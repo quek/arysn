@@ -4,11 +4,11 @@
 name = "arysn"
 version = "0.1.0"
 dependencies = [
- "arysn_macro",
+ "arysn-macro",
 ]
 
 [[package]]
-name = "arysn_macro"
+name = "arysn-macro"
 version = "0.1.0"
 dependencies = [
  "quote",

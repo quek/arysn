@@ -1,5 +1,5 @@
 [package]
-name = "arysn_macro"
+name = "arysn-macro"
 version = "0.1.0"
 authors = ["Tahara Yoshinori <read.eval.print@gmail.com>"]
 edition = "2018"
