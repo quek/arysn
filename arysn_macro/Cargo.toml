@@ -1,0 +1,12 @@
+[package]
+name = "arysn_macro"
+version = "0.1.0"
+authors = ["Tahara Yoshinori <read.eval.print@gmail.com>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "*"
+quote = "*"
