@@ -1,0 +1,28 @@
+version: '3'
+services:
+  db:
+    build: ./docker/db
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user1
+      POSTGRES_PASSWORD: password1
+      POSTGRES_DB: arysn_development
+      LANG: ja_JP.UTF-8
+      TZ: Asia/Tokyo
+  dev:
+    user: "${UID}:${GID}"
+    build: ./docker/dev
+    volumes:
+      - .:/app
+      - ./tmp/.cargo:/cargo
+    environment:
+      CARGO_HOME: /cargo
+      DATABASE_URL: postgres://user1:password1@db/arysn_development
+      LANG: ja_JP.UTF-8
+      TZ: Asia/Tokyo
+    depends_on:
+      - db
+volumes:
+  postgresql_data:
+    driver: local

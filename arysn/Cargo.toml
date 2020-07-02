@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 arysn-macro = { path = "../arysn-macro" }
+# tokio = "0.2"
+tokio = { version = "0.2", features = ["full"] }
+tokio-postgres = "0.5"

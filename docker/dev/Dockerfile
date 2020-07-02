@@ -1,0 +1,17 @@
+FROM rust:latest
+
+RUN apt update && apt install -y locales
+
+RUN localedef -i ja_JP -c -f UTF-8 -A /usr/share/locale/locale.alias ja_JP.UTF-8
+ENV LANG ja_JP.UTF-8
+
+RUN cargo install cargo-watch
+
+ADD wait-for-it.sh /
+
+WORKDIR /app/server
+
+CMD ["/wait-for-it.sh", "db:5432", "--", \
+     "cargo", "watch", \
+     "--ignore", "tmp", \
+     "-x", "test -- --nocapture"]
