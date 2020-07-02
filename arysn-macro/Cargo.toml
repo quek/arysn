@@ -8,7 +8,9 @@ edition = "2018"
 proc-macro = true
 
 [dependencies]
-syn = "*"
+anyhow = "1"
+proc-macro2 = "*"
 quote = "*"
+syn = "*"
 tokio = { version = "0.2", features = ["full"] }
 tokio-postgres = "0.5"

@@ -13,6 +13,7 @@ mod tests {
     #[tokio::test]
     async fn it_works() -> Result<(), Error> {
         let user = User {
+            id: "1".to_string(),
             name: "こねら".to_string(),
         };
         println!("{}!!!!", &user.name);
