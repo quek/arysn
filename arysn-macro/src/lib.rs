@@ -12,6 +12,24 @@ use tokio_postgres::{Client, NoTls};
 #[proc_macro]
 pub fn defar(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     env_logger::init();
+
+    // TODO input.to_string() で "User { table_name : users }" になるからそれを JSON 処理しちゃう？
+    debug!("input {:?}", &input);
+    input.clone().into_iter().for_each(|x| println!("{:?}", x));
+    debug!("input {}", input.to_string());
+
+    {
+        debug!("-----------------------------------------------------------------------------");
+        let mut iter = input.clone().into_iter();
+        let struct_name = iter.clone().nth(0).unwrap();
+        debug!("struct name {:?}", &struct_name);
+        if let proc_macro::TokenTree::Group(xs) = iter.nth(1).unwrap() {
+            for x in xs.stream().into_iter() {
+                debug!("{:?}", &x);
+            }
+        }
+    }
+
     let args = syn::parse_macro_input!(input as Args);
     let output: TokenStream = impl_defar(args).unwrap();
     proc_macro::TokenStream::from(output)

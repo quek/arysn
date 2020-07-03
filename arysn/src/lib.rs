@@ -1,14 +1,12 @@
-#[tokio::main]
-async fn main() -> Result<(), tokio::io::Error> {
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use arysn_macro::defar;
     use tokio_postgres::{Error, NoTls};
 
-    defar!(User { table_name: users });
+    defar!(User {
+        table_name: users,
+        foo: bar
+    });
 
     #[tokio::test]
     async fn it_works() -> Result<(), Error> {
