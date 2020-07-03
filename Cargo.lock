@@ -25,7 +25,10 @@ checksum = "4d25d88fd6b8041580a654f9d0c581a047baee2b3efee13275f2fc392fc75034"
 name = "arysn"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "arysn-macro",
+ "env_logger",
+ "log",
  "tokio",
  "tokio-postgres",
 ]

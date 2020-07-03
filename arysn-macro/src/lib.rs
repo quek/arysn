@@ -11,7 +11,7 @@ use tokio_postgres::{Client, NoTls};
 
 #[proc_macro]
 pub fn defar(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    env_logger::init();
+    let _ = env_logger::builder().is_test(true).try_init();
 
     // TODO input.to_string() で "User { table_name : users }" になるからそれを JSON 処理しちゃう？
     debug!("input {:?}", &input);
@@ -86,6 +86,22 @@ ORDER BY ordinal_position
             #[derive(Debug)]
             struct #name {
                 #(pub #column_names: #rust_types),*
+            }
+
+            impl #name {
+                pub fn filter<T: std::fmt::Display>(value: T) -> Builder {
+                    Builder::default().from(#table_name.to_string()).filter(value)
+                }
+            }
+
+            impl From<tokio_postgres::row::Row> for #name {
+                fn from(row: tokio_postgres::row::Row) -> Self {
+                    Self {
+                        id: row.get(0),
+                        name: row.get(1),
+                        title: row.get(2),
+                    }
+                }
             }
         };
         debug!("output: {}", &output);
