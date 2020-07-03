@@ -5,6 +5,7 @@ use log::debug;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
+use syn::{braced, Token};
 use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
 
@@ -12,7 +13,6 @@ use tokio_postgres::{Client, NoTls};
 pub fn defar(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     env_logger::init();
     let args = syn::parse_macro_input!(input as Args);
-    debug!("args {:?}", &args);
     let output: TokenStream = impl_defar(args).unwrap();
     proc_macro::TokenStream::from(output)
 }
@@ -22,6 +22,23 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
 
     rt.block_on(async {
         let client = connect().await?;
+
+        let table_name = args
+            .fields
+            .iter()
+            .find(|field| {
+                field
+                    .ident
+                    .as_ref()
+                    .map(|x| x.to_string().as_str() == "table_name")
+                    .unwrap_or(false)
+            })
+            .map(|field| {
+                let ty = &field.ty;
+                let x = quote! { #ty };
+                x.to_string()
+            })
+            .expect("no table_name field!");
         let sql = format!(
             r"
 SELECT column_name, is_nullable, data_type
@@ -31,7 +48,7 @@ WHERE
   table_name = '{}'
 ORDER BY ordinal_position
 ",
-            args.table_name
+            table_name
         );
         let rows = client.query(sql.as_str(), &[]).await?;
         let mut column_names = Vec::<Ident>::new();
@@ -84,17 +101,19 @@ async fn connect() -> Result<Client> {
     Ok(client)
 }
 
-#[derive(Debug)]
 struct Args {
     struct_name: Ident,
-    table_name: Ident,
+    _brace_token: syn::token::Brace,
+    fields: syn::punctuated::Punctuated<syn::Field, Token![,]>,
 }
 
 impl Parse for Args {
     fn parse(input: ParseStream) -> std::result::Result<Self, syn::Error> {
+        let content;
         Ok(Self {
             struct_name: input.parse()?,
-            table_name: input.parse()?,
+            _brace_token: braced!(content in input),
+            fields: content.parse_terminated(syn::Field::parse_named)?,
         })
     }
 }
