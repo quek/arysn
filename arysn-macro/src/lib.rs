@@ -12,7 +12,7 @@ use tokio_postgres::{Client, NoTls};
 pub fn defar(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     env_logger::init();
     let args = syn::parse_macro_input!(input as Args);
-    log::info!("args {:?}", &args);
+    debug!("args {:?}", &args);
     let output: TokenStream = impl_defar(args).unwrap();
     proc_macro::TokenStream::from(output)
 }
@@ -22,15 +22,18 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
 
     rt.block_on(async {
         let client = connect().await?;
-        let sql = r"
+        let sql = format!(
+            r"
 SELECT column_name, is_nullable, data_type
 FROM
   information_schema.columns
 WHERE
-  table_name = 'users'
+  table_name = '{}'
 ORDER BY ordinal_position
-";
-        let rows = client.query(sql, &[]).await?;
+",
+            args.table_name
+        );
+        let rows = client.query(sql.as_str(), &[]).await?;
         let mut column_names = Vec::<Ident>::new();
         let mut rust_types = Vec::<TokenStream>::new();
         for row in rows {
@@ -43,7 +46,7 @@ ORDER BY ordinal_position
             rust_types.push(rust_type);
         }
 
-        let name = &args.name;
+        let name = &args.struct_name;
         let output = quote! {
             #[derive(Debug)]
             struct #name {
@@ -83,13 +86,15 @@ async fn connect() -> Result<Client> {
 
 #[derive(Debug)]
 struct Args {
-    name: Ident,
+    struct_name: Ident,
+    table_name: Ident,
 }
 
 impl Parse for Args {
     fn parse(input: ParseStream) -> std::result::Result<Self, syn::Error> {
         Ok(Self {
-            name: input.parse()?,
+            struct_name: input.parse()?,
+            table_name: input.parse()?,
         })
     }
 }
