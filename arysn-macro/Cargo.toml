@@ -9,6 +9,8 @@ proc-macro = true
 
 [dependencies]
 anyhow = "1"
+env_logger = "*"
+log = "*"
 proc-macro2 = "*"
 quote = "*"
 syn = "*"

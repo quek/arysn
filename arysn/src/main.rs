@@ -13,8 +13,9 @@ mod tests {
     #[tokio::test]
     async fn it_works() -> Result<(), Error> {
         let user = User {
-            id: "1".to_string(),
+            id: 1,
             name: "こねら".to_string(),
+            title: None,
         };
         println!("{}!!!!", &user.name);
         assert_eq!("こねら", &user.name);
