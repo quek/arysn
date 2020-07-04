@@ -131,10 +131,6 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
             }
 
             impl #name {
-                pub fn filter<T: std::fmt::Display>(value: T) -> Builder {
-                    Builder::default().from(#table_name.to_string()).filter(value)
-                }
-
                 pub fn select() -> #builder_name {
                     #builder_name::default()
                 }
@@ -166,7 +162,9 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
                 impl #builder_name_columns {
                     pub fn eq(&self, value: #rust_types) -> #builder_name {
                         let mut filters = self.builder.filters.clone();
-                        filters.push(format!("{}={:?}", stringify!(#column_names), value));
+                        filters.push(format!("{}={}",
+                                             stringify!(#column_names),
+                                             ToSqlValue::to_sql_value(&value)));
                         #builder_name {
                             filters,
                             ..self.builder.clone()
