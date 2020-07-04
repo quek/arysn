@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 anyhow = "*"
 arysn-macro = { path = "../arysn-macro" }
+async-trait = "0.1"
 env_logger = "*"
 log = "*"
 tokio = { version = "0.2", features = ["full"] }

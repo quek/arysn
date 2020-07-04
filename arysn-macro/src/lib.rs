@@ -154,6 +154,9 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
             }
 
             impl BuilderTrait for #builder_name {
+                fn filters(&self) -> &Vec<String> {
+                    &self.filters
+                }
             }
 
             #(

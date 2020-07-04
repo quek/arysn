@@ -27,6 +27,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arysn-macro",
+ "async-trait",
  "env_logger",
  "log",
  "tokio",
