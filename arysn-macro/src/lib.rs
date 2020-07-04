@@ -97,26 +97,27 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
 
         let mut column_names = Vec::<Ident>::new();
         let mut rust_types = Vec::<TokenStream>::new();
-        for column in columns {
+        for column in columns.iter() {
             column_names.push(Ident::new(&column.name, Span::call_site()));
-            rust_types.push(column.rust_type);
+            rust_types.push(column.rust_type.clone());
         }
 
         let name = &args.struct_name;
+        let builder_name = Ident::new(&format!("{}Builder", &args.struct_name), Span::call_site());
+        let builder_name_columns: Vec<Ident> = columns
+            .iter()
+            .map(|column| {
+                Ident::new(
+                    &format!("{}_{}", &builder_name, &column.name),
+                    Span::call_site(),
+                )
+            })
+            .collect();
+
         let output = quote! {
             #[derive(Debug)]
             struct #name {
                 #(pub #column_names: #rust_types),*
-            }
-
-            impl #name {
-                pub fn filter<T: std::fmt::Display>(value: T) -> Builder {
-                    Builder::default().from(#table_name.to_string()).filter(value)
-                }
-
-                pub fn select() -> Builder {
-                    Builder::default().from(#table_name.to_string())
-                }
             }
 
             impl From<tokio_postgres::row::Row> for #name {
@@ -128,6 +129,49 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
                     }
                 }
             }
+
+            impl #name {
+                pub fn filter<T: std::fmt::Display>(value: T) -> Builder {
+                    Builder::default().from(#table_name.to_string()).filter(value)
+                }
+
+                pub fn select() -> #builder_name {
+                    #builder_name::default()
+                }
+            }
+
+            #[derive(Clone, Debug, Default)]
+            struct #builder_name {
+                pub filters: Vec<String>
+            }
+
+            impl #builder_name {
+                #(pub fn #column_names(&self) -> #builder_name_columns {
+                    #builder_name_columns {
+                        builder: self.clone()
+                    }
+                })*
+            }
+
+            impl BuilderTrait for #builder_name {
+            }
+
+            #(
+                struct #builder_name_columns {
+                    pub builder: #builder_name,
+                }
+                impl #builder_name_columns {
+                    pub fn eq(&self, value: #rust_types) -> #builder_name {
+                        let mut filters = self.builder.filters.clone();
+                        filters.push(format!("{}={:?}", stringify!(#column_names), value));
+                        #builder_name {
+                            filters,
+                            ..self.builder.clone()
+                        }
+                    }
+                }
+            )*
+
         };
         debug!("output: {}", &output);
         Ok(output.into())

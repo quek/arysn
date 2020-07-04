@@ -1,7 +1,7 @@
 use anyhow::Result;
+use log::debug;
 use std::fmt::Display;
 use tokio_postgres::{Client, NoTls, Row};
-// use log::debug;
 
 pub async fn connect() -> Result<Client> {
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set!");
@@ -16,6 +16,10 @@ pub async fn connect() -> Result<Client> {
     client.execute("SET TIME ZONE 'Japan'", &[]).await?;
     Ok(client)
 }
+
+pub trait BuilderTrait {}
+
+pub trait BuilderColumnTrait {}
 
 #[derive(Clone, Debug, Default)]
 pub struct Builder {
@@ -97,7 +101,8 @@ mod tests {
 
         {
             // let users = User::select().id.eq(1).order().id.asc();
-            User::select().id();
+            let query = User::select().id().eq(1);
+            debug!("{:?}", &query);
         }
 
         let users = User::filter("id in (1, 2)").order("id ASC");
