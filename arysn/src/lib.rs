@@ -95,6 +95,11 @@ mod tests {
 
         let client = connect().await?;
 
+        {
+            // let users = User::select().id.eq(1).order().id.asc();
+            User::select().id();
+        }
+
         let users = User::filter("id in (1, 2)").order("id ASC");
         assert_eq!(
             "SELECT * FROM users WHERE id in (1, 2) ORDER BY id ASC",

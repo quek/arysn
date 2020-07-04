@@ -35,6 +35,41 @@ pub fn defar(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     proc_macro::TokenStream::from(output)
 }
 
+async fn columns(table_name: &String, client: &Client) -> Result<Vec<Column>> {
+    let primary_key: Vec<String> = primary_key(table_name, client).await?;
+    let sql = format!(
+        r"
+SELECT column_name, is_nullable, data_type
+FROM
+  information_schema.columns
+WHERE
+  table_name = '{}'
+ORDER BY ordinal_position
+",
+        table_name
+    );
+    let rows = client.query(sql.as_str(), &[]).await?;
+    let result: Vec<Column> = rows
+        .iter()
+        .map(|row| {
+            let name: String = row.get(0);
+            let is_nullable: &str = row.get(1);
+            let is_nullable: bool = is_nullable == "YES";
+            let data_type: String = row.get(2);
+            let rust_type = rust_type(&data_type, is_nullable);
+            let is_primary_key = primary_key.iter().any(|x| x == &name);
+            Column {
+                name,
+                is_nullable,
+                data_type,
+                rust_type,
+                is_primary_key,
+            }
+        })
+        .collect();
+    Ok(result)
+}
+
 fn impl_defar(args: Args) -> Result<TokenStream> {
     let mut rt = Runtime::new()?;
 
@@ -57,28 +92,14 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
                 x.to_string()
             })
             .expect("no table_name field!");
-        let sql = format!(
-            r"
-SELECT column_name, is_nullable, data_type
-FROM
-  information_schema.columns
-WHERE
-  table_name = '{}'
-ORDER BY ordinal_position
-",
-            table_name
-        );
-        let rows = client.query(sql.as_str(), &[]).await?;
+
+        let columns: Vec<Column> = columns(&table_name, &client).await?;
+
         let mut column_names = Vec::<Ident>::new();
         let mut rust_types = Vec::<TokenStream>::new();
-        for row in rows {
-            let column_name: &str = row.get(0);
-            column_names.push(Ident::new(column_name, Span::call_site()));
-            let is_nullable: &str = row.get(1);
-            let is_nullable: bool = is_nullable == "YES";
-            let data_type: &str = row.get(2);
-            let rust_type = rust_type(data_type, is_nullable);
-            rust_types.push(rust_type);
+        for column in columns {
+            column_names.push(Ident::new(&column.name, Span::call_site()));
+            rust_types.push(column.rust_type);
         }
 
         let name = &args.struct_name;
@@ -91,6 +112,10 @@ ORDER BY ordinal_position
             impl #name {
                 pub fn filter<T: std::fmt::Display>(value: T) -> Builder {
                     Builder::default().from(#table_name.to_string()).filter(value)
+                }
+
+                pub fn select() -> Builder {
+                    Builder::default().from(#table_name.to_string())
                 }
             }
 
@@ -107,6 +132,28 @@ ORDER BY ordinal_position
         debug!("output: {}", &output);
         Ok(output.into())
     })
+}
+
+async fn primary_key(table_name: &String, client: &Client) -> Result<Vec<String>> {
+    let sql = format!(
+        r"
+SELECT kcu.column_name
+FROM
+  information_schema.table_constraints tc
+    INNER JOIN information_schema.key_column_usage kcu
+            ON tc.constraint_catalog = kcu.constraint_catalog
+           AND tc.constraint_schema = kcu.constraint_schema
+           AND tc.constraint_name = kcu.constraint_name
+WHERE
+      tc.table_name = '{}'
+  AND tc.constraint_type = 'PRIMARY KEY'
+ORDER BY kcu.ordinal_position
+",
+        table_name
+    );
+    let rows = client.query(sql.as_str(), &[]).await?;
+    let result: Vec<String> = rows.iter().map(|row| row.get::<_, String>(0)).collect();
+    Ok(result)
 }
 
 fn rust_type(data_type: &str, is_nullable: bool) -> TokenStream {
@@ -150,4 +197,12 @@ impl Parse for Args {
             fields: content.parse_terminated(syn::Field::parse_named)?,
         })
     }
+}
+
+struct Column {
+    pub name: String,
+    pub is_nullable: bool,
+    pub data_type: String,
+    pub rust_type: TokenStream,
+    pub is_primary_key: bool,
 }
