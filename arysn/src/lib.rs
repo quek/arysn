@@ -31,10 +31,6 @@ impl From<String> for Value {
     }
 }
 
-pub trait FilterTrait {
-    fn to_sql(&self) -> String;
-}
-
 #[derive(Clone, Debug)]
 pub struct Filter {
     pub table: String,
@@ -43,19 +39,13 @@ pub struct Filter {
 }
 
 impl Filter {
-    pub fn to_sql_impl(&self) -> String {
+    pub fn to_sql(&self) -> String {
         format!(
             "{}.{} = {}",
             &self.table,
             &self.name,
             self.value.to_sql_value()
         )
-    }
-}
-
-impl FilterTrait for Filter {
-    fn to_sql(&self) -> String {
-        self.to_sql_impl()
     }
 }
 
