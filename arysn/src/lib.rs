@@ -43,6 +43,7 @@ mod tests {
         assert_eq!(1, user.id);
         assert_eq!("ユーザ1", user.name);
         assert_eq!(Some("旅人".to_string()), user.title);
+        assert_eq!(true, user.active);
 
         Ok(())
     }

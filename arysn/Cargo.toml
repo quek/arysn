@@ -10,7 +10,8 @@ edition = "2018"
 anyhow = "*"
 arysn-macro = { path = "../arysn-macro" }
 async-trait = "0.1"
+chrono = "0.4"
 env_logger = "*"
 log = "*"
 tokio = { version = "0.2", features = ["full"] }
-tokio-postgres = "0.5"
+tokio-postgres = { version = "0.5", features = ["with-chrono-0_4"] }

@@ -107,6 +107,7 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
             nullable_rust_types.push(column.nullable_rust_type.clone());
             value_types.push(column.value_type.clone());
         }
+        let column_index = 0..columns.len();
 
         let name = &args.struct_name;
         let builder_name = Ident::new(&format!("{}Builder", &args.struct_name), Span::call_site());
@@ -129,9 +130,9 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
             impl From<tokio_postgres::row::Row> for #name {
                 fn from(row: tokio_postgres::row::Row) -> Self {
                     Self {
-                        id: row.get(0),
-                        name: row.get(1),
-                        title: row.get(2),
+                        #(
+                            #column_names: row.get(#column_index),
+                        )*
                     }
                 }
             }
@@ -222,8 +223,10 @@ ORDER BY kcu.ordinal_position
 
 fn compute_type(data_type: &str, is_nullable: bool) -> (TokenStream, TokenStream, TokenStream) {
     let (rust_type, value_type) = match data_type {
+        "boolean" => (quote!(bool), quote!(Bool)),
         "bigint" => (quote!(i64), quote!(I64)),
         "character varying" => (quote!(String), quote!(String)),
+        "timestamp with time zone" => (quote!(chrono::DateTime<chrono::Local>), quote!(DateTime)),
         _ => panic!("unknown sql type: {}", data_type),
     };
     if is_nullable {
