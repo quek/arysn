@@ -14,7 +14,7 @@ impl Value {
             Self::Bool(x) => if *x { "TRUE" } else { "FALSE" }.to_string(),
             Self::I64(x) => x.to_string(),
             Self::String(x) => format!("'{}'", x.replace("'", "''")),
-            Self::DateTime(x) => x.to_rfc3339(),
+            Self::DateTime(x) => x.format("'%Y-%m-%d %H:%M:%S%.6f %:z'").to_string(),
         }
     }
 }

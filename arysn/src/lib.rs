@@ -44,6 +44,7 @@ mod tests {
         assert_eq!("ユーザ1", user.name);
         assert_eq!(Some("旅人".to_string()), user.title);
         assert_eq!(true, user.active);
+        log::debug!("{}", user.created_at);
 
         Ok(())
     }
