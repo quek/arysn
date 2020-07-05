@@ -1,31 +1,61 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use log::debug;
+use std::fmt::Debug;
 use tokio_postgres::{Client, NoTls, Row};
 
-trait ToSqlValue {
-    fn to_sql_value(&self) -> String;
+#[derive(Clone, Debug)]
+pub enum Value {
+    I64(i64),
+    String(String),
 }
 
-impl ToSqlValue for i64 {
-    fn to_sql_value(&self) -> String {
-        format!("{}", self)
-    }
-}
-
-impl ToSqlValue for String {
-    fn to_sql_value(&self) -> String {
-        format!("'{}'", self.replace("'", "''"))
-    }
-}
-
-impl ToSqlValue for Option<String> {
-    fn to_sql_value(&self) -> String {
-        if let Some(x) = self {
-            format!("'{}'", x)
-        } else {
-            "TODO".to_string()
+impl Value {
+    pub fn to_sql_value(&self) -> String {
+        match self {
+            Self::I64(x) => x.to_string(),
+            Self::String(x) => format!("'{}'", x.replace("'", "''")),
         }
+    }
+}
+
+impl From<i64> for Value {
+    fn from(x: i64) -> Self {
+        Self::I64(x)
+    }
+}
+
+impl From<String> for Value {
+    fn from(x: String) -> Self {
+        Self::String(x)
+    }
+}
+
+pub trait FilterTrait {
+    fn to_sql(&self) -> String;
+}
+
+#[derive(Clone, Debug)]
+pub struct Filter {
+    pub table: String,
+    pub name: String,
+    pub value: Value,
+}
+
+impl Filter {
+    pub fn to_sql_impl(&self) -> String {
+        format!(
+            "{}.{} = {}",
+            &self.table,
+            &self.name,
+            self.value.to_sql_value()
+        )
+    }
+}
+
+impl FilterTrait for Filter {
+    fn to_sql(&self) -> String {
+        self.to_sql_impl()
     }
 }
 
@@ -46,7 +76,7 @@ pub async fn connect() -> Result<Client> {
 
 #[async_trait]
 pub trait BuilderTrait {
-    fn filters(&self) -> &Vec<String>;
+    fn filters(&self) -> &Vec<Filter>;
 
     async fn load<T>(&self, client: &Client) -> Result<Vec<T>>
     where
@@ -58,7 +88,14 @@ pub trait BuilderTrait {
     }
 
     fn sql(&self) -> String {
-        format!("SELECT * FROM users WHERE {}", self.filters().join(" AND "))
+        format!(
+            "SELECT * FROM users WHERE {}",
+            self.filters()
+                .iter()
+                .map(|x| x.to_sql())
+                .collect::<Vec<_>>()
+                .join(" AND ")
+        )
     }
 }
 

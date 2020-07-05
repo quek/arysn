@@ -56,13 +56,15 @@ ORDER BY ordinal_position
             let is_nullable: &str = row.get(1);
             let is_nullable: bool = is_nullable == "YES";
             let data_type: String = row.get(2);
-            let rust_type = rust_type(&data_type, is_nullable);
+            let (rust_type, nullable_rust_type, value_type) = compute_type(&data_type, is_nullable);
             let is_primary_key = primary_key.iter().any(|x| x == &name);
             Column {
                 name,
                 is_nullable,
                 data_type,
                 rust_type,
+                nullable_rust_type,
+                value_type,
                 is_primary_key,
             }
         })
@@ -97,9 +99,13 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
 
         let mut column_names = Vec::<Ident>::new();
         let mut rust_types = Vec::<TokenStream>::new();
+        let mut nullable_rust_types = Vec::<TokenStream>::new();
+        let mut value_types = Vec::<TokenStream>::new();
         for column in columns.iter() {
             column_names.push(Ident::new(&column.name, Span::call_site()));
             rust_types.push(column.rust_type.clone());
+            nullable_rust_types.push(column.nullable_rust_type.clone());
+            value_types.push(column.value_type.clone());
         }
 
         let name = &args.struct_name;
@@ -117,7 +123,7 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
         let output = quote! {
             #[derive(Debug)]
             struct #name {
-                #(pub #column_names: #rust_types),*
+                #(pub #column_names: #nullable_rust_types),*
             }
 
             impl From<tokio_postgres::row::Row> for #name {
@@ -138,7 +144,7 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
 
             #[derive(Clone, Debug, Default)]
             struct #builder_name {
-                pub filters: Vec<String>
+                pub filters: Vec<Filter>
             }
 
             impl #builder_name {
@@ -150,7 +156,7 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
             }
 
             impl BuilderTrait for #builder_name {
-                fn filters(&self) -> &Vec<String> {
+                fn filters(&self) -> &Vec<Filter> {
                     &self.filters
                 }
             }
@@ -162,9 +168,11 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
                 impl #builder_name_columns {
                     pub fn eq(&self, value: #rust_types) -> #builder_name {
                         let mut filters = self.builder.filters.clone();
-                        filters.push(format!("{}={}",
-                                             stringify!(#column_names),
-                                             ToSqlValue::to_sql_value(&value)));
+                        filters.push(Filter {
+                            table: #table_name.to_string(),
+                            name: stringify!(#column_names).to_string(),
+                            value: Value::#value_types(value),
+                        });
                         #builder_name {
                             filters,
                             ..self.builder.clone()
@@ -201,16 +209,16 @@ ORDER BY kcu.ordinal_position
     Ok(result)
 }
 
-fn rust_type(data_type: &str, is_nullable: bool) -> TokenStream {
-    let rust_type = match data_type {
-        "bigint" => quote!(i64),
-        "character varying" => quote!(String),
+fn compute_type(data_type: &str, is_nullable: bool) -> (TokenStream, TokenStream, TokenStream) {
+    let (rust_type, value_type) = match data_type {
+        "bigint" => (quote!(i64), quote!(I64)),
+        "character varying" => (quote!(String), quote!(String)),
         _ => panic!("unknown sql type: {}", data_type),
     };
     if is_nullable {
-        quote!(Option<#rust_type>)
+        (rust_type.clone(), quote!(Option<#rust_type>), value_type)
     } else {
-        rust_type
+        (rust_type.clone(), rust_type, value_type)
     }
 }
 
@@ -249,5 +257,7 @@ struct Column {
     pub is_nullable: bool,
     pub data_type: String,
     pub rust_type: TokenStream,
+    pub nullable_rust_type: TokenStream,
+    pub value_type: TokenStream,
     pub is_primary_key: bool,
 }
