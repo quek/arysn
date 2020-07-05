@@ -39,7 +39,7 @@ async fn columns(table_name: &String, client: &Client) -> Result<Vec<Column>> {
     let primary_key: Vec<String> = primary_key(table_name, client).await?;
     let sql = format!(
         r"
-SELECT column_name, is_nullable, data_type
+SELECT column_name, is_nullable, data_type, column_default
 FROM
   information_schema.columns
 WHERE
@@ -56,12 +56,18 @@ ORDER BY ordinal_position
             let is_nullable: &str = row.get(1);
             let is_nullable: bool = is_nullable == "YES";
             let data_type: String = row.get(2);
-            let (rust_type, nullable_rust_type, value_type) = compute_type(&data_type, is_nullable);
+            let column_default: Option<String> = row.get(3);
+            let (rust_type, mut nullable_rust_type, value_type) =
+                compute_type(&data_type, is_nullable);
             let is_primary_key = primary_key.iter().any(|x| x == &name);
+            if is_primary_key && column_default.is_some() {
+                nullable_rust_type = quote!(Option<#rust_type>);
+            }
             Column {
                 name,
                 is_nullable,
                 data_type,
+                column_default,
                 rust_type,
                 nullable_rust_type,
                 value_type,
@@ -276,6 +282,7 @@ struct Column {
     pub name: String,
     pub is_nullable: bool,
     pub data_type: String,
+    pub column_default: Option<String>,
     pub rust_type: TokenStream,
     pub nullable_rust_type: TokenStream,
     pub value_type: TokenStream,
