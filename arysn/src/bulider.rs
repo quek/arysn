@@ -5,9 +5,10 @@ use tokio_postgres::{Client, Row};
 
 #[async_trait]
 pub trait BuilderTrait {
+    fn from(&self) -> &String;
     fn filters(&self) -> &Vec<Filter>;
 
-    async fn load<T>(&self, client: &Client) -> Result<Vec<T>>
+    async fn load_impl<T>(&self, client: &Client) -> Result<Vec<T>>
     where
         T: From<Row>,
     {
@@ -18,7 +19,8 @@ pub trait BuilderTrait {
 
     fn sql(&self) -> String {
         format!(
-            "SELECT * FROM users WHERE {}",
+            "SELECT * FROM {} WHERE {}",
+            self.from(),
             self.filters()
                 .iter()
                 .map(|x| x.to_sql())

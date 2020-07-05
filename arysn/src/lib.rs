@@ -31,7 +31,7 @@ mod tests {
 
         let client = connect().await?;
 
-        let users: Vec<User> = User::select()
+        let users = User::select()
             .id()
             .eq(1)
             .name()

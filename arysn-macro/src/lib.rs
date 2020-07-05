@@ -138,12 +138,16 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
 
             impl #name {
                 pub fn select() -> #builder_name {
-                    #builder_name::default()
+                    #builder_name {
+                        from: #table_name.to_string(),
+                        ..#builder_name::default()
+                    }
                 }
             }
 
             #[derive(Clone, Debug, Default)]
             struct #builder_name {
+                pub from: String,
                 pub filters: Vec<Filter>
             }
 
@@ -153,9 +157,16 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
                         builder: self.clone()
                     }
                 })*
+                pub async fn load(&self, client: &tokio_postgres::Client) -> anyhow::Result<Vec<#name>> {
+                    self.load_impl::<#name>(client).await
+                }
             }
 
             impl BuilderTrait for #builder_name {
+                fn from(&self) -> &String {
+                    &self.from
+                }
+
                 fn filters(&self) -> &Vec<Filter> {
                     &self.filters
                 }
