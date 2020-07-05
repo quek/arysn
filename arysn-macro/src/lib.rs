@@ -2,8 +2,8 @@ extern crate proc_macro;
 
 use anyhow::Result;
 use log::debug;
-use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
+use proc_macro2::{Ident, TokenStream};
+use quote::{format_ident, quote};
 use syn::parse::{Parse, ParseStream};
 use syn::{braced, Token};
 use tokio::runtime::Runtime;
@@ -78,7 +78,7 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
     rt.block_on(async {
         let client = connect().await?;
 
-        let table_name = args
+        let table_name:String = args
             .fields
             .iter()
             .find(|field| {
@@ -102,32 +102,41 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
         let mut nullable_rust_types = Vec::<TokenStream>::new();
         let mut value_types = Vec::<TokenStream>::new();
         for column in columns.iter() {
-            column_names.push(Ident::new(&column.name, Span::call_site()));
+            column_names.push(format_ident!("{}", &column.name));
             rust_types.push(column.rust_type.clone());
             nullable_rust_types.push(column.nullable_rust_type.clone());
             value_types.push(column.value_type.clone());
         }
         let column_index = 0..columns.len();
 
-        let name = &args.struct_name;
-        let builder_name = Ident::new(&format!("{}Builder", &args.struct_name), Span::call_site());
+        let struct_name: Ident = args.struct_name;
+        let builder_name = format_ident!("{}Builder", &struct_name);
         let builder_name_columns: Vec<Ident> = columns
             .iter()
             .map(|column| {
-                Ident::new(
-                    &format!("{}_{}", &builder_name, &column.name),
-                    Span::call_site(),
-                )
+                format_ident!("{}_{}", &builder_name, &column.name)
             })
             .collect();
 
+        let fn_update: TokenStream = make_update(&table_name, &columns);
+
         let output = quote! {
-            #[derive(Debug)]
-            struct #name {
+            #[derive(Clone, Debug)]
+            pub struct #struct_name {
                 #(pub #column_names: #nullable_rust_types),*
             }
 
-            impl From<tokio_postgres::row::Row> for #name {
+            impl #struct_name {
+                pub fn select() -> #builder_name {
+                    #builder_name {
+                        from: #table_name.to_string(),
+                        ..#builder_name::default()
+                    }
+                }
+                #fn_update
+            }
+
+            impl From<tokio_postgres::row::Row> for #struct_name {
                 fn from(row: tokio_postgres::row::Row) -> Self {
                     Self {
                         #(
@@ -137,17 +146,9 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
                 }
             }
 
-            impl #name {
-                pub fn select() -> #builder_name {
-                    #builder_name {
-                        from: #table_name.to_string(),
-                        ..#builder_name::default()
-                    }
-                }
-            }
 
             #[derive(Clone, Debug, Default)]
-            struct #builder_name {
+            pub struct #builder_name {
                 pub from: String,
                 pub filters: Vec<Filter>
             }
@@ -158,8 +159,11 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
                         builder: self.clone()
                     }
                 })*
-                pub async fn load(&self, client: &tokio_postgres::Client) -> anyhow::Result<Vec<#name>> {
-                    self.load_impl::<#name>(client).await
+                pub async fn first(&self, client: &tokio_postgres::Client) -> anyhow::Result<#struct_name> {
+                    self.first_impl::<#struct_name>(client).await
+                }
+                pub async fn load(&self, client: &tokio_postgres::Client) -> anyhow::Result<Vec<#struct_name>> {
+                    self.load_impl::<#struct_name>(client).await
                 }
             }
 
@@ -174,7 +178,8 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
             }
 
             #(
-                struct #builder_name_columns {
+                #[allow(non_camel_case_types)]
+                pub struct #builder_name_columns {
                     pub builder: #builder_name,
                 }
                 impl #builder_name_columns {
@@ -224,6 +229,7 @@ ORDER BY kcu.ordinal_position
 fn compute_type(data_type: &str, is_nullable: bool) -> (TokenStream, TokenStream, TokenStream) {
     let (rust_type, value_type) = match data_type {
         "boolean" => (quote!(bool), quote!(Bool)),
+        "integer" => (quote!(i32), quote!(I32)),
         "bigint" => (quote!(i64), quote!(I64)),
         "character varying" => (quote!(String), quote!(String)),
         "timestamp with time zone" => (quote!(chrono::DateTime<chrono::Local>), quote!(DateTime)),
@@ -274,4 +280,37 @@ struct Column {
     pub nullable_rust_type: TokenStream,
     pub value_type: TokenStream,
     pub is_primary_key: bool,
+}
+
+fn make_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
+    let (key_columns, rest_columns): (Vec<&Column>, Vec<&Column>) =
+        colums.iter().partition(|cloumn| cloumn.is_primary_key);
+
+    let set_sql = rest_columns
+        .iter()
+        .enumerate()
+        .map(|(index, column)| format!("{} = ${}", &column.name, index + 1))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let where_sql = key_columns
+        .iter()
+        .enumerate()
+        .map(|(index, column)| format!("{} = ${}", &column.name, index + rest_columns.len() + 1))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let statement = format!("UPDATE {} SET {} WHERE {}", table_name, set_sql, where_sql);
+
+    let params = rest_columns
+        .iter()
+        .chain(key_columns.iter())
+        .map(|column| format_ident!("{}", &column.name))
+        .collect::<Vec<_>>();
+    let params = quote! { &[#(&self.#params),*] };
+
+    quote! {
+        pub async fn update(&self, client: &tokio_postgres::Client) -> anyhow::Result<()> {
+            client.execute(#statement, #params).await?;
+            Ok(())
+        }
+    }
 }

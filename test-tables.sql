@@ -7,12 +7,13 @@ CREATE TABLE users (
   id BIGSERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   title VARCHAR(255),
+  age INTEGER NOT NULL,
   active BOOLEAN NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-INSERT INTO users(name, title, active, created_at) VALUES
- ('ユーザ1', '旅人', TRUE, CURRENT_TIMESTAMP)
-,('ユーザ2', NULL, FALSE, CURRENT_TIMESTAMP)
-,('ユーザ3', 'もののけ', TRUE, CURRENT_TIMESTAMP)
+INSERT INTO users(name, title, age, active, created_at) VALUES
+ ('ユーザ1', '旅人', 20, TRUE, CURRENT_TIMESTAMP)
+,('ユーザ2', NULL, 21, FALSE, CURRENT_TIMESTAMP)
+,('ユーザ3', 'もののけ', 22, TRUE, CURRENT_TIMESTAMP)
 ;

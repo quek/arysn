@@ -46,6 +46,14 @@ mod tests {
         assert_eq!(true, user.active);
         log::debug!("{}", user.created_at);
 
+        let mut user = user.clone();
+        let age = user.age + 100;
+        user.age = age;
+        user.update(&client).await?;
+
+        let user = User::select().id().eq(1).first(&client).await?;
+        assert_eq!(age, user.age);
+
         Ok(())
     }
 }
