@@ -124,7 +124,8 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
             })
             .collect();
 
-        let fn_update: TokenStream = make_update(&table_name, &columns);
+        let fn_insert: TokenStream = make_fn_insert(&table_name, &columns);
+        let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
         let output = quote! {
             #[derive(Clone, Debug)]
@@ -139,6 +140,7 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
                         ..#builder_name::default()
                     }
                 }
+                #fn_insert
                 #fn_update
             }
 
@@ -289,7 +291,43 @@ struct Column {
     pub is_primary_key: bool,
 }
 
-fn make_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
+fn make_fn_insert(table_name: &String, colums: &Vec<Column>) -> TokenStream {
+    let (_key_columns, rest_columns): (Vec<&Column>, Vec<&Column>) =
+        colums.iter().partition(|cloumn| cloumn.is_primary_key);
+
+    let target_columns = rest_columns
+        .iter()
+        .map(|column| column.name.clone())
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let binds = rest_columns
+        .iter()
+        .enumerate()
+        .map(|(index, _column)| format!("${}", index + 1))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let statement = format!(
+        "INSERT INTO {} ({}) VALUES ({}) RETURNING *",
+        table_name, target_columns, binds
+    );
+
+    let params = rest_columns
+        .iter()
+        .map(|column| format_ident!("{}", &column.name))
+        .collect::<Vec<_>>();
+    let params = quote! { &[#(&self.#params),*] };
+
+    quote! {
+        pub async fn insert(&self, client: &tokio_postgres::Client) -> anyhow::Result<Self> {
+            let row = client.query_one(#statement, #params).await?;
+            Ok(row.into())
+        }
+    }
+}
+
+fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let (key_columns, rest_columns): (Vec<&Column>, Vec<&Column>) =
         colums.iter().partition(|cloumn| cloumn.is_primary_key);
 

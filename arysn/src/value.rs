@@ -19,6 +19,16 @@ impl Value {
             Self::DateTime(x) => x.format("'%Y-%m-%d %H:%M:%S%.6f %:z'").to_string(),
         }
     }
+
+    pub fn to_sql(&self) -> &(dyn tokio_postgres::types::ToSql + Sync) {
+        match self {
+            Self::Bool(x) => x,
+            Self::I64(x) => x,
+            Self::I32(x) => x,
+            Self::String(x) => x,
+            Self::DateTime(x) => x,
+        }
+    }
 }
 
 impl From<bool> for Value {

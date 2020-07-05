@@ -54,6 +54,24 @@ mod tests {
         let user = User::select().id().eq(1).first(&client).await?;
         assert_eq!(age, user.age);
 
+        let created_at = chrono::Local::now();
+        let user = User {
+            id: None,
+            name: "こねら".to_string(),
+            title: Some("さば".to_string()),
+            age: 3,
+            active: true,
+            created_at,
+        };
+        let inserted_user = user.insert(&client).await?;
+        assert_eq!(true, inserted_user.id.is_some());
+        assert_eq!("こねら".to_string(), inserted_user.name);
+        assert_eq!(Some("さば".to_string()), inserted_user.title);
+        assert_eq!(3, inserted_user.age);
+        assert_eq!(true, inserted_user.active);
+        // nano seconds が postgres の方にない
+        // assert_eq!(created_at, inserted_user.created_at);
+
         Ok(())
     }
 }
