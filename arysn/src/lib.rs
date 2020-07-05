@@ -70,7 +70,13 @@ mod tests {
         assert_eq!(3, inserted_user.age);
         assert_eq!(true, inserted_user.active);
         // nano seconds が postgres の方にない
-        // assert_eq!(created_at, inserted_user.created_at);
+        assert_eq!(
+            created_at.format("'%Y-%m-%d %H:%M:%S%.6f %:z'").to_string(),
+            inserted_user
+                .created_at
+                .format("'%Y-%m-%d %H:%M:%S%.6f %:z'")
+                .to_string()
+        );
 
         Ok(())
     }
