@@ -124,6 +124,7 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
             })
             .collect();
 
+        let fn_delete: TokenStream = make_fn_delete(&table_name, &columns);
         let fn_insert: TokenStream = make_fn_insert(&table_name, &columns);
         let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
@@ -140,6 +141,7 @@ fn impl_defar(args: Args) -> Result<TokenStream> {
                         ..#builder_name::default()
                     }
                 }
+                #fn_delete
                 #fn_insert
                 #fn_update
             }
@@ -289,6 +291,32 @@ struct Column {
     pub nullable_rust_type: TokenStream,
     pub value_type: TokenStream,
     pub is_primary_key: bool,
+}
+
+fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {
+    let (key_columns, _rest_columns): (Vec<&Column>, Vec<&Column>) =
+        colums.iter().partition(|cloumn| cloumn.is_primary_key);
+
+    let where_sql = key_columns
+        .iter()
+        .enumerate()
+        .map(|(index, column)| format!("{} = ${}", &column.name, index + 1))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let statement = format!("DELETE FROM {} WHERE {}", table_name, where_sql);
+
+    let params = key_columns
+        .iter()
+        .map(|column| format_ident!("{}", &column.name))
+        .collect::<Vec<_>>();
+    let params = quote! { &[#(&self.#params),*] };
+
+    quote! {
+        pub async fn delete(&self, client: &tokio_postgres::Client) -> anyhow::Result<()> {
+            client.execute(#statement, #params).await?;
+            Ok(())
+        }
+    }
 }
 
 fn make_fn_insert(table_name: &String, colums: &Vec<Column>) -> TokenStream {

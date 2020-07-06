@@ -63,21 +63,30 @@ mod tests {
             active: true,
             created_at,
         };
-        let inserted_user = user.insert(&client).await?;
-        assert_eq!(true, inserted_user.id.is_some());
-        assert_eq!("こねら".to_string(), inserted_user.name);
-        assert_eq!(Some("さば".to_string()), inserted_user.title);
-        assert_eq!(3, inserted_user.age);
-        assert_eq!(true, inserted_user.active);
+        let user = user.insert(&client).await?;
+        assert_eq!(true, user.id.is_some());
+        assert_eq!("こねら".to_string(), user.name);
+        assert_eq!(Some("さば".to_string()), user.title);
+        assert_eq!(3, user.age);
+        assert_eq!(true, user.active);
         // nano seconds が postgres の方にない
         assert_eq!(
             created_at.format("'%Y-%m-%d %H:%M:%S%.6f %:z'").to_string(),
-            inserted_user
-                .created_at
+            user.created_at
                 .format("'%Y-%m-%d %H:%M:%S%.6f %:z'")
                 .to_string()
         );
+        user.delete(&client).await?;
+        let user = User::select()
+            .id()
+            .eq(user.id.unwrap())
+            .first(&client)
+            .await;
+        log::debug!("{:?}", &user);
+        assert_eq!(true, user.is_err());
 
         Ok(())
     }
+
+    //User::select().join().roles().merge(Roles::select().active().eq(true))
 }
