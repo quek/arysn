@@ -25,7 +25,7 @@ mod tests {
         has_many: roles
     });
 
-    define_ar!(Roles {
+    define_ar!(Role {
         table_name: roles,
         belogns_to: user
     });
@@ -67,6 +67,7 @@ mod tests {
             age: 3,
             active: true,
             created_at,
+            roles: None,
         };
         let user = user.insert(&client).await?;
         assert_eq!(true, user.id.is_some());

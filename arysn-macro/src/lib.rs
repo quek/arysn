@@ -1,6 +1,7 @@
 extern crate proc_macro;
 
 use anyhow::Result;
+use inflector::Inflector;
 use log::debug;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -84,7 +85,9 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
     rt.block_on(async {
         let client = connect().await?;
 
-        let table_name:String = args.get("table_name").to_string();
+        let table_name:String = args.get("table_name")
+            .expect("table_name field is required!")
+            .to_string();
         let columns: Vec<Column> = columns(&table_name, &client).await?;
 
         let mut column_names = Vec::<Ident>::new();
@@ -99,8 +102,8 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
         }
         let column_index = 0..columns.len();
 
-        let struct_name: Ident = args.struct_name;
-        let builder_name = format_ident!("{}Builder", &struct_name);
+        let struct_name: &Ident = &args.struct_name;
+        let builder_name = format_ident!("{}Builder", struct_name);
         let builder_name_columns: Vec<Ident> = columns
             .iter()
             .map(|column| {
@@ -112,10 +115,13 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
         let fn_insert: TokenStream = make_fn_insert(&table_name, &columns);
         let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
+        let (has_many_field, has_many_init): (TokenStream, TokenStream) = make_has_many(&args);
+
         let output = quote! {
             #[derive(Clone, Debug)]
             pub struct #struct_name {
-                #(pub #column_names: #nullable_rust_types),*
+                #(pub #column_names: #nullable_rust_types,)*
+                #has_many_field
             }
 
             impl #struct_name {
@@ -136,6 +142,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                         #(
                             #column_names: row.get(#column_index),
                         )*
+                        #has_many_init
                     }
                 }
             }
@@ -256,7 +263,7 @@ struct Args {
 }
 
 impl Args {
-    pub fn get(&self, key: &str) -> TokenStream {
+    pub fn get(&self, key: &str) -> Option<TokenStream> {
         self.fields
             .iter()
             .find(|field| {
@@ -271,7 +278,6 @@ impl Args {
                 let x = quote! { #ty };
                 x
             })
-            .expect("no table_name field!")
     }
 }
 
@@ -389,5 +395,18 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
             client.execute(#statement, #params).await?;
             Ok(())
         }
+    }
+}
+
+fn make_has_many(args: &Args) -> (TokenStream, TokenStream) {
+    match args.get("has_many") {
+        Some(field_name) => {
+            let struct_name = format_ident!("{}", field_name.to_string().to_class_case());
+            (
+                quote! { pub #field_name: Option<Vec<#struct_name>>, },
+                quote! { #field_name: None, },
+            )
+        }
+        None => (quote!(), quote!()),
     }
 }
