@@ -84,23 +84,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
     rt.block_on(async {
         let client = connect().await?;
 
-        let table_name:String = args
-            .fields
-            .iter()
-            .find(|field| {
-                field
-                    .ident
-                    .as_ref()
-                    .map(|x| x.to_string().as_str() == "table_name")
-                    .unwrap_or(false)
-            })
-            .map(|field| {
-                let ty = &field.ty;
-                let x = quote! { #ty };
-                x.to_string()
-            })
-            .expect("no table_name field!");
-
+        let table_name:String = args.get("table_name").to_string();
         let columns: Vec<Column> = columns(&table_name, &client).await?;
 
         let mut column_names = Vec::<Ident>::new();
@@ -269,6 +253,26 @@ struct Args {
     struct_name: Ident,
     _brace_token: syn::token::Brace,
     fields: syn::punctuated::Punctuated<syn::Field, Token![,]>,
+}
+
+impl Args {
+    pub fn get(&self, key: &str) -> TokenStream {
+        self.fields
+            .iter()
+            .find(|field| {
+                field
+                    .ident
+                    .as_ref()
+                    .map(|x| x.to_string().as_str() == key)
+                    .unwrap_or(false)
+            })
+            .map(|field| {
+                let ty = &field.ty;
+                let x = quote! { #ty };
+                x
+            })
+            .expect("no table_name field!")
+    }
 }
 
 impl Parse for Args {

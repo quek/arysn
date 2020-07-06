@@ -22,7 +22,12 @@ mod tests {
 
     define_ar!(User {
         table_name: users,
-        foo: bar
+        has_many: roles
+    });
+
+    define_ar!(Roles {
+        table_name: roles,
+        belogns_to: user
     });
 
     #[tokio::test]
