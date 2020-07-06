@@ -10,7 +10,7 @@ use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
 
 #[proc_macro]
-pub fn defar(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn define_ar(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let _ = env_logger::builder().is_test(true).try_init();
 
     // TODO input.to_string() で "User { table_name : users }" になるからそれを JSON 処理しちゃう？
@@ -31,7 +31,7 @@ pub fn defar(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     }
 
     let args = syn::parse_macro_input!(input as Args);
-    let output: TokenStream = impl_defar(args).unwrap();
+    let output: TokenStream = define_ar_impl(args).unwrap();
     proc_macro::TokenStream::from(output)
 }
 
@@ -78,7 +78,7 @@ ORDER BY ordinal_position
     Ok(result)
 }
 
-fn impl_defar(args: Args) -> Result<TokenStream> {
+fn define_ar_impl(args: Args) -> Result<TokenStream> {
     let mut rt = Runtime::new()?;
 
     rt.block_on(async {

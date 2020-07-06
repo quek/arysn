@@ -14,13 +14,13 @@ pub mod prelude {
 mod tests {
     use super::prelude::*;
     use anyhow::Result;
-    use arysn_macro::defar;
+    use arysn_macro::define_ar;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
     }
 
-    defar!(User {
+    define_ar!(User {
         table_name: users,
         foo: bar
     });
