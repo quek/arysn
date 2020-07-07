@@ -94,5 +94,17 @@ mod tests {
         Ok(())
     }
 
-    //User::select().join().roles().merge(Roles::select().active().eq(true))
+    #[tokio::test]
+    async fn join() -> Result<()> {
+        init();
+        let client = connect().await?;
+        let users = User::select()
+            .roles()
+            .name()
+            .eq("管理".to_string())
+            .end()
+            .load(&client)
+            .await?;
+        Ok(())
+    }
 }

@@ -8,18 +8,6 @@ pub trait BuilderTrait {
     fn from(&self) -> &String;
     fn filters(&self) -> &Vec<Filter>;
 
-    async fn first_impl<T>(&self, client: &Client) -> Result<T>
-    where
-        T: From<Row>,
-    {
-        let params = self.select_params();
-        let row = client
-            .query_one(self.select_sql().as_str(), &params[..])
-            .await?;
-        let x: T = T::from(row);
-        Ok(x)
-    }
-
     async fn load_impl<T>(&self, client: &Client) -> Result<Vec<T>>
     where
         T: From<Row>,

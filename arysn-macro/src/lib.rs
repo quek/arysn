@@ -85,7 +85,8 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
     rt.block_on(async {
         let client = connect().await?;
 
-        let table_name:String = args.get("table_name")
+        let table_name: String = args
+            .get("table_name")
             .expect("table_name field is required!")
             .to_string();
         let columns: Vec<Column> = columns(&table_name, &client).await?;
@@ -106,16 +107,20 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
         let builder_name = format_ident!("{}Builder", struct_name);
         let builder_name_columns: Vec<Ident> = columns
             .iter()
-            .map(|column| {
-                format_ident!("{}_{}", &builder_name, &column.name)
-            })
+            .map(|column| format_ident!("{}_{}", &builder_name, &column.name))
             .collect();
 
         let fn_delete: TokenStream = make_fn_delete(&table_name, &columns);
         let fn_insert: TokenStream = make_fn_insert(&table_name, &columns);
         let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
-        let (has_many_field, has_many_init): (TokenStream, TokenStream) = make_has_many(&args);
+        let (
+            has_many_field,
+            has_many_init,
+            has_many_builder_field,
+            has_many_builder_impl,
+            has_many_wrapped_builder,
+        ) = make_has_many(&args);
 
         let output = quote! {
             #[derive(Clone, Debug)]
@@ -147,11 +152,11 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                 }
             }
 
-
             #[derive(Clone, Debug, Default)]
             pub struct #builder_name {
                 pub from: String,
-                pub filters: Vec<Filter>
+                pub filters: Vec<Filter>,
+                #has_many_builder_field
             }
 
             impl #builder_name {
@@ -160,11 +165,25 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                         builder: self.clone()
                     }
                 })*
-                pub async fn first(&self, client: &tokio_postgres::Client) -> anyhow::Result<#struct_name> {
-                    self.first_impl::<#struct_name>(client).await
+                #has_many_builder_impl
+                pub async fn first(&self, client: &tokio_postgres::Client) ->
+                    anyhow::Result<#struct_name> {
+                    let params = self.select_params();
+                    let row = client
+                        .query_one(self.select_sql().as_str(), &params[..])
+                        .await?;
+                    let x: #struct_name = #struct_name::from(row);
+                    Ok(x)
                 }
-                pub async fn load(&self, client: &tokio_postgres::Client) -> anyhow::Result<Vec<#struct_name>> {
-                    self.load_impl::<#struct_name>(client).await
+                pub async fn load(&self, client: &tokio_postgres::Client) ->
+                    anyhow::Result<Vec<#struct_name>> {
+                    let params = self.select_params();
+                    let rows = client
+                        .query(self.select_sql().as_str(), &params[..])
+                        .await?;
+                    let xs: Vec<#struct_name> = rows.into_iter()
+                        .map(|row| #struct_name::from(row)).collect();
+                    Ok(xs)
                 }
             }
 
@@ -199,6 +218,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                 }
             )*
 
+            #has_many_wrapped_builder
         };
         debug!("output: {}", &output);
         Ok(output.into())
@@ -398,15 +418,83 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     }
 }
 
-fn make_has_many(args: &Args) -> (TokenStream, TokenStream) {
+// fn make_belogns_to(args: &Args) -> (TokenStream, TokenStream, TokenStream, TokenStream) {
+//     match args.get("bolongs_to") {
+//         Some(field_name) => {
+//             let struct_name = format_ident!("{}", field_name.to_string().to_class_case());
+//             let builder_field = format_ident!("{}_bulider", field_name.to_string());
+//             let builder_type = format_ident!("{}Builder", &struct_name.to_string());
+//             (
+//                 quote! { pub #field_name: Option<#struct_name>, },
+//                 quote! { #field_name: None, },
+//                 quote! { pub #builder_field: #builder_type, },
+//                 quote! {
+//                     pub fn #field_name(&self) -> #builder_type {
+//                         #builder_type {
+//                             parent: Some(self.clone()),
+//                             ..#builder_type::default()
+//                         }
+//                     }
+//                 },
+//             )
+//         }
+//         None => (quote!(), quote!(), quote!(), quote!()),
+//     }
+// }
+
+fn make_has_many(
+    args: &Args,
+) -> (
+    TokenStream,
+    TokenStream,
+    TokenStream,
+    TokenStream,
+    TokenStream,
+) {
     match args.get("has_many") {
         Some(field_name) => {
             let struct_name = format_ident!("{}", field_name.to_string().to_class_case());
+            let builder_field = format_ident!("{}_builder", field_name.to_string());
+            let builder_type = format_ident!("{}Builder", &struct_name.to_string());
             (
+                // has_many_field
                 quote! { pub #field_name: Option<Vec<#struct_name>>, },
+                // has_many_init
                 quote! { #field_name: None, },
+                // has_many_builder_field
+                quote! { pub #builder_field: Option<#builder_type>, },
+                // has_many_builder_impl
+                quote! {
+                    pub fn roles(&self) -> User_RoleBuilder {
+                        User_RoleBuilder {
+                            roles_builder: self.roles_builder.map(|x| x.clone()).unwrap_or_default(),
+                            user_builder: self.clone(),
+                        }
+                    }
+                },
+                // has_many_wrapped_builder
+                quote! {
+                    struct User_RoleBuilder {
+                        pub roles_builder: RoleBuilder,
+                        pub user_builder: UserBuilder,
+                    }
+                    impl User_RoleBuilder {
+                        pub fn end(&self) -> UserBuilder {
+                            UserBuilder {
+                                roles_builder: Some(self.roles_builder.clone()),
+                                ..self.user_builder.clone()
+                            }
+                        }
+                    }
+                    impl std::ops::Deref for User_RoleBuilder {
+                        type Target = RoleBuilder;
+                        fn deref(&self) -> &Self::Target {
+                            &self.roles_builder
+                        }
+                    }
+                },
             )
         }
-        None => (quote!(), quote!()),
+        None => (quote!(), quote!(), quote!(), quote!(), quote!()),
     }
 }
