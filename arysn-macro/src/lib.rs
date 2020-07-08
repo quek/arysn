@@ -1,10 +1,12 @@
 extern crate proc_macro;
 
 mod args;
+mod belongs_to;
 mod has_many;
 
 use anyhow::Result;
 use args::Args;
+use belongs_to::{make_belongs_to, BelongsTo};
 use has_many::{make_has_many, HasMany};
 use log::debug;
 use proc_macro2::{Ident, TokenStream};
@@ -123,13 +125,23 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
             has_many_builder_impl,
             has_many_filters_impl,
             has_many_join,
-        } = make_has_many(&args, struct_name, &builder_name);
+        } = make_has_many(&args, struct_name, &table_name, &builder_name);
+
+        let BelongsTo {
+            belongs_to_field,
+            belongs_to_init,
+            belongs_to_builder_field,
+            belongs_to_builder_impl,
+            belongs_to_filters_impl,
+            belongs_to_join,
+        } = make_belongs_to(&args, struct_name, &table_name, &builder_name);
 
         let output = quote! {
             #[derive(Clone, Debug)]
             pub struct #struct_name {
                 #(pub #column_names: #nullable_rust_types,)*
                 #has_many_field
+                #belongs_to_field
             }
 
             impl #struct_name {
@@ -151,6 +163,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                             #column_names: row.get(#column_index),
                         )*
                         #has_many_init
+                        #belongs_to_init
                     }
                 }
             }
@@ -160,6 +173,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                 pub from: String,
                 pub filters: Vec<Filter>,
                 #has_many_builder_field
+                #belongs_to_builder_field
             }
 
             impl #builder_name {
@@ -169,6 +183,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                     }
                 })*
                 #has_many_builder_impl
+                #belongs_to_builder_impl
                 pub async fn first(&self, client: &tokio_postgres::Client) ->
                     anyhow::Result<#struct_name> {
                     let params = self.select_params();
@@ -198,12 +213,14 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                 fn from(&self) -> String {
                     let mut result = self.from.clone();
                     #has_many_join
+                    #belongs_to_join
                     result
                 }
 
                 fn filters(&self) -> Vec<&Filter> {
                     let mut result: Vec<&Filter> = self.filters.iter().collect();
                     #has_many_filters_impl
+                    #belongs_to_filters_impl
                     result
                 }
             }
@@ -390,27 +407,3 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
         }
     }
 }
-
-// fn make_belogns_to(args: &Args) -> (TokenStream, TokenStream, TokenStream, TokenStream) {
-//     match args.get("bolongs_to") {
-//         Some(field_name) => {
-//             let struct_name = format_ident!("{}", field_name.to_string().to_class_case());
-//             let builder_field = format_ident!("{}_bulider", field_name.to_string());
-//             let builder_type = format_ident!("{}Builder", &struct_name.to_string());
-//             (
-//                 quote! { pub #field_name: Option<#struct_name>, },
-//                 quote! { #field_name: None, },
-//                 quote! { pub #builder_field: #builder_type, },
-//                 quote! {
-//                     pub fn #field_name(&self) -> #builder_type {
-//                         #builder_type {
-//                             parent: Some(self.clone()),
-//                             ..#builder_type::default()
-//                         }
-//                     }
-//                 },
-//             )
-//         }
-//         None => (quote!(), quote!(), quote!(), quote!()),
-//     }
-// }

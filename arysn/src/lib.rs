@@ -27,7 +27,7 @@ mod tests {
 
     define_ar!(Role {
         table_name: roles,
-        belogns_to: user
+        belongs_to: user
     });
 
     #[tokio::test]

@@ -12,10 +12,14 @@ pub struct HasMany {
     pub has_many_join: TokenStream,
 }
 
-pub fn make_has_many(args: &Args, self_struct_name: &Ident, self_builder_name: &Ident) -> HasMany {
+pub fn make_has_many(
+    args: &Args,
+    self_struct_name: &Ident,
+    self_table_name: &String,
+    self_builder_name: &Ident,
+) -> HasMany {
     match args.get("has_many") {
         Some(field_name) => {
-            let self_table_name = self_struct_name.to_string().to_table_case();
             let foreign_key = format!("{}_id", self_table_name.to_singular());
             let join = format!(
                 " INNER JOIN {} ON {}.{} = {}.id",
