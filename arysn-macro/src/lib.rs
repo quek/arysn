@@ -104,7 +104,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
         let column_index = 0..columns.len();
 
         let struct_name: &Ident = &args.struct_name;
-        let builder_name = format_ident!("{}Builder", struct_name);
+        let builder_name: Ident = format_ident!("{}Builder", struct_name);
         let builder_name_columns: Vec<Ident> = columns
             .iter()
             .map(|column| format_ident!("{}_{}", &builder_name, &column.name))
@@ -121,7 +121,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
             has_many_builder_impl,
             has_many_filters_impl,
             has_many_join,
-        } = make_has_many(&args);
+        } = make_has_many(&args, &builder_name);
 
         let output = quote! {
             #[derive(Clone, Debug)]
@@ -458,22 +458,22 @@ struct HasMany {
     has_many_join: TokenStream,
 }
 
-fn make_has_many(args: &Args) -> HasMany {
+fn make_has_many(args: &Args, self_builder_name: &Ident) -> HasMany {
     match args.get("has_many") {
         Some(field_name) => {
             let struct_name = format_ident!("{}", field_name.to_string().to_class_case());
             let builder_field = format_ident!("{}_builder", field_name.to_string());
-            let builder_type = format_ident!("{}Builder", &struct_name.to_string());
+            let child_builder_name = format_ident!("{}Builder", &struct_name.to_string());
             HasMany {
                 has_many_field: quote! { pub #field_name: Option<Vec<#struct_name>>, },
                 has_many_init: quote! { #field_name: None, },
-                has_many_builder_field: quote! { pub #builder_field: Option<#builder_type>, },
+                has_many_builder_field: quote! { pub #builder_field: Option<#child_builder_name>, },
                 has_many_builder_impl: quote! {
-                    pub fn roles<F>(&self, f: F) -> UserBuilder
-                    where F: FnOnce(&RoleBuilder) -> RoleBuilder {
+                    pub fn #field_name<F>(&self, f: F) -> #self_builder_name
+                    where F: FnOnce(&#child_builder_name) -> #child_builder_name {
                         UserBuilder {
-                            roles_builder: Some(
-                                f(self.roles_builder.as_ref().unwrap_or(&Default::default()))
+                            #builder_field: Some(
+                                f(self.#builder_field.as_ref().unwrap_or(&Default::default()))
                             ),
                             ..self.clone()
                         }
@@ -481,13 +481,13 @@ fn make_has_many(args: &Args) -> HasMany {
                 },
                 has_many_filters_impl: quote! {
                     result.append(
-                        &mut self.roles_builder.as_ref()
+                        &mut self.#builder_field.as_ref()
                             .map_or(vec![],
                                     |x| x.filters.iter().collect::<Vec<&Filter>>())
                     );
                 },
                 has_many_join: quote! {
-                    if self.roles_builder.is_some() {
+                    if self.#builder_field.is_some() {
                         result.push_str(" INNER JOIN roles ON roles.user_id = users.id");
                     }
                 },
