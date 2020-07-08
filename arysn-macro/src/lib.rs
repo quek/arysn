@@ -487,7 +487,9 @@ fn make_has_many(args: &Args) -> HasMany {
                     );
                 },
                 has_many_join: quote! {
-                    result.push_str(" INNER JOIN roles ON roles.user_id = users.id");
+                    if self.roles_builder.is_some() {
+                        result.push_str(" INNER JOIN roles ON roles.user_id = users.id");
+                    }
                 },
             }
         }
