@@ -43,13 +43,12 @@ mod tests {
             .eq("ユーザ1".to_string())
             .load(&client)
             .await?;
-        assert_eq!(1, users.len());
+        assert_eq!(users.len(), 1);
         let user = &users[0];
-        assert_eq!(Some(1), user.id);
-        assert_eq!("ユーザ1", user.name);
-        assert_eq!(Some("旅人".to_string()), user.title);
-        assert_eq!(true, user.active);
-        log::debug!("{}", user.created_at);
+        assert_eq!(user.id, Some(1));
+        assert_eq!(user.name, "ユーザ1");
+        assert_eq!(user.title, Some("旅人".to_string()));
+        assert_eq!(user.active, true);
 
         let mut user = user.clone();
         let age = user.age + 100;
@@ -57,7 +56,7 @@ mod tests {
         user.update(&client).await?;
 
         let user = User::select().id().eq(1).first(&client).await?;
-        assert_eq!(age, user.age);
+        assert_eq!(user.age, age);
 
         let created_at = chrono::Local::now();
         let user = User {
@@ -70,17 +69,17 @@ mod tests {
             roles: None,
         };
         let user = user.insert(&client).await?;
-        assert_eq!(true, user.id.is_some());
-        assert_eq!("こねら".to_string(), user.name);
-        assert_eq!(Some("さば".to_string()), user.title);
-        assert_eq!(3, user.age);
-        assert_eq!(true, user.active);
+        assert_eq!(user.id.is_some(), true);
+        assert_eq!(user.name, "こねら".to_string());
+        assert_eq!(user.title, Some("さば".to_string()));
+        assert_eq!(user.age, 3);
+        assert_eq!(user.active, true);
         // nano seconds が postgres の方にない
         assert_eq!(
-            created_at.format("'%Y-%m-%d %H:%M:%S%.6f %:z'").to_string(),
             user.created_at
                 .format("'%Y-%m-%d %H:%M:%S%.6f %:z'")
-                .to_string()
+                .to_string(),
+            created_at.format("'%Y-%m-%d %H:%M:%S%.6f %:z'").to_string()
         );
         user.delete(&client).await?;
         let user = User::select()
@@ -89,7 +88,7 @@ mod tests {
             .first(&client)
             .await;
         log::debug!("{:?}", &user);
-        assert_eq!(true, user.is_err());
+        assert_eq!(user.is_err(), true);
 
         Ok(())
     }
