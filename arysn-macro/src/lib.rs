@@ -121,7 +121,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
             has_many_builder_impl,
             has_many_filters_impl,
             has_many_join,
-        } = make_has_many(&args, &builder_name);
+        } = make_has_many(&args, struct_name, &builder_name);
 
         let output = quote! {
             #[derive(Clone, Debug)]
@@ -458,9 +458,18 @@ struct HasMany {
     has_many_join: TokenStream,
 }
 
-fn make_has_many(args: &Args, self_builder_name: &Ident) -> HasMany {
+fn make_has_many(args: &Args, self_struct_name: &Ident, self_builder_name: &Ident) -> HasMany {
     match args.get("has_many") {
         Some(field_name) => {
+            let self_table_name = self_struct_name.to_string().to_table_case();
+            let foreign_key = format!("{}_id", self_table_name.to_singular());
+            let join = format!(
+                " INNER JOIN {} ON {}.{} = {}.id",
+                field_name.to_string(),
+                field_name.to_string(),
+                foreign_key,
+                self_table_name
+            );
             let struct_name = format_ident!("{}", field_name.to_string().to_class_case());
             let builder_field = format_ident!("{}_builder", field_name.to_string());
             let child_builder_name = format_ident!("{}Builder", &struct_name.to_string());
@@ -471,7 +480,7 @@ fn make_has_many(args: &Args, self_builder_name: &Ident) -> HasMany {
                 has_many_builder_impl: quote! {
                     pub fn #field_name<F>(&self, f: F) -> #self_builder_name
                     where F: FnOnce(&#child_builder_name) -> #child_builder_name {
-                        UserBuilder {
+                        #self_builder_name {
                             #builder_field: Some(
                                 f(self.#builder_field.as_ref().unwrap_or(&Default::default()))
                             ),
@@ -488,7 +497,7 @@ fn make_has_many(args: &Args, self_builder_name: &Ident) -> HasMany {
                 },
                 has_many_join: quote! {
                     if self.#builder_field.is_some() {
-                        result.push_str(" INNER JOIN roles ON roles.user_id = users.id");
+                        result.push_str(#join);
                     }
                 },
             }
