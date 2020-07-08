@@ -94,7 +94,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn join() -> Result<()> {
+    async fn has_many() -> Result<()> {
         init();
         let client = connect().await?;
 
@@ -106,7 +106,18 @@ mod tests {
             .await?;
         assert_eq!(1, users.len());
         assert_eq!(Some(1), users[0].id);
+        Ok(())
+    }
 
+    #[tokio::test]
+    async fn belongs_to() -> Result<()> {
+        init();
+        let connection = connect().await?;
+        let roles = Role::select()
+            .user(|user| user.id().eq(1))
+            .load(&connection)
+            .await?;
+        assert_eq!(roles.len(), 2);
         Ok(())
     }
 }
