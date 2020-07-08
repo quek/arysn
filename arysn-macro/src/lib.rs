@@ -1,12 +1,14 @@
 extern crate proc_macro;
 
+mod args;
+mod has_many;
+
 use anyhow::Result;
-use inflector::Inflector;
+use args::Args;
+use has_many::{make_has_many, HasMany};
 use log::debug;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
-use syn::parse::{Parse, ParseStream};
-use syn::{braced, Token};
 use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
 
@@ -283,42 +285,6 @@ async fn connect() -> Result<Client> {
     Ok(client)
 }
 
-struct Args {
-    struct_name: Ident,
-    _brace_token: syn::token::Brace,
-    fields: syn::punctuated::Punctuated<syn::Field, Token![,]>,
-}
-
-impl Args {
-    pub fn get(&self, key: &str) -> Option<TokenStream> {
-        self.fields
-            .iter()
-            .find(|field| {
-                field
-                    .ident
-                    .as_ref()
-                    .map(|x| x.to_string().as_str() == key)
-                    .unwrap_or(false)
-            })
-            .map(|field| {
-                let ty = &field.ty;
-                let x = quote! { #ty };
-                x
-            })
-    }
-}
-
-impl Parse for Args {
-    fn parse(input: ParseStream) -> std::result::Result<Self, syn::Error> {
-        let content;
-        Ok(Self {
-            struct_name: input.parse()?,
-            _brace_token: braced!(content in input),
-            fields: content.parse_terminated(syn::Field::parse_named)?,
-        })
-    }
-}
-
 struct Column {
     pub name: String,
     pub is_nullable: bool,
@@ -448,67 +414,3 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
 //         None => (quote!(), quote!(), quote!(), quote!()),
 //     }
 // }
-
-struct HasMany {
-    has_many_field: TokenStream,
-    has_many_init: TokenStream,
-    has_many_builder_field: TokenStream,
-    has_many_builder_impl: TokenStream,
-    has_many_filters_impl: TokenStream,
-    has_many_join: TokenStream,
-}
-
-fn make_has_many(args: &Args, self_struct_name: &Ident, self_builder_name: &Ident) -> HasMany {
-    match args.get("has_many") {
-        Some(field_name) => {
-            let self_table_name = self_struct_name.to_string().to_table_case();
-            let foreign_key = format!("{}_id", self_table_name.to_singular());
-            let join = format!(
-                " INNER JOIN {} ON {}.{} = {}.id",
-                field_name.to_string(),
-                field_name.to_string(),
-                foreign_key,
-                self_table_name
-            );
-            let struct_name = format_ident!("{}", field_name.to_string().to_class_case());
-            let builder_field = format_ident!("{}_builder", field_name.to_string());
-            let child_builder_name = format_ident!("{}Builder", &struct_name.to_string());
-            HasMany {
-                has_many_field: quote! { pub #field_name: Option<Vec<#struct_name>>, },
-                has_many_init: quote! { #field_name: None, },
-                has_many_builder_field: quote! { pub #builder_field: Option<#child_builder_name>, },
-                has_many_builder_impl: quote! {
-                    pub fn #field_name<F>(&self, f: F) -> #self_builder_name
-                    where F: FnOnce(&#child_builder_name) -> #child_builder_name {
-                        #self_builder_name {
-                            #builder_field: Some(
-                                f(self.#builder_field.as_ref().unwrap_or(&Default::default()))
-                            ),
-                            ..self.clone()
-                        }
-                    }
-                },
-                has_many_filters_impl: quote! {
-                    result.append(
-                        &mut self.#builder_field.as_ref()
-                            .map_or(vec![],
-                                    |x| x.filters.iter().collect::<Vec<&Filter>>())
-                    );
-                },
-                has_many_join: quote! {
-                    if self.#builder_field.is_some() {
-                        result.push_str(#join);
-                    }
-                },
-            }
-        }
-        None => HasMany {
-            has_many_field: quote!(),
-            has_many_init: quote!(),
-            has_many_builder_field: quote!(),
-            has_many_builder_impl: quote!(),
-            has_many_filters_impl: quote!(),
-            has_many_join: quote!(),
-        },
-    }
-}
