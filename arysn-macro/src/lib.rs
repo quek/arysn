@@ -114,13 +114,14 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
         let fn_insert: TokenStream = make_fn_insert(&table_name, &columns);
         let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
-        let (
+        let HasMany {
             has_many_field,
             has_many_init,
             has_many_builder_field,
             has_many_builder_impl,
-            has_many_wrapped_builder,
-        ) = make_has_many(&args);
+            has_many_filters_impl,
+            has_many_join,
+        } = make_has_many(&args);
 
         let output = quote! {
             #[derive(Clone, Debug)]
@@ -188,12 +189,20 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
             }
 
             impl BuilderTrait for #builder_name {
-                fn from(&self) -> &String {
-                    &self.from
+                fn select(&self) -> String {
+                    #table_name.to_string()
                 }
 
-                fn filters(&self) -> &Vec<Filter> {
-                    &self.filters
+                fn from(&self) -> String {
+                    let mut result = self.from.clone();
+                    #has_many_join
+                    result
+                }
+
+                fn filters(&self) -> Vec<&Filter> {
+                    let mut result: Vec<&Filter> = self.filters.iter().collect();
+                    #has_many_filters_impl
+                    result
                 }
             }
 
@@ -217,8 +226,6 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                     }
                 }
             )*
-
-            #has_many_wrapped_builder
         };
         debug!("output: {}", &output);
         Ok(output.into())
@@ -442,59 +449,55 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
 //     }
 // }
 
-fn make_has_many(
-    args: &Args,
-) -> (
-    TokenStream,
-    TokenStream,
-    TokenStream,
-    TokenStream,
-    TokenStream,
-) {
+struct HasMany {
+    has_many_field: TokenStream,
+    has_many_init: TokenStream,
+    has_many_builder_field: TokenStream,
+    has_many_builder_impl: TokenStream,
+    has_many_filters_impl: TokenStream,
+    has_many_join: TokenStream,
+}
+
+fn make_has_many(args: &Args) -> HasMany {
     match args.get("has_many") {
         Some(field_name) => {
             let struct_name = format_ident!("{}", field_name.to_string().to_class_case());
             let builder_field = format_ident!("{}_builder", field_name.to_string());
             let builder_type = format_ident!("{}Builder", &struct_name.to_string());
-            (
-                // has_many_field
-                quote! { pub #field_name: Option<Vec<#struct_name>>, },
-                // has_many_init
-                quote! { #field_name: None, },
-                // has_many_builder_field
-                quote! { pub #builder_field: Option<#builder_type>, },
-                // has_many_builder_impl
-                quote! {
-                    pub fn roles(&self) -> User_RoleBuilder {
-                        User_RoleBuilder {
-                            roles_builder: self.roles_builder.map(|x| x.clone()).unwrap_or_default(),
-                            user_builder: self.clone(),
+            HasMany {
+                has_many_field: quote! { pub #field_name: Option<Vec<#struct_name>>, },
+                has_many_init: quote! { #field_name: None, },
+                has_many_builder_field: quote! { pub #builder_field: Option<#builder_type>, },
+                has_many_builder_impl: quote! {
+                    pub fn roles<F>(&self, f: F) -> UserBuilder
+                    where F: FnOnce(&RoleBuilder) -> RoleBuilder {
+                        UserBuilder {
+                            roles_builder: Some(
+                                f(self.roles_builder.as_ref().unwrap_or(&Default::default()))
+                            ),
+                            ..self.clone()
                         }
                     }
                 },
-                // has_many_wrapped_builder
-                quote! {
-                    struct User_RoleBuilder {
-                        pub roles_builder: RoleBuilder,
-                        pub user_builder: UserBuilder,
-                    }
-                    impl User_RoleBuilder {
-                        pub fn end(&self) -> UserBuilder {
-                            UserBuilder {
-                                roles_builder: Some(self.roles_builder.clone()),
-                                ..self.user_builder.clone()
-                            }
-                        }
-                    }
-                    impl std::ops::Deref for User_RoleBuilder {
-                        type Target = RoleBuilder;
-                        fn deref(&self) -> &Self::Target {
-                            &self.roles_builder
-                        }
-                    }
+                has_many_filters_impl: quote! {
+                    result.append(
+                        &mut self.roles_builder.as_ref()
+                            .map_or(vec![],
+                                    |x| x.filters.iter().collect::<Vec<&Filter>>())
+                    );
                 },
-            )
+                has_many_join: quote! {
+                    result.push_str(" INNER JOIN roles ON roles.user_id = users.id");
+                },
+            }
         }
-        None => (quote!(), quote!(), quote!(), quote!(), quote!()),
+        None => HasMany {
+            has_many_field: quote!(),
+            has_many_init: quote!(),
+            has_many_builder_field: quote!(),
+            has_many_builder_impl: quote!(),
+            has_many_filters_impl: quote!(),
+            has_many_join: quote!(),
+        },
     }
 }

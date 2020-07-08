@@ -98,13 +98,12 @@ mod tests {
     async fn join() -> Result<()> {
         init();
         let client = connect().await?;
+
         let users = User::select()
-            .roles()
-            .name()
-            .eq("管理".to_string())
-            .end()
+            .roles(|roles| roles.name().eq("管理".to_string()))
             .load(&client)
             .await?;
+
         Ok(())
     }
 }
