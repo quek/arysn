@@ -14,7 +14,7 @@ pub struct HasMany {
 
 pub fn make_has_many(
     args: &Args,
-    self_struct_name: &Ident,
+    _self_struct_name: &Ident,
     self_table_name: &String,
     self_builder_name: &Ident,
 ) -> HasMany {
@@ -34,13 +34,13 @@ pub fn make_has_many(
             HasMany {
                 has_many_field: quote! { pub #field_name: Option<Vec<#struct_name>>, },
                 has_many_init: quote! { #field_name: None, },
-                has_many_builder_field: quote! { pub #builder_field: Option<#child_builder_name>, },
+                has_many_builder_field: quote! { pub #builder_field: Option<Box<#child_builder_name>>, },
                 has_many_builder_impl: quote! {
                     pub fn #field_name<F>(&self, f: F) -> #self_builder_name
                     where F: FnOnce(&#child_builder_name) -> #child_builder_name {
                         #self_builder_name {
                             #builder_field: Some(
-                                f(self.#builder_field.as_ref().unwrap_or(&Default::default()))
+                                Box::new(f(self.#builder_field.as_ref().unwrap_or(&Default::default())))
                             ),
                             ..self.clone()
                         }
