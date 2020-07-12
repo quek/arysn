@@ -15,7 +15,7 @@ services:
     build: ./docker/dev
     volumes:
       - .:/app
-      - ./tmp/.cargo:/cargo
+      - ~/.cargo:/cargo
     environment:
       CARGO_HOME: /cargo
       DATABASE_URL: postgres://user1:password1@db/arysn_development
