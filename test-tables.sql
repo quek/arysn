@@ -10,7 +10,7 @@ CREATE TABLE users (
   title VARCHAR(255),
   age INTEGER NOT NULL,
   active BOOLEAN NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO users(name, title, age, active, created_at) VALUES

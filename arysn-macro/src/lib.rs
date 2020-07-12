@@ -64,6 +64,11 @@ ORDER BY ordinal_position
             let column_default: Option<String> = row.get(3);
             let (rust_type, mut nullable_rust_type, value_type) =
                 compute_type(&data_type, is_nullable);
+            let rust_type_for_new = if column_default.is_some() && !is_nullable {
+                quote! { Option<#rust_type> }
+            } else {
+                nullable_rust_type.clone()
+            };
             let is_primary_key = primary_key.iter().any(|x| x == &name);
             if is_primary_key && column_default.is_some() {
                 nullable_rust_type = quote!(Option<#rust_type>);
@@ -74,6 +79,7 @@ ORDER BY ordinal_position
                 data_type,
                 column_default,
                 rust_type,
+                rust_type_for_new,
                 nullable_rust_type,
                 value_type,
                 is_primary_key,
@@ -97,17 +103,20 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
 
         let mut column_names = Vec::<Ident>::new();
         let mut rust_types = Vec::<TokenStream>::new();
+        let mut rust_types_for_new = Vec::<TokenStream>::new();
         let mut nullable_rust_types = Vec::<TokenStream>::new();
         let mut value_types = Vec::<TokenStream>::new();
         for column in columns.iter() {
             column_names.push(format_ident!("{}", &column.name));
             rust_types.push(column.rust_type.clone());
+            rust_types_for_new.push(column.rust_type_for_new.clone());
             nullable_rust_types.push(column.nullable_rust_type.clone());
             value_types.push(column.value_type.clone());
         }
         let column_index = 0..columns.len();
 
         let struct_name: &Ident = &args.struct_name;
+        let new_struct_name: Ident = format_ident!("{}New", struct_name);
         let builder_name: Ident = format_ident!("{}Builder", struct_name);
         let builder_name_columns: Vec<Ident> = columns
             .iter()
@@ -115,7 +124,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
             .collect();
 
         let fn_delete: TokenStream = make_fn_delete(&table_name, &columns);
-        let fn_insert: TokenStream = make_fn_insert(&table_name, &columns);
+        let fn_insert: TokenStream = make_fn_insert(struct_name, &table_name, &columns);
         let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
         let HasMany {
@@ -144,6 +153,11 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                 #belongs_to_field
             }
 
+            #[derive(Clone, Debug)]
+            pub struct #new_struct_name {
+                #(pub #column_names: #rust_types_for_new,)*
+            }
+
             impl #struct_name {
                 pub fn select() -> #builder_name {
                     #builder_name {
@@ -152,8 +166,11 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                     }
                 }
                 #fn_delete
-                #fn_insert
                 #fn_update
+            }
+
+            impl #new_struct_name {
+                #fn_insert
             }
 
             impl From<tokio_postgres::row::Row> for #struct_name {
@@ -308,6 +325,7 @@ struct Column {
     pub data_type: String,
     pub column_default: Option<String>,
     pub rust_type: TokenStream,
+    pub rust_type_for_new: TokenStream,
     pub nullable_rust_type: TokenStream,
     pub value_type: TokenStream,
     pub is_primary_key: bool,
@@ -339,37 +357,83 @@ fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     }
 }
 
-fn make_fn_insert(table_name: &String, colums: &Vec<Column>) -> TokenStream {
+fn make_fn_insert(struct_name: &Ident, table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let (_key_columns, rest_columns): (Vec<&Column>, Vec<&Column>) =
         colums.iter().partition(|cloumn| cloumn.is_primary_key);
 
-    let target_columns = rest_columns
+    let target_columns: Vec<TokenStream> = rest_columns
         .iter()
-        .map(|column| column.name.clone())
-        .collect::<Vec<_>>()
-        .join(", ");
+        .map(|column| {
+            let name = format_ident!("{}", &column.name);
+            if !column.is_nullable && column.column_default.is_some() {
+                quote! {
+                    if self.#name.is_some() {
+                        target_columns.push(stringify!(#name));
+                    }
+                }
+            } else {
+                quote! {
+                    target_columns.push(stringify!(#name));
+                }
+            }
+        })
+        .collect();
 
-    let binds = rest_columns
+    let count_bind: Vec<TokenStream> = rest_columns
         .iter()
-        .enumerate()
-        .map(|(index, _column)| format!("${}", index + 1))
-        .collect::<Vec<_>>()
-        .join(", ");
+        .map(|column| {
+            let name = format_ident!("{}", &column.name);
+            if !column.is_nullable && column.column_default.is_some() {
+                quote! {
+                    if self.#name.is_some() {
+                        bind_count += 1;
+                    }
+                }
+            } else {
+                quote! {
+                    bind_count += 1;
+                }
+            }
+        })
+        .collect();
 
-    let statement = format!(
-        "INSERT INTO {} ({}) VALUES ({}) RETURNING *",
-        table_name, target_columns, binds
-    );
-
-    let params = rest_columns
+    let params: Vec<TokenStream> = rest_columns
         .iter()
-        .map(|column| format_ident!("{}", &column.name))
-        .collect::<Vec<_>>();
-    let params = quote! { &[#(&self.#params),*] };
+        .map(|column| {
+            let name = format_ident!("{}", &column.name);
+            if !column.is_nullable && column.column_default.is_some() {
+                quote! {
+                    if self.#name.is_some() {
+                        params.push(&self.#name);
+                    }
+                }
+            } else {
+                quote! {
+                    params.push(&self.#name);
+                }
+            }
+        })
+        .collect();
 
     quote! {
-        pub async fn insert(&self, client: &tokio_postgres::Client) -> anyhow::Result<Self> {
-            let row = client.query_one(#statement, #params).await?;
+        pub async fn insert(&self, client: &tokio_postgres::Client) -> anyhow::Result<#struct_name> {
+            let mut target_columns: Vec<&str> = vec![];
+            #(#target_columns)*
+            let target_columns = target_columns.join(", ");
+
+            let mut bind_count: i32 = 0;
+            #(#count_bind)*
+            let binds = (1..=bind_count).map(|i| format!("${}", i)).collect::<Vec<_>>().join(", ");
+
+            let statement = format!(
+                "INSERT INTO {} ({}) VALUES ({}) RETURNING *",
+                #table_name, target_columns, binds
+            );
+
+            let mut params: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = vec![];
+            #(#params)*
+
+            let row = client.query_one(statement.as_str(), &params[..]).await?;
             Ok(row.into())
         }
     }

@@ -3,7 +3,7 @@ use arysn::prelude::*;
 
 mod common;
 
-use common::{init, Role, User};
+use common::{init, User, UserNew};
 
 #[tokio::test]
 async fn it_works() -> Result<()> {
@@ -33,15 +33,13 @@ async fn it_works() -> Result<()> {
     let user = User::select().id().eq(1).first(&client).await?;
     assert_eq!(user.age, age);
 
-    let created_at = chrono::Local::now();
-    let user = User {
+    let user = UserNew {
         id: None,
         name: "こねら".to_string(),
         title: Some("さば".to_string()),
         age: 3,
         active: true,
-        created_at,
-        roles: None,
+        created_at: None,
     };
     let user = user.insert(&client).await?;
     assert_eq!(user.id.is_some(), true);
@@ -49,13 +47,6 @@ async fn it_works() -> Result<()> {
     assert_eq!(user.title, Some("さば".to_string()));
     assert_eq!(user.age, 3);
     assert_eq!(user.active, true);
-    // nano seconds が postgres の方にない
-    assert_eq!(
-        user.created_at
-            .format("'%Y-%m-%d %H:%M:%S%.6f %:z'")
-            .to_string(),
-        created_at.format("'%Y-%m-%d %H:%M:%S%.6f %:z'").to_string()
-    );
     user.delete(&client).await?;
     let user = User::select()
         .id()
