@@ -10,10 +10,8 @@ RUN cargo install cargo-watch
 RUN rustup component add rls rust-analysis rust-src
 
 ADD wait-for-it.sh /
+ADD start.sh /
 
 WORKDIR /app/server
 
-CMD ["/wait-for-it.sh", "db:5432", "--", \
-     "cargo", "watch", \
-     "--ignore", "tmp", \
-     "-x", "test -- --nocapture"]
+CMD ["/start.sh"]

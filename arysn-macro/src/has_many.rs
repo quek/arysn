@@ -10,6 +10,7 @@ pub struct HasMany {
     pub has_many_builder_impl: TokenStream,
     pub has_many_filters_impl: TokenStream,
     pub has_many_join: TokenStream,
+    pub has_many_preload: TokenStream,
 }
 
 pub fn make_has_many(
@@ -58,6 +59,21 @@ pub fn make_has_many(
                         result.push_str(#join);
                     }
                 },
+                has_many_preload: quote! {
+                    if self.#builder_field.as_ref().map_or(false, |x| x.preload) {
+                        let ids = xs.iter().map(|x| x.id).collect::<Vec<_>>();
+                        let roles = Role::select().user_id().eq_any(ids).load(client).await?;
+                        xs.iter_mut().for_each(|x| {
+                            let mut ys = vec![];
+                            for role in roles.iter() {
+                                if x.id == role.user_id {
+                                    ys.push(role.clone());
+                                }
+                            }
+                            x.roles = Some(ys);
+                        });
+                    }
+                },
             }
         }
         None => HasMany {
@@ -67,6 +83,7 @@ pub fn make_has_many(
             has_many_builder_impl: quote!(),
             has_many_filters_impl: quote!(),
             has_many_join: quote!(),
+            has_many_preload: quote!(),
         },
     }
 }

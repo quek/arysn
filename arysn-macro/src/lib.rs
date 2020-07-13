@@ -70,7 +70,7 @@ ORDER BY ordinal_position
                 nullable_rust_type.clone()
             };
             let is_primary_key = primary_key.iter().any(|x| x == &name);
-            if is_primary_key && column_default.is_some() {
+            if !is_primary_key && column_default.is_some() {
                 nullable_rust_type = quote!(Option<#rust_type>);
             }
             Column {
@@ -134,6 +134,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
             has_many_builder_impl,
             has_many_filters_impl,
             has_many_join,
+            has_many_preload,
         } = make_has_many(&args, struct_name, &table_name, &builder_name);
 
         let BelongsTo {
@@ -189,6 +190,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
             pub struct #builder_name {
                 pub from: String,
                 pub filters: Vec<Filter>,
+                pub preload: bool,
                 #has_many_builder_field
                 #belongs_to_builder_field
             }
@@ -201,6 +203,14 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                 })*
                 #has_many_builder_impl
                 #belongs_to_builder_impl
+
+                pub fn preload(&self) -> Self {
+                    Self {
+                        preload: true,
+                        ..self.clone()
+                    }
+                }
+
                 pub async fn first(&self, client: &tokio_postgres::Client) ->
                     anyhow::Result<#struct_name> {
                     let params = self.select_params();
@@ -216,8 +226,9 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                     let rows = client
                         .query(self.select_sql().as_str(), &params[..])
                         .await?;
-                    let xs: Vec<#struct_name> = rows.into_iter()
-                        .map(|row| #struct_name::from(row)).collect();
+                    let mut xs: Vec<#struct_name> = rows.into_iter()
+                            .map(|row| #struct_name::from(row)).collect();
+                    #has_many_preload
                     Ok(xs)
                 }
             }
@@ -253,7 +264,22 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
                         filters.push(Filter {
                             table: #table_name.to_string(),
                             name: stringify!(#column_names).to_string(),
-                            value: Value::#value_types(value),
+                            value: value.into(),
+                            operator: "=".to_string()
+                        });
+                        #builder_name {
+                            filters,
+                            ..self.builder.clone()
+                        }
+                    }
+
+                    pub fn eq_any(&self, value: Vec<#rust_types>) -> #builder_name {
+                        let mut filters = self.builder.filters.clone();
+                        filters.push(Filter {
+                            table: #table_name.to_string(),
+                            name: stringify!(#column_names).to_string(),
+                            value: value.into(),
+                            operator: "in".to_string(),
                         });
                         #builder_name {
                             filters,
@@ -314,7 +340,9 @@ async fn connect() -> Result<Client> {
             debug!("connection error: {}", e);
         }
     });
-    client.execute("SET log_statement = 'all'", &[]).await?;
+    if std::env::var("TRACE_SQL").map_or(false, |x| x == "1") {
+        client.execute("SET log_statement = 'all'", &[]).await?;
+    }
     client.execute("SET TIME ZONE 'Japan'", &[]).await?;
     Ok(client)
 }

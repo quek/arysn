@@ -20,7 +20,7 @@ async fn it_works() -> Result<()> {
         .await?;
     assert_eq!(users.len(), 1);
     let user = &users[0];
-    assert_eq!(user.id, Some(1));
+    assert_eq!(user.id, 1);
     assert_eq!(user.name, "ユーザ1");
     assert_eq!(user.title, Some("旅人".to_string()));
     assert_eq!(user.active, true);
@@ -42,17 +42,12 @@ async fn it_works() -> Result<()> {
         created_at: None,
     };
     let user = user.insert(&client).await?;
-    assert_eq!(user.id.is_some(), true);
     assert_eq!(user.name, "こねら".to_string());
     assert_eq!(user.title, Some("さば".to_string()));
     assert_eq!(user.age, 3);
     assert_eq!(user.active, true);
     user.delete(&client).await?;
-    let user = User::select()
-        .id()
-        .eq(user.id.unwrap())
-        .first(&client)
-        .await;
+    let user = User::select().id().eq(user.id).first(&client).await;
     log::debug!("{:?}", &user);
     assert_eq!(user.is_err(), true);
 

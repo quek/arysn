@@ -15,7 +15,17 @@ async fn has_many() -> Result<()> {
         .roles(|roles| roles.name().eq("管理".to_string()))
         .load(&client)
         .await?;
-    assert_eq!(1, users.len());
-    assert_eq!(Some(1), users[0].id);
+    assert_eq!(users.len(), 1);
+    assert_eq!(users[0].id, 1);
+    assert_eq!(users[0].roles.is_none(), true);
+
+    let users = User::select()
+        .active()
+        .eq(true)
+        .roles(|roles| roles.name().eq("管理".to_string()).preload())
+        .load(&client)
+        .await?;
+    assert_eq!(users[0].roles.is_some(), true);
+
     Ok(())
 }

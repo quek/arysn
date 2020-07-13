@@ -7,19 +7,14 @@ pub enum Value {
     I64(i64),
     String(String),
     DateTime(DateTime<Local>),
+    VecBool(Vec<bool>),
+    VecI32(Vec<i32>),
+    VecI64(Vec<i64>),
+    VecString(Vec<String>),
+    VecDateTime(Vec<DateTime<Local>>),
 }
 
 impl Value {
-    pub fn to_sql_value(&self) -> String {
-        match self {
-            Self::Bool(x) => if *x { "TRUE" } else { "FALSE" }.to_string(),
-            Self::I64(x) => x.to_string(),
-            Self::I32(x) => x.to_string(),
-            Self::String(x) => format!("'{}'", x.replace("'", "''")),
-            Self::DateTime(x) => x.format("'%Y-%m-%d %H:%M:%S%.6f %:z'").to_string(),
-        }
-    }
-
     pub fn to_sql(&self) -> &(dyn tokio_postgres::types::ToSql + Sync) {
         match self {
             Self::Bool(x) => x,
@@ -27,6 +22,11 @@ impl Value {
             Self::I32(x) => x,
             Self::String(x) => x,
             Self::DateTime(x) => x,
+            Self::VecBool(x) => x,
+            Self::VecI32(x) => x,
+            Self::VecI64(x) => x,
+            Self::VecString(x) => x,
+            Self::VecDateTime(x) => x,
         }
     }
 }
@@ -58,5 +58,35 @@ impl From<String> for Value {
 impl From<DateTime<Local>> for Value {
     fn from(x: DateTime<Local>) -> Self {
         Self::DateTime(x)
+    }
+}
+
+impl From<Vec<bool>> for Value {
+    fn from(x: Vec<bool>) -> Self {
+        Self::VecBool(x)
+    }
+}
+
+impl From<Vec<i32>> for Value {
+    fn from(x: Vec<i32>) -> Self {
+        Self::VecI32(x)
+    }
+}
+
+impl From<Vec<i64>> for Value {
+    fn from(x: Vec<i64>) -> Self {
+        Self::VecI64(x)
+    }
+}
+
+impl From<Vec<String>> for Value {
+    fn from(x: Vec<String>) -> Self {
+        Self::VecString(x)
+    }
+}
+
+impl From<Vec<DateTime<Local>>> for Value {
+    fn from(x: Vec<DateTime<Local>>) -> Self {
+        Self::VecDateTime(x)
     }
 }
