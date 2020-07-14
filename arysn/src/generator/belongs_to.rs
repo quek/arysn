@@ -11,6 +11,7 @@ pub struct BelongsTo {
     pub belongs_to_builder_impl: TokenStream,
     pub belongs_to_filters_impl: TokenStream,
     pub belongs_to_join: TokenStream,
+    pub belongs_to_preload: TokenStream,
 }
 
 pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo {
@@ -25,13 +26,13 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
                     .to_singular()
             );
             let field_name = &belongs_to.field;
-            let foreign_key = format!("{}_id", &field_name);
+            let foreign_key = format_ident!("{}_id", &field_name);
             let join = format!(
                 " INNER JOIN {} ON {}.id = {}.{}",
                 field_name.to_string().to_table_case(),
                 field_name.to_string().to_table_case(),
                 config.table_name,
-                foreign_key
+                foreign_key.to_string()
             );
             let struct_name = &belongs_to.struct_name;
             let builder_field = format_ident!("{}_bulider", &field_name);
@@ -66,6 +67,20 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
                         result.push_str(#join);
                     }
                 },
+                belongs_to_preload: quote! {
+                    if self.#builder_field.as_ref().map_or(false, |x| x.preload) {
+                        let ids = xs.iter().map(|x| x.#foreign_key).collect::<Vec<_>>();
+                        let zs = #struct_name::select().id().eq_any(ids).load(client).await?;
+                        xs.iter_mut().for_each(|x| {
+                            for z in zs.iter() {
+                                if x.#foreign_key == z.id {
+                                    x.#field_name = Some(z.clone());
+                                    break;
+                                }
+                            }
+                        });
+                    }
+                },
             }
         }
         None => BelongsTo {
@@ -76,6 +91,7 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
             belongs_to_builder_impl: quote!(),
             belongs_to_filters_impl: quote!(),
             belongs_to_join: quote!(),
+            belongs_to_preload: quote!(),
         },
     }
 }

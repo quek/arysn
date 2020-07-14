@@ -126,10 +126,12 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
             belongs_to_builder_impl,
             belongs_to_filters_impl,
             belongs_to_join,
+            belongs_to_preload,
         } = make_belongs_to(config, &builder_name);
 
         let output = quote! {
             use arysn::prelude::*;
+            use async_recursion::async_recursion;
             #has_many_use
             #belongs_to_use
 
@@ -206,6 +208,8 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                     let x: #struct_name = #struct_name::from(row);
                     Ok(x)
                 }
+
+                #[async_recursion]
                 pub async fn load(&self, client: &tokio_postgres::Client) ->
                     anyhow::Result<Vec<#struct_name>> {
                     let params = self.select_params();
@@ -215,6 +219,7 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                     let mut xs: Vec<#struct_name> = rows.into_iter()
                             .map(|row| #struct_name::from(row)).collect();
                     #has_many_preload
+                    #belongs_to_preload
                     Ok(xs)
                 }
             }

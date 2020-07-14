@@ -1,5 +1,6 @@
 use super::user::{User, UserBuilder};
 use arysn::prelude::*;
+use async_recursion::async_recursion;
 #[derive(Clone, Debug)]
 pub struct Role {
     pub id: i64,
@@ -119,12 +120,25 @@ impl RoleBuilder {
         let x: Role = Role::from(row);
         Ok(x)
     }
+    #[async_recursion]
     pub async fn load(&self, client: &tokio_postgres::Client) -> anyhow::Result<Vec<Role>> {
         let params = self.select_params();
         let rows = client
             .query(self.select_sql().as_str(), &params[..])
             .await?;
         let mut xs: Vec<Role> = rows.into_iter().map(|row| Role::from(row)).collect();
+        if self.user_bulider.as_ref().map_or(false, |x| x.preload) {
+            let ids = xs.iter().map(|x| x.user_id).collect::<Vec<_>>();
+            let zs = User::select().id().eq_any(ids).load(client).await?;
+            xs.iter_mut().for_each(|x| {
+                for z in zs.iter() {
+                    if x.user_id == z.id {
+                        x.user = Some(z.clone());
+                        break;
+                    }
+                }
+            });
+        }
         Ok(xs)
     }
 }

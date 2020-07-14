@@ -1,5 +1,6 @@
 use super::role::{Role, RoleBuilder};
 use arysn::prelude::*;
+use async_recursion::async_recursion;
 #[derive(Clone, Debug)]
 pub struct User {
     pub id: i64,
@@ -153,6 +154,7 @@ impl UserBuilder {
         let x: User = User::from(row);
         Ok(x)
     }
+    #[async_recursion]
     pub async fn load(&self, client: &tokio_postgres::Client) -> anyhow::Result<Vec<User>> {
         let params = self.select_params();
         let rows = client
