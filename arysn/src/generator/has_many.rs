@@ -25,13 +25,13 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                     .to_table_case()
                     .to_singular()
             );
-            let foreign_key = format!("{}_id", config.table_name.to_singular());
+            let foreign_key = format_ident!("{}_id", config.table_name.to_singular());
             let field_name = &has_many.field;
             let join = format!(
                 " INNER JOIN {} ON {}.{} = {}.id",
                 field_name.to_string(),
                 field_name.to_string(),
-                foreign_key,
+                foreign_key.to_string(),
                 config.table_name,
             );
             let struct_name = &has_many.struct_name;
@@ -70,15 +70,15 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                 has_many_preload: quote! {
                     if self.#builder_field.as_ref().map_or(false, |x| x.preload) {
                         let ids = xs.iter().map(|x| x.id).collect::<Vec<_>>();
-                        let roles = Role::select().user_id().eq_any(ids).load(client).await?;
+                        let zs = #struct_name::select().#foreign_key().eq_any(ids).load(client).await?;
                         xs.iter_mut().for_each(|x| {
                             let mut ys = vec![];
-                            for role in roles.iter() {
-                                if x.id == role.user_id {
-                                    ys.push(role.clone());
+                            for z in zs.iter() {
+                                if x.id == z.#foreign_key {
+                                    ys.push(z.clone());
                                 }
                             }
-                            x.roles = Some(ys);
+                            x.#field_name = Some(ys);
                         });
                     }
                 },

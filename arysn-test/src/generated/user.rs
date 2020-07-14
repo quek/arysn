@@ -161,12 +161,12 @@ impl UserBuilder {
         let mut xs: Vec<User> = rows.into_iter().map(|row| User::from(row)).collect();
         if self.roles_builder.as_ref().map_or(false, |x| x.preload) {
             let ids = xs.iter().map(|x| x.id).collect::<Vec<_>>();
-            let roles = Role::select().user_id().eq_any(ids).load(client).await?;
+            let zs = Role::select().user_id().eq_any(ids).load(client).await?;
             xs.iter_mut().for_each(|x| {
                 let mut ys = vec![];
-                for role in roles.iter() {
-                    if x.id == role.user_id {
-                        ys.push(role.clone());
+                for z in zs.iter() {
+                    if x.id == z.user_id {
+                        ys.push(z.clone());
                     }
                 }
                 x.roles = Some(ys);
