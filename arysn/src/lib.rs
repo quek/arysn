@@ -1,6 +1,7 @@
 mod bulider;
 mod db;
 mod filter;
+pub mod generator;
 mod value;
 
 pub mod prelude {

@@ -1,6 +1,7 @@
 use anyhow::Result;
 use arysn::prelude::*;
-use common::{init, Role};
+use arysn_test::generated::role::Role;
+use common::init;
 
 mod common;
 

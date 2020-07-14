@@ -1,15 +1,5 @@
+use super::role::{Role, RoleBuilder};
 use arysn::prelude::*;
-use arysn_macro::define_ar;
-
-pub fn init() {
-    let _ = env_logger::builder().is_test(true).try_init();
-}
-
-// define_ar!(User {
-//     table_name: users,
-//     has_many: roles
-// });
-
 #[derive(Clone, Debug)]
 pub struct User {
     pub id: i64,
@@ -43,11 +33,7 @@ impl User {
         Ok(())
     }
     pub async fn update(&self, client: &tokio_postgres::Client) -> anyhow::Result<()> {
-        client .
-             execute("UPDATE users SET name = $1, title = $2, age = $3, active = $4, created_at = $5 WHERE id = $6",
-                     &
-                     [& self . name, & self . title, & self . age, & self . active,
-                      & self . created_at, & self . id]) . await ? ;
+        client . execute ( "UPDATE users SET name = $1, title = $2, age = $3, active = $4, created_at = $5 WHERE id = $6" , & [ & self . name , & self . title , & self . age , & self . active , & self . created_at , & self . id ] ) . await ? ;
         Ok(())
     }
 }
@@ -403,8 +389,3 @@ impl UserBuilder_created_at {
         }
     }
 }
-
-define_ar!(Role {
-    table_name: roles,
-    belongs_to: user
-});

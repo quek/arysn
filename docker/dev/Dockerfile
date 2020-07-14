@@ -8,6 +8,7 @@ ENV LANG ja_JP.UTF-8
 RUN cargo install cargo-watch
 
 RUN rustup component add rls rust-analysis rust-src
+RUN rustup component add rustfmt
 
 ADD wait-for-it.sh /
 ADD start.sh /

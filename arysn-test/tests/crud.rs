@@ -1,9 +1,9 @@
 use anyhow::Result;
 use arysn::prelude::*;
+use arysn_test::generated::user::{User, UserNew};
+use common::init;
 
 mod common;
-
-use common::{init, User, UserNew};
 
 #[tokio::test]
 async fn it_works() -> Result<()> {

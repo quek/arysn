@@ -1,9 +1,10 @@
-use crate::Args;
+use crate::generator::config::Config;
 use inflector::Inflector;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 
 pub struct BelongsTo {
+    pub belongs_to_use: TokenStream,
     pub belongs_to_field: TokenStream,
     pub belongs_to_init: TokenStream,
     pub belongs_to_builder_field: TokenStream,
@@ -12,26 +13,33 @@ pub struct BelongsTo {
     pub belongs_to_join: TokenStream,
 }
 
-pub fn make_belongs_to(
-    args: &Args,
-    _self_struct_name: &Ident,
-    self_table_name: &String,
-    self_builder_name: &Ident,
-) -> BelongsTo {
-    match args.get("belongs_to") {
-        Some(field_name) => {
-            let foreign_key = format!("{}_id", field_name.to_string());
+pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo {
+    match &config.belongs_to {
+        Some(belongs_to) => {
+            let module_name = format_ident!(
+                "{}",
+                belongs_to
+                    .struct_name
+                    .to_string()
+                    .to_table_case()
+                    .to_singular()
+            );
+            let field_name = &belongs_to.field;
+            let foreign_key = format!("{}_id", &field_name);
             let join = format!(
                 " INNER JOIN {} ON {}.id = {}.{}",
                 field_name.to_string().to_table_case(),
                 field_name.to_string().to_table_case(),
-                self_table_name,
+                config.table_name,
                 foreign_key
             );
-            let struct_name = format_ident!("{}", field_name.to_string().to_class_case());
-            let builder_field = format_ident!("{}_bulider", field_name.to_string());
+            let struct_name = &belongs_to.struct_name;
+            let builder_field = format_ident!("{}_bulider", &field_name);
             let child_builder_name = format_ident!("{}Builder", &struct_name.to_string());
             BelongsTo {
+                belongs_to_use: quote! {
+                    use super::#module_name::{#struct_name, #child_builder_name};
+                },
                 belongs_to_field: quote! { pub #field_name: Option<#struct_name>, },
                 belongs_to_init: quote! { #field_name: None, },
                 belongs_to_builder_field: quote! { pub #builder_field: Option<Box<#child_builder_name>>, },
@@ -61,6 +69,7 @@ pub fn make_belongs_to(
             }
         }
         None => BelongsTo {
+            belongs_to_use: quote!(),
             belongs_to_field: quote!(),
             belongs_to_init: quote!(),
             belongs_to_builder_field: quote!(),

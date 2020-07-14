@@ -1,5 +1,5 @@
 [package]
-name = "arysn"
+name = "arysn-test"
 version = "0.1.0"
 authors = ["Tahara Yoshinori <read.eval.print@gmail.com>"]
 edition = "2018"
@@ -7,14 +7,15 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-Inflector = "0.11"
 anyhow = "*"
-async-trait = "0.1"
+arysn = { path = "../arysn" }
 chrono = "0.4"
 env_logger = "*"
 log = "*"
-proc-macro2 = "*"
-quote = "*"
-syn = "*"
 tokio = { version = "0.2", features = ["full"] }
 tokio-postgres = { version = "0.5", features = ["with-chrono-0_4"] }
+
+[build-dependencies]
+anyhow = "*"
+arysn = { path = "../arysn" }
+quote = "*"

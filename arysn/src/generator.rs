@@ -1,43 +1,26 @@
-extern crate proc_macro;
-
-mod args;
-mod belongs_to;
-mod has_many;
-
 use anyhow::Result;
-use args::Args;
 use belongs_to::{make_belongs_to, BelongsTo};
+use config::Config;
 use has_many::{make_has_many, HasMany};
 use log::debug;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
+use std::io::Write;
 use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
 
-#[proc_macro]
-pub fn define_ar(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+mod belongs_to;
+pub mod config;
+mod has_many;
+
+pub fn define_ar(config: &Config) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
 
-    // TODO input.to_string() で "User { table_name : users }" になるからそれを JSON 処理しちゃう？
-    debug!("input {:?}", &input);
-    input.clone().into_iter().for_each(|x| println!("{:?}", x));
-    debug!("input {}", input.to_string());
+    let output: TokenStream = define_ar_impl(config).unwrap();
 
-    {
-        debug!("-----------------------------------------------------------------------------");
-        let mut iter = input.clone().into_iter();
-        let struct_name = iter.clone().nth(0).unwrap();
-        debug!("struct name {:?}", &struct_name);
-        if let proc_macro::TokenTree::Group(xs) = iter.nth(1).unwrap() {
-            for x in xs.stream().into_iter() {
-                debug!("{:?}", &x);
-            }
-        }
-    }
-
-    let args = syn::parse_macro_input!(input as Args);
-    let output: TokenStream = define_ar_impl(args).unwrap();
-    proc_macro::TokenStream::from(output)
+    let mut writer = std::io::BufWriter::new(std::fs::File::create(config.path)?);
+    writeln!(writer, "{}", &output.to_string())?;
+    Ok(())
 }
 
 async fn columns(table_name: &String, client: &Client) -> Result<Vec<Column>> {
@@ -89,16 +72,13 @@ ORDER BY ordinal_position
     Ok(result)
 }
 
-fn define_ar_impl(args: Args) -> Result<TokenStream> {
+fn define_ar_impl(config: &Config) -> Result<TokenStream> {
     let mut rt = Runtime::new()?;
 
     rt.block_on(async {
         let client = connect().await?;
 
-        let table_name: String = args
-            .get("table_name")
-            .expect("table_name field is required!")
-            .to_string();
+        let table_name: String = config.table_name.to_string();
         let columns: Vec<Column> = columns(&table_name, &client).await?;
 
         let mut column_names = Vec::<Ident>::new();
@@ -115,7 +95,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
         }
         let column_index = 0..columns.len();
 
-        let struct_name: &Ident = &args.struct_name;
+        let struct_name: &Ident = &config.struct_name;
         let new_struct_name: Ident = format_ident!("{}New", struct_name);
         let builder_name: Ident = format_ident!("{}Builder", struct_name);
         let builder_name_columns: Vec<Ident> = columns
@@ -128,6 +108,7 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
         let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
         let HasMany {
+            has_many_use,
             has_many_field,
             has_many_init,
             has_many_builder_field,
@@ -135,18 +116,23 @@ fn define_ar_impl(args: Args) -> Result<TokenStream> {
             has_many_filters_impl,
             has_many_join,
             has_many_preload,
-        } = make_has_many(&args, struct_name, &table_name, &builder_name);
+        } = make_has_many(config, &builder_name);
 
         let BelongsTo {
+            belongs_to_use,
             belongs_to_field,
             belongs_to_init,
             belongs_to_builder_field,
             belongs_to_builder_impl,
             belongs_to_filters_impl,
             belongs_to_join,
-        } = make_belongs_to(&args, struct_name, &table_name, &builder_name);
+        } = make_belongs_to(config, &builder_name);
 
         let output = quote! {
+            use arysn::prelude::*;
+            #has_many_use
+            #belongs_to_use
+
             #[derive(Clone, Debug)]
             pub struct #struct_name {
                 #(pub #column_names: #nullable_rust_types,)*

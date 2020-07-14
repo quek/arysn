@@ -1,6 +1,7 @@
 use anyhow::Result;
 use arysn::prelude::*;
-use common::{init, User};
+use arysn_test::generated::user::User;
+use common::init;
 
 mod common;
 

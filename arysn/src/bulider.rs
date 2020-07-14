@@ -52,18 +52,9 @@ pub trait BuilderTrait {
                         result.push(x);
                     }
                 }
-                _ => {
-                    ();
-                }
             }
         }
         result
-
-        //        let filters = self.filters();
-        //        filters
-        //            .into_iter()
-        //            .map(|filter| filter.value.to_sql())
-        //            .collect::<Vec<_>>()
     }
 
     fn select_sql(&self) -> String {
