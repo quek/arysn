@@ -65,11 +65,16 @@ pub trait BuilderTrait {
             filters.push(s);
             index += i;
         }
+        let where_part = if filters.is_empty() {
+            "".to_string()
+        } else {
+            format!(" WHERE {}", filters.join(" AND "))
+        };
         format!(
-            "SELECT {}.* FROM {} WHERE {}",
+            "SELECT {}.* FROM {}{}",
             self.select(),
             self.from(),
-            filters.join(" AND ")
+            where_part
         )
     }
 }

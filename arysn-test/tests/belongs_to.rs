@@ -8,11 +8,18 @@ mod common;
 #[tokio::test]
 async fn belongs_to() -> Result<()> {
     init();
-    let connection = connect().await?;
+    let conn = &connect().await?;
     let roles = Role::select()
         .user(|user| user.id().eq(1))
-        .load(&connection)
+        .load(conn)
         .await?;
     assert_eq!(roles.len(), 2);
+
+    let roles = Role::select()
+        .user(|user| user.preload())
+        .load(conn)
+        .await?;
+    assert_eq!(roles[0].user.is_some(), true);
+
     Ok(())
 }
