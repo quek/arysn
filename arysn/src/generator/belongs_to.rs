@@ -28,7 +28,7 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
             let field_name = &belongs_to.field;
             let foreign_key = format_ident!("{}_id", &field_name);
             let join = format!(
-                " INNER JOIN {} ON {}.id = {}.{}",
+                "INNER JOIN {} ON {}.id = {}.{}",
                 field_name.to_string().to_table_case(),
                 field_name.to_string().to_table_case(),
                 config.table_name,
@@ -56,29 +56,36 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
                     }
                 },
                 belongs_to_filters_impl: quote! {
-                    result.append(
-                        &mut self.#builder_field.as_ref()
-                            .map_or(vec![],
-                                    |x| x.filters.iter().collect::<Vec<&Filter>>())
-                    );
+                    if let Some(builder) = &self.#builder_field {
+                        result.append(&mut builder.filters());
+                    }
                 },
                 belongs_to_join: quote! {
-                    if self.#builder_field.is_some() {
-                        result.push_str(#join);
+                    if let Some(builder) = &self.#builder_field {
+                        join_parts.push(#join.to_string());
+                        builder.join(join_parts);
                     }
                 },
                 belongs_to_preload: quote! {
-                    if self.#builder_field.as_ref().map_or(false, |x| x.preload) {
-                        let ids = xs.iter().map(|x| x.#foreign_key).collect::<Vec<_>>();
-                        let zs = #struct_name::select().id().eq_any(ids).load(client).await?;
-                        xs.iter_mut().for_each(|x| {
-                            for z in zs.iter() {
-                                if x.#foreign_key == z.id {
-                                    x.#field_name = Some(z.clone());
-                                    break;
+                    if let Some(builder) = &self.#builder_field {
+                        if builder.preload {
+                            let ids = result.iter().map(|x| x.#foreign_key).collect::<Vec<_>>();
+                            let parents_builder = #struct_name::select().id().eq_any(ids);
+                            let parents_builder = #child_builder_name {
+                                from: parents_builder.from,
+                                filters: parents_builder.filters,
+                                ..(**builder).clone()
+                            };
+                            let parents = parents_builder.load(client).await?;
+                            result.iter_mut().for_each(|x| {
+                                for parent in parents.iter() {
+                                    if x.#foreign_key == parent.id {
+                                        x.#field_name = Some(parent.clone());
+                                        break;
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                 },
             }

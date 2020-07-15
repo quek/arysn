@@ -1,6 +1,7 @@
 SET log_statement = 'all';
 SET TIME ZONE 'Japan';
 
+DROP TABLE IF EXISTS screens;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS users;
 
@@ -30,3 +31,15 @@ INSERT INTO roles(user_id, name) VALUES
 ,(1, '編集')
 ,(2, '参照')
 ;
+
+CREATE TABLE screens (
+  id BIGSERIAL PRIMARY KEY,
+  role_id BIGINT NOT NULL REFERENCES roles ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL
+);
+
+INSERT INTO screens(role_id, name) VALUES
+ (1, 'ねこ')
+,(1, 'かも')
+,(2, 'さくらえび')
+,(3, 'のり')

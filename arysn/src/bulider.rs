@@ -6,6 +6,7 @@ use async_trait::async_trait;
 pub trait BuilderTrait {
     fn select(&self) -> String;
     fn from(&self) -> String;
+    fn join(&self, join_parts: &mut Vec<String>);
     fn filters(&self) -> Vec<&Filter>;
 
     fn select_params(&self) -> Vec<&(dyn tokio_postgres::types::ToSql + Sync)> {

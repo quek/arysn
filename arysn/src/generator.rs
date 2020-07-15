@@ -216,11 +216,11 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                     let rows = client
                         .query(self.select_sql().as_str(), &params[..])
                         .await?;
-                    let mut xs: Vec<#struct_name> = rows.into_iter()
+                    let mut result: Vec<#struct_name> = rows.into_iter()
                             .map(|row| #struct_name::from(row)).collect();
                     #has_many_preload
                     #belongs_to_preload
-                    Ok(xs)
+                    Ok(result)
                 }
             }
 
@@ -230,10 +230,14 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                 }
 
                 fn from(&self) -> String {
-                    let mut result = self.from.clone();
+                    let mut result: Vec<String> = vec![self.from.clone()];
+                    self.join(&mut result);
+                    result.join(" ")
+                }
+
+                fn join(&self, join_parts: &mut Vec<String>) {
                     #has_many_join
                     #belongs_to_join
-                    result
                 }
 
                 fn filters(&self) -> Vec<&Filter> {

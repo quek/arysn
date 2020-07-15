@@ -1,3 +1,4 @@
+use super::screen::{Screen, ScreenBuilder};
 use super::user::{User, UserBuilder};
 use arysn::prelude::*;
 use async_recursion::async_recursion;
@@ -6,6 +7,7 @@ pub struct Role {
     pub id: i64,
     pub user_id: i64,
     pub name: String,
+    pub screens: Option<Vec<Screen>>,
     pub user: Option<User>,
 }
 #[derive(Clone, Debug)]
@@ -67,6 +69,7 @@ impl From<tokio_postgres::row::Row> for Role {
             id: row.get(0usize),
             user_id: row.get(1usize),
             name: row.get(2usize),
+            screens: None,
             user: None,
         }
     }
@@ -76,6 +79,7 @@ pub struct RoleBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
+    pub screens_builder: Option<Box<ScreenBuilder>>,
     pub user_bulider: Option<Box<UserBuilder>>,
 }
 impl RoleBuilder {
@@ -92,6 +96,18 @@ impl RoleBuilder {
     pub fn name(&self) -> RoleBuilder_name {
         RoleBuilder_name {
             builder: self.clone(),
+        }
+    }
+    pub fn screens<F>(&self, f: F) -> RoleBuilder
+    where
+        F: FnOnce(&ScreenBuilder) -> ScreenBuilder,
+    {
+        RoleBuilder {
+            screens_builder: Some(Box::new(f(self
+                .screens_builder
+                .as_ref()
+                .unwrap_or(&Default::default())))),
+            ..self.clone()
         }
     }
     pub fn user<F>(&self, f: F) -> RoleBuilder
@@ -126,20 +142,49 @@ impl RoleBuilder {
         let rows = client
             .query(self.select_sql().as_str(), &params[..])
             .await?;
-        let mut xs: Vec<Role> = rows.into_iter().map(|row| Role::from(row)).collect();
-        if self.user_bulider.as_ref().map_or(false, |x| x.preload) {
-            let ids = xs.iter().map(|x| x.user_id).collect::<Vec<_>>();
-            let zs = User::select().id().eq_any(ids).load(client).await?;
-            xs.iter_mut().for_each(|x| {
-                for z in zs.iter() {
-                    if x.user_id == z.id {
-                        x.user = Some(z.clone());
-                        break;
+        let mut result: Vec<Role> = rows.into_iter().map(|row| Role::from(row)).collect();
+        if let Some(builder) = &self.screens_builder {
+            if builder.preload {
+                let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
+                let children_builder = Screen::select().role_id().eq_any(ids);
+                let children_builder = ScreenBuilder {
+                    from: children_builder.from,
+                    filters: children_builder.filters,
+                    ..(**builder).clone()
+                };
+                let children = children_builder.load(client).await?;
+                result.iter_mut().for_each(|x| {
+                    let mut ys = vec![];
+                    for child in children.iter() {
+                        if x.id == child.role_id {
+                            ys.push(child.clone());
+                        }
                     }
-                }
-            });
+                    x.screens = Some(ys);
+                });
+            }
         }
-        Ok(xs)
+        if let Some(builder) = &self.user_bulider {
+            if builder.preload {
+                let ids = result.iter().map(|x| x.user_id).collect::<Vec<_>>();
+                let parents_builder = User::select().id().eq_any(ids);
+                let parents_builder = UserBuilder {
+                    from: parents_builder.from,
+                    filters: parents_builder.filters,
+                    ..(**builder).clone()
+                };
+                let parents = parents_builder.load(client).await?;
+                result.iter_mut().for_each(|x| {
+                    for parent in parents.iter() {
+                        if x.user_id == parent.id {
+                            x.user = Some(parent.clone());
+                            break;
+                        }
+                    }
+                });
+            }
+        }
+        Ok(result)
     }
 }
 impl BuilderTrait for RoleBuilder {
@@ -147,20 +192,28 @@ impl BuilderTrait for RoleBuilder {
         "roles".to_string()
     }
     fn from(&self) -> String {
-        let mut result = self.from.clone();
-        if self.user_bulider.is_some() {
-            result.push_str(" INNER JOIN users ON users.id = roles.user_id");
+        let mut result: Vec<String> = vec![self.from.clone()];
+        self.join(&mut result);
+        result.join(" ")
+    }
+    fn join(&self, join_parts: &mut Vec<String>) {
+        if let Some(builder) = &self.screens_builder {
+            join_parts.push("INNER JOIN screens ON screens.role_id = roles.id".to_string());
+            builder.join(join_parts);
         }
-        result
+        if let Some(builder) = &self.user_bulider {
+            join_parts.push("INNER JOIN users ON users.id = roles.user_id".to_string());
+            builder.join(join_parts);
+        }
     }
     fn filters(&self) -> Vec<&Filter> {
         let mut result: Vec<&Filter> = self.filters.iter().collect();
-        result.append(
-            &mut self
-                .user_bulider
-                .as_ref()
-                .map_or(vec![], |x| x.filters.iter().collect::<Vec<&Filter>>()),
-        );
+        if let Some(builder) = &self.screens_builder {
+            result.append(&mut builder.filters());
+        }
+        if let Some(builder) = &self.user_bulider {
+            result.append(&mut builder.filters());
+        }
         result
     }
 }

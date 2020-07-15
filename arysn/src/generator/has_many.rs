@@ -28,7 +28,7 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
             let foreign_key = format_ident!("{}_id", config.table_name.to_singular());
             let field_name = &has_many.field;
             let join = format!(
-                " INNER JOIN {} ON {}.{} = {}.id",
+                "INNER JOIN {} ON {}.{} = {}.id",
                 field_name.to_string(),
                 field_name.to_string(),
                 foreign_key.to_string(),
@@ -56,30 +56,37 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                     }
                 },
                 has_many_filters_impl: quote! {
-                    result.append(
-                        &mut self.#builder_field.as_ref()
-                            .map_or(vec![],
-                                    |x| x.filters.iter().collect::<Vec<&Filter>>())
-                    );
+                    if let Some(builder) = &self.#builder_field {
+                        result.append(&mut builder.filters());
+                    }
                 },
                 has_many_join: quote! {
-                    if self.#builder_field.is_some() {
-                        result.push_str(#join);
+                    if let Some(builder) = &self.#builder_field {
+                        join_parts.push(#join.to_string());
+                        builder.join(join_parts);
                     }
                 },
                 has_many_preload: quote! {
-                    if self.#builder_field.as_ref().map_or(false, |x| x.preload) {
-                        let ids = xs.iter().map(|x| x.id).collect::<Vec<_>>();
-                        let zs = #struct_name::select().#foreign_key().eq_any(ids).load(client).await?;
-                        xs.iter_mut().for_each(|x| {
-                            let mut ys = vec![];
-                            for z in zs.iter() {
-                                if x.id == z.#foreign_key {
-                                    ys.push(z.clone());
+                    if let Some(builder) = &self.#builder_field {
+                        if builder.preload {
+                            let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
+                            let children_builder = #struct_name::select().#foreign_key().eq_any(ids);
+                            let children_builder = #child_builder_name {
+                                from: children_builder.from,
+                                filters: children_builder.filters,
+                                ..(**builder).clone()
+                            };
+                            let children = children_builder.load(client).await?;
+                            result.iter_mut().for_each(|x| {
+                                let mut ys = vec![];
+                                for child in children.iter() {
+                                    if x.id == child.#foreign_key {
+                                        ys.push(child.clone());
+                                    }
                                 }
-                            }
-                            x.#field_name = Some(ys);
-                        });
+                                x.#field_name = Some(ys);
+                            });
+                        }
                     }
                 },
             }

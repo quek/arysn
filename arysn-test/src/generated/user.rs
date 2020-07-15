@@ -160,21 +160,29 @@ impl UserBuilder {
         let rows = client
             .query(self.select_sql().as_str(), &params[..])
             .await?;
-        let mut xs: Vec<User> = rows.into_iter().map(|row| User::from(row)).collect();
-        if self.roles_builder.as_ref().map_or(false, |x| x.preload) {
-            let ids = xs.iter().map(|x| x.id).collect::<Vec<_>>();
-            let zs = Role::select().user_id().eq_any(ids).load(client).await?;
-            xs.iter_mut().for_each(|x| {
-                let mut ys = vec![];
-                for z in zs.iter() {
-                    if x.id == z.user_id {
-                        ys.push(z.clone());
+        let mut result: Vec<User> = rows.into_iter().map(|row| User::from(row)).collect();
+        if let Some(builder) = &self.roles_builder {
+            if builder.preload {
+                let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
+                let children_builder = Role::select().user_id().eq_any(ids);
+                let children_builder = RoleBuilder {
+                    from: children_builder.from,
+                    filters: children_builder.filters,
+                    ..(**builder).clone()
+                };
+                let children = children_builder.load(client).await?;
+                result.iter_mut().for_each(|x| {
+                    let mut ys = vec![];
+                    for child in children.iter() {
+                        if x.id == child.user_id {
+                            ys.push(child.clone());
+                        }
                     }
-                }
-                x.roles = Some(ys);
-            });
+                    x.roles = Some(ys);
+                });
+            }
         }
-        Ok(xs)
+        Ok(result)
     }
 }
 impl BuilderTrait for UserBuilder {
@@ -182,20 +190,21 @@ impl BuilderTrait for UserBuilder {
         "users".to_string()
     }
     fn from(&self) -> String {
-        let mut result = self.from.clone();
-        if self.roles_builder.is_some() {
-            result.push_str(" INNER JOIN roles ON roles.user_id = users.id");
+        let mut result: Vec<String> = vec![self.from.clone()];
+        self.join(&mut result);
+        result.join(" ")
+    }
+    fn join(&self, join_parts: &mut Vec<String>) {
+        if let Some(builder) = &self.roles_builder {
+            join_parts.push("INNER JOIN roles ON roles.user_id = users.id".to_string());
+            builder.join(join_parts);
         }
-        result
     }
     fn filters(&self) -> Vec<&Filter> {
         let mut result: Vec<&Filter> = self.filters.iter().collect();
-        result.append(
-            &mut self
-                .roles_builder
-                .as_ref()
-                .map_or(vec![], |x| x.filters.iter().collect::<Vec<&Filter>>()),
-        );
+        if let Some(builder) = &self.roles_builder {
+            result.append(&mut builder.filters());
+        }
         result
     }
 }

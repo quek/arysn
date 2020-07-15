@@ -28,5 +28,19 @@ async fn has_many() -> Result<()> {
         .await?;
     assert_eq!(users[0].roles.is_some(), true);
 
+    let users = User::select()
+        .roles(|roles| {
+            roles
+                .preload()
+                .screens(|screens| screens.id().eq(1).preload())
+        })
+        .load(&client)
+        .await?;
+    let screen = &users[0].roles.as_ref().unwrap()[0]
+        .screens
+        .as_ref()
+        .unwrap()[0];
+    assert_eq!(screen.id, 1);
+
     Ok(())
 }
