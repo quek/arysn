@@ -6,6 +6,7 @@ use log::debug;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use std::io::Write;
+use std::process::Command;
 use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
 
@@ -17,9 +18,15 @@ pub fn define_ar(config: &Config) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
 
     let output: TokenStream = define_ar_impl(config).unwrap();
-
-    let mut writer = std::io::BufWriter::new(std::fs::File::create(config.path)?);
-    writeln!(writer, "{}", &output.to_string())?;
+    {
+        let mut writer = std::io::BufWriter::new(std::fs::File::create(config.path)?);
+        writeln!(writer, "{}", &output.to_string())?;
+    }
+    Command::new("rustfmt")
+        .arg("--edition")
+        .arg("2018")
+        .arg(config.path)
+        .output()?;
     Ok(())
 }
 
@@ -132,14 +139,14 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         let output = quote! {
             use arysn::prelude::*;
             use async_recursion::async_recursion;
-            #has_many_use
-            #belongs_to_use
+            #(#has_many_use)*
+            #(#belongs_to_use)*
 
             #[derive(Clone, Debug)]
             pub struct #struct_name {
                 #(pub #column_names: #nullable_rust_types,)*
-                #has_many_field
-                #belongs_to_field
+                #(#has_many_field)*
+                #(#belongs_to_field)*
             }
 
             #[derive(Clone, Debug)]
@@ -168,8 +175,8 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                         #(
                             #column_names: row.get(#column_index),
                         )*
-                        #has_many_init
-                        #belongs_to_init
+                        #(#has_many_init)*
+                        #(#belongs_to_init)*
                     }
                 }
             }
@@ -179,8 +186,8 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                 pub from: String,
                 pub filters: Vec<Filter>,
                 pub preload: bool,
-                #has_many_builder_field
-                #belongs_to_builder_field
+                #(#has_many_builder_field)*
+                #(#belongs_to_builder_field)*
             }
 
             impl #builder_name {
@@ -189,8 +196,8 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                         builder: self.clone()
                     }
                 })*
-                #has_many_builder_impl
-                #belongs_to_builder_impl
+                #(#has_many_builder_impl)*
+                #(#belongs_to_builder_impl)*
 
                 pub fn preload(&self) -> Self {
                     Self {
@@ -218,8 +225,8 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                         .await?;
                     let mut result: Vec<#struct_name> = rows.into_iter()
                             .map(|row| #struct_name::from(row)).collect();
-                    #has_many_preload
-                    #belongs_to_preload
+                    #(#has_many_preload)*
+                    #(#belongs_to_preload)*
                     Ok(result)
                 }
             }
@@ -236,14 +243,14 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                 }
 
                 fn join(&self, join_parts: &mut Vec<String>) {
-                    #has_many_join
-                    #belongs_to_join
+                    #(#has_many_join)*
+                    #(#belongs_to_join)*
                 }
 
                 fn filters(&self) -> Vec<&Filter> {
                     let mut result: Vec<&Filter> = self.filters.iter().collect();
-                    #has_many_filters_impl
-                    #belongs_to_filters_impl
+                    #(#has_many_filters_impl)*
+                    #(#belongs_to_filters_impl)*
                     result
                 }
             }

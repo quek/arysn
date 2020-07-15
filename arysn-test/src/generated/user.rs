@@ -1,3 +1,4 @@
+use super::contribution::{Contribution, ContributionBuilder};
 use super::role::{Role, RoleBuilder};
 use arysn::prelude::*;
 use async_recursion::async_recursion;
@@ -10,6 +11,7 @@ pub struct User {
     pub active: bool,
     pub created_at: Option<chrono::DateTime<chrono::Local>>,
     pub roles: Option<Vec<Role>>,
+    pub contributions: Option<Vec<Contribution>>,
 }
 #[derive(Clone, Debug)]
 pub struct UserNew {
@@ -87,6 +89,7 @@ impl From<tokio_postgres::row::Row> for User {
             active: row.get(4usize),
             created_at: row.get(5usize),
             roles: None,
+            contributions: None,
         }
     }
 }
@@ -96,6 +99,7 @@ pub struct UserBuilder {
     pub filters: Vec<Filter>,
     pub preload: bool,
     pub roles_builder: Option<Box<RoleBuilder>>,
+    pub contributions_builder: Option<Box<ContributionBuilder>>,
 }
 impl UserBuilder {
     pub fn id(&self) -> UserBuilder_id {
@@ -135,6 +139,18 @@ impl UserBuilder {
         UserBuilder {
             roles_builder: Some(Box::new(f(self
                 .roles_builder
+                .as_ref()
+                .unwrap_or(&Default::default())))),
+            ..self.clone()
+        }
+    }
+    pub fn contributions<F>(&self, f: F) -> UserBuilder
+    where
+        F: FnOnce(&ContributionBuilder) -> ContributionBuilder,
+    {
+        UserBuilder {
+            contributions_builder: Some(Box::new(f(self
+                .contributions_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
             ..self.clone()
@@ -182,6 +198,27 @@ impl UserBuilder {
                 });
             }
         }
+        if let Some(builder) = &self.contributions_builder {
+            if builder.preload {
+                let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
+                let children_builder = Contribution::select().user_id().eq_any(ids);
+                let children_builder = ContributionBuilder {
+                    from: children_builder.from,
+                    filters: children_builder.filters,
+                    ..(**builder).clone()
+                };
+                let children = children_builder.load(client).await?;
+                result.iter_mut().for_each(|x| {
+                    let mut ys = vec![];
+                    for child in children.iter() {
+                        if x.id == child.user_id {
+                            ys.push(child.clone());
+                        }
+                    }
+                    x.contributions = Some(ys);
+                });
+            }
+        }
         Ok(result)
     }
 }
@@ -199,10 +236,18 @@ impl BuilderTrait for UserBuilder {
             join_parts.push("INNER JOIN roles ON roles.user_id = users.id".to_string());
             builder.join(join_parts);
         }
+        if let Some(builder) = &self.contributions_builder {
+            join_parts
+                .push("INNER JOIN contributions ON contributions.user_id = users.id".to_string());
+            builder.join(join_parts);
+        }
     }
     fn filters(&self) -> Vec<&Filter> {
         let mut result: Vec<&Filter> = self.filters.iter().collect();
         if let Some(builder) = &self.roles_builder {
+            result.append(&mut builder.filters());
+        }
+        if let Some(builder) = &self.contributions_builder {
             result.append(&mut builder.filters());
         }
         result

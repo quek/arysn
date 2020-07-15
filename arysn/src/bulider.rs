@@ -71,8 +71,9 @@ pub trait BuilderTrait {
         } else {
             format!(" WHERE {}", filters.join(" AND "))
         };
+        // TODO 無条件に DISTINCT 付けるのはどうかと思う
         format!(
-            "SELECT {}.* FROM {}{}",
+            "SELECT DISTINCT {}.* FROM {}{}",
             self.select(),
             self.from(),
             where_part

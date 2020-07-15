@@ -8,13 +8,13 @@ mod common;
 #[tokio::test]
 async fn has_many() -> Result<()> {
     init();
-    let client = connect().await?;
+    let conn = &connect().await?;
 
     let users = User::select()
         .active()
         .eq(true)
         .roles(|roles| roles.name().eq("管理".to_string()))
-        .load(&client)
+        .load(conn)
         .await?;
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].id, 1);
@@ -24,7 +24,7 @@ async fn has_many() -> Result<()> {
         .active()
         .eq(true)
         .roles(|roles| roles.name().eq("管理".to_string()).preload())
-        .load(&client)
+        .load(conn)
         .await?;
     assert_eq!(users[0].roles.is_some(), true);
 
@@ -34,7 +34,7 @@ async fn has_many() -> Result<()> {
                 .preload()
                 .screens(|screens| screens.id().eq(1).preload())
         })
-        .load(&client)
+        .load(conn)
         .await?;
     let screen = &users[0].roles.as_ref().unwrap()[0]
         .screens
