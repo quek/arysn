@@ -19,4 +19,4 @@ tokio-postgres = { version = "0.5", features = ["with-chrono-0_4"] }
 [build-dependencies]
 anyhow = "*"
 arysn = { path = "../arysn" }
-quote = "*"
+quote = "1"
