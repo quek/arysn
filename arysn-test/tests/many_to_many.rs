@@ -12,6 +12,7 @@ async fn many_to_many() -> Result<()> {
 
     let users = User::select()
         .contributions(|contribution| contribution.preload().project(|project| project.preload()))
+        .order("users.id")
         .load(conn)
         .await?;
     assert_eq!(users.len(), 2);

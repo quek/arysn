@@ -186,6 +186,7 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                 pub from: String,
                 pub filters: Vec<Filter>,
                 pub preload: bool,
+                pub order: String,
                 #(#has_many_builder_field)*
                 #(#belongs_to_builder_field)*
             }
@@ -198,6 +199,13 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                 })*
                 #(#has_many_builder_impl)*
                 #(#belongs_to_builder_impl)*
+
+                pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
+                    Self {
+                        order: value.as_ref().to_string(),
+                        ..self.clone()
+                    }
+                }
 
                 pub fn preload(&self) -> Self {
                     Self {
@@ -252,6 +260,10 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                     #(#has_many_filters_impl)*
                     #(#belongs_to_filters_impl)*
                     result
+                }
+
+                fn order_part(&self) -> String {
+                    self.order.clone()
                 }
             }
 

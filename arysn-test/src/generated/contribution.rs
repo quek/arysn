@@ -79,6 +79,7 @@ pub struct ContributionBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
+    pub order: String,
     pub project_builder: Option<Box<ProjectBuilder>>,
     pub user_builder: Option<Box<UserBuilder>>,
 }
@@ -119,6 +120,12 @@ impl ContributionBuilder {
                 .user_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
+            ..self.clone()
+        }
+    }
+    pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
+        Self {
+            order: value.as_ref().to_string(),
             ..self.clone()
         }
     }
@@ -218,6 +225,9 @@ impl BuilderTrait for ContributionBuilder {
             result.append(&mut builder.filters());
         }
         result
+    }
+    fn order_part(&self) -> String {
+        self.order.clone()
     }
 }
 #[allow(non_camel_case_types)]

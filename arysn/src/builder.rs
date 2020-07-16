@@ -1,11 +1,13 @@
 use crate::filter::Filter;
 use crate::value::Value;
 
+// TODO カラム名がメソッドとしてはえるので名前衝突しないように名前空間がわけたい
 pub trait BuilderTrait {
     fn select(&self) -> String;
     fn from(&self) -> String;
     fn join(&self, join_parts: &mut Vec<String>);
     fn filters(&self) -> Vec<&Filter>;
+    fn order_part(&self) -> String;
 
     fn select_params(&self) -> Vec<&(dyn tokio_postgres::types::ToSql + Sync)> {
         let mut result: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = vec![];
@@ -69,7 +71,11 @@ pub trait BuilderTrait {
         } else {
             format!(" WHERE {}", filters.join(" AND "))
         };
-        let order_part = "";
+        let order_part = if self.order_part().is_empty() {
+            "".to_string()
+        } else {
+            format!(" ORDER BY {}", &self.order_part())
+        };
         // TODO 無条件に DISTINCT 付けるのはどうかと思う
         format!(
             "SELECT DISTINCT {}.* FROM {}{}{}",

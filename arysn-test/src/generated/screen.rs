@@ -76,6 +76,7 @@ pub struct ScreenBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
+    pub order: String,
     pub role_builder: Option<Box<RoleBuilder>>,
 }
 impl ScreenBuilder {
@@ -103,6 +104,12 @@ impl ScreenBuilder {
                 .role_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
+            ..self.clone()
+        }
+    }
+    pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
+        Self {
+            order: value.as_ref().to_string(),
             ..self.clone()
         }
     }
@@ -171,6 +178,9 @@ impl BuilderTrait for ScreenBuilder {
             result.append(&mut builder.filters());
         }
         result
+    }
+    fn order_part(&self) -> String {
+        self.order.clone()
     }
 }
 #[allow(non_camel_case_types)]
