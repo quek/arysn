@@ -37,7 +37,6 @@ version = "0.1.0"
 dependencies = [
  "Inflector",
  "anyhow",
- "async-trait",
  "chrono",
  "env_logger",
  "log",
