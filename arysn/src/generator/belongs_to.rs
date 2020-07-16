@@ -36,7 +36,7 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
             foreign_key.to_string()
         );
         let struct_name = &belongs_to.struct_name;
-        let builder_field = format_ident!("{}_bulider", &field_name);
+        let builder_field = format_ident!("{}_builder", &field_name);
         let child_builder_name = format_ident!("{}Builder", &struct_name.to_string());
 
         result.belongs_to_use.push(quote! {

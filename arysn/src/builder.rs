@@ -1,8 +1,6 @@
 use crate::filter::Filter;
 use crate::value::Value;
-use async_trait::async_trait;
 
-#[async_trait]
 pub trait BuilderTrait {
     fn select(&self) -> String;
     fn from(&self) -> String;
@@ -71,12 +69,14 @@ pub trait BuilderTrait {
         } else {
             format!(" WHERE {}", filters.join(" AND "))
         };
+        let order_part = "";
         // TODO 無条件に DISTINCT 付けるのはどうかと思う
         format!(
-            "SELECT DISTINCT {}.* FROM {}{}",
+            "SELECT DISTINCT {}.* FROM {}{}{}",
             self.select(),
             self.from(),
-            where_part
+            where_part,
+            order_part,
         )
     }
 }

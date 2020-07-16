@@ -79,8 +79,8 @@ pub struct ContributionBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
-    pub project_bulider: Option<Box<ProjectBuilder>>,
-    pub user_bulider: Option<Box<UserBuilder>>,
+    pub project_builder: Option<Box<ProjectBuilder>>,
+    pub user_builder: Option<Box<UserBuilder>>,
 }
 impl ContributionBuilder {
     pub fn id(&self) -> ContributionBuilder_id {
@@ -103,8 +103,8 @@ impl ContributionBuilder {
         F: FnOnce(&ProjectBuilder) -> ProjectBuilder,
     {
         ContributionBuilder {
-            project_bulider: Some(Box::new(f(self
-                .project_bulider
+            project_builder: Some(Box::new(f(self
+                .project_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
             ..self.clone()
@@ -115,8 +115,8 @@ impl ContributionBuilder {
         F: FnOnce(&UserBuilder) -> UserBuilder,
     {
         ContributionBuilder {
-            user_bulider: Some(Box::new(f(self
-                .user_bulider
+            user_builder: Some(Box::new(f(self
+                .user_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
             ..self.clone()
@@ -146,7 +146,7 @@ impl ContributionBuilder {
             .into_iter()
             .map(|row| Contribution::from(row))
             .collect();
-        if let Some(builder) = &self.project_bulider {
+        if let Some(builder) = &self.project_builder {
             if builder.preload {
                 let ids = result.iter().map(|x| x.project_id).collect::<Vec<_>>();
                 let parents_builder = Project::select().id().eq_any(ids);
@@ -166,7 +166,7 @@ impl ContributionBuilder {
                 });
             }
         }
-        if let Some(builder) = &self.user_bulider {
+        if let Some(builder) = &self.user_builder {
             if builder.preload {
                 let ids = result.iter().map(|x| x.user_id).collect::<Vec<_>>();
                 let parents_builder = User::select().id().eq_any(ids);
@@ -199,22 +199,22 @@ impl BuilderTrait for ContributionBuilder {
         result.join(" ")
     }
     fn join(&self, join_parts: &mut Vec<String>) {
-        if let Some(builder) = &self.project_bulider {
+        if let Some(builder) = &self.project_builder {
             join_parts
                 .push("INNER JOIN projects ON projects.id = contributions.project_id".to_string());
             builder.join(join_parts);
         }
-        if let Some(builder) = &self.user_bulider {
+        if let Some(builder) = &self.user_builder {
             join_parts.push("INNER JOIN users ON users.id = contributions.user_id".to_string());
             builder.join(join_parts);
         }
     }
     fn filters(&self) -> Vec<&Filter> {
         let mut result: Vec<&Filter> = self.filters.iter().collect();
-        if let Some(builder) = &self.project_bulider {
+        if let Some(builder) = &self.project_builder {
             result.append(&mut builder.filters());
         }
-        if let Some(builder) = &self.user_bulider {
+        if let Some(builder) = &self.user_builder {
             result.append(&mut builder.filters());
         }
         result

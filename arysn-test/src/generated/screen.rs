@@ -76,7 +76,7 @@ pub struct ScreenBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
-    pub role_bulider: Option<Box<RoleBuilder>>,
+    pub role_builder: Option<Box<RoleBuilder>>,
 }
 impl ScreenBuilder {
     pub fn id(&self) -> ScreenBuilder_id {
@@ -99,8 +99,8 @@ impl ScreenBuilder {
         F: FnOnce(&RoleBuilder) -> RoleBuilder,
     {
         ScreenBuilder {
-            role_bulider: Some(Box::new(f(self
-                .role_bulider
+            role_builder: Some(Box::new(f(self
+                .role_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
             ..self.clone()
@@ -127,7 +127,7 @@ impl ScreenBuilder {
             .query(self.select_sql().as_str(), &params[..])
             .await?;
         let mut result: Vec<Screen> = rows.into_iter().map(|row| Screen::from(row)).collect();
-        if let Some(builder) = &self.role_bulider {
+        if let Some(builder) = &self.role_builder {
             if builder.preload {
                 let ids = result.iter().map(|x| x.role_id).collect::<Vec<_>>();
                 let parents_builder = Role::select().id().eq_any(ids);
@@ -160,14 +160,14 @@ impl BuilderTrait for ScreenBuilder {
         result.join(" ")
     }
     fn join(&self, join_parts: &mut Vec<String>) {
-        if let Some(builder) = &self.role_bulider {
+        if let Some(builder) = &self.role_builder {
             join_parts.push("INNER JOIN roles ON roles.id = screens.role_id".to_string());
             builder.join(join_parts);
         }
     }
     fn filters(&self) -> Vec<&Filter> {
         let mut result: Vec<&Filter> = self.filters.iter().collect();
-        if let Some(builder) = &self.role_bulider {
+        if let Some(builder) = &self.role_builder {
             result.append(&mut builder.filters());
         }
         result

@@ -80,7 +80,7 @@ pub struct RoleBuilder {
     pub filters: Vec<Filter>,
     pub preload: bool,
     pub screens_builder: Option<Box<ScreenBuilder>>,
-    pub user_bulider: Option<Box<UserBuilder>>,
+    pub user_builder: Option<Box<UserBuilder>>,
 }
 impl RoleBuilder {
     pub fn id(&self) -> RoleBuilder_id {
@@ -115,8 +115,8 @@ impl RoleBuilder {
         F: FnOnce(&UserBuilder) -> UserBuilder,
     {
         RoleBuilder {
-            user_bulider: Some(Box::new(f(self
-                .user_bulider
+            user_builder: Some(Box::new(f(self
+                .user_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
             ..self.clone()
@@ -164,7 +164,7 @@ impl RoleBuilder {
                 });
             }
         }
-        if let Some(builder) = &self.user_bulider {
+        if let Some(builder) = &self.user_builder {
             if builder.preload {
                 let ids = result.iter().map(|x| x.user_id).collect::<Vec<_>>();
                 let parents_builder = User::select().id().eq_any(ids);
@@ -201,7 +201,7 @@ impl BuilderTrait for RoleBuilder {
             join_parts.push("INNER JOIN screens ON screens.role_id = roles.id".to_string());
             builder.join(join_parts);
         }
-        if let Some(builder) = &self.user_bulider {
+        if let Some(builder) = &self.user_builder {
             join_parts.push("INNER JOIN users ON users.id = roles.user_id".to_string());
             builder.join(join_parts);
         }
@@ -211,7 +211,7 @@ impl BuilderTrait for RoleBuilder {
         if let Some(builder) = &self.screens_builder {
             result.append(&mut builder.filters());
         }
-        if let Some(builder) = &self.user_bulider {
+        if let Some(builder) = &self.user_builder {
             result.append(&mut builder.filters());
         }
         result
