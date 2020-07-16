@@ -58,7 +58,7 @@ fn main() -> Result<()> {
             struct_name: format_ident!("{}", "Contribution"),
         }],
         belongs_to: vec![],
-    });
+    })?;
 
     define_ar(&Config {
         path: "src/generated/contribution.rs",
@@ -75,7 +75,7 @@ fn main() -> Result<()> {
                 struct_name: format_ident!("{}", "User"),
             },
         ],
-    });
+    })?;
 
     Ok(())
 }
