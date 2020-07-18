@@ -12,8 +12,8 @@ use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
 
 mod belongs_to;
-mod enums;
 pub mod config;
+mod enums;
 mod has_many;
 
 pub fn define_ar(config: &Config) -> Result<()> {
@@ -55,7 +55,7 @@ ORDER BY ordinal_position
             let data_type: String = row.get(2);
             let column_default: Option<String> = row.get(3);
             let udt_name: String = row.get(4);
-            let (rust_type, mut nullable_rust_type, value_type) =
+            let (rust_type, mut nullable_rust_type) =
                 compute_type(&data_type, is_nullable, &udt_name);
             let rust_type_for_new = if column_default.is_some() && !is_nullable {
                 quote! { Option<#rust_type> }
@@ -74,7 +74,6 @@ ORDER BY ordinal_position
                 rust_type,
                 rust_type_for_new,
                 nullable_rust_type,
-                value_type,
                 is_primary_key,
                 udt_name,
             }
@@ -96,13 +95,11 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         let mut rust_types = Vec::<TokenStream>::new();
         let mut rust_types_for_new = Vec::<TokenStream>::new();
         let mut nullable_rust_types = Vec::<TokenStream>::new();
-        let mut value_types = Vec::<TokenStream>::new();
         for column in columns.iter() {
             column_names.push(format_ident!("{}", &column.name));
             rust_types.push(column.rust_type.clone());
             rust_types_for_new.push(column.rust_type_for_new.clone());
             nullable_rust_types.push(column.nullable_rust_type.clone());
-            value_types.push(column.value_type.clone());
         }
         let column_index = 0..columns.len();
 
@@ -122,9 +119,11 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         let use_to_sql_from_sql = if enums.is_empty() {
             quote!()
         } else {
-            quote!(use postgres_types::{FromSql, ToSql};)
+            quote!(
+                use postgres_types::{FromSql, ToSql};
+            )
         };
-        
+
         let HasMany {
             has_many_use,
             has_many_field,
@@ -352,23 +351,24 @@ fn compute_type(
     data_type: &str,
     is_nullable: bool,
     udt_name: &String,
-) -> (TokenStream, TokenStream, TokenStream) {
-    let (rust_type, value_type) = match data_type {
-        "boolean" => (quote!(bool), quote!(Bool)),
-        "integer" => (quote!(i32), quote!(I32)),
-        "bigint" => (quote!(i64), quote!(I64)),
-        "character varying" => (quote!(String), quote!(String)),
-        "timestamp with time zone" => (quote!(chrono::DateTime<chrono::Local>), quote!(DateTime)),
+) -> (TokenStream, TokenStream) {
+    let rust_type = match data_type {
+        "boolean" => quote!(bool),
+        "integer" => quote!(i32),
+        "bigint" => quote!(i64),
+        "character varying" => quote!(String),
+        "timestamp with time zone" => quote!(chrono::DateTime<chrono::Local>),
+        "timestamp without time zone" => quote!(chrono::NaiveDateTime),
         "USER-DEFINED" => {
             let name = format_ident!("{}", udt_name.to_class_case());
-            (quote!(#name), quote!(#name))
+            quote!(#name)
         }
         _ => panic!("unknown sql type: {}", data_type),
     };
     if is_nullable {
-        (rust_type.clone(), quote!(Option<#rust_type>), value_type)
+        (rust_type.clone(), quote!(Option<#rust_type>))
     } else {
-        (rust_type.clone(), rust_type, value_type)
+        (rust_type.clone(), rust_type)
     }
 }
 
@@ -395,7 +395,6 @@ pub struct Column {
     pub rust_type: TokenStream,
     pub rust_type_for_new: TokenStream,
     pub nullable_rust_type: TokenStream,
-    pub value_type: TokenStream,
     pub is_primary_key: bool,
     pub udt_name: String,
 }
