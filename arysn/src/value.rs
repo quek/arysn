@@ -1,4 +1,18 @@
 use chrono::{DateTime, Local};
+use tokio_postgres::types::ToSql;
+use dyn_clone::DynClone;
+
+pub trait ToSqlValue: DynClone + ToSql + Sync + Send {
+    fn as_to_sql(&self) -> Option<&(dyn ToSql + Sync)>;
+}
+
+impl<T> ToSqlValue for T where T: ToSql + Sync + Clone + Send {
+    fn as_to_sql(&self) -> Option<&(dyn ToSql + Sync)> {
+        Some(self)
+    }
+}
+
+dyn_clone::clone_trait_object!(ToSqlValue);
 
 #[derive(Clone, Debug)]
 pub enum Value {
@@ -12,10 +26,11 @@ pub enum Value {
     VecI64(Vec<i64>),
     VecString(Vec<String>),
     VecDateTime(Vec<DateTime<Local>>),
+    UserDefined(Box<dyn ToSqlValue>),
 }
 
 impl Value {
-    pub fn to_sql(&self) -> &(dyn tokio_postgres::types::ToSql + Sync) {
+    pub fn to_sql(&self) -> &(dyn ToSql + Sync) {
         match self {
             Self::Bool(x) => x,
             Self::I64(x) => x,
@@ -27,6 +42,7 @@ impl Value {
             Self::VecI64(x) => x,
             Self::VecString(x) => x,
             Self::VecDateTime(x) => x,
+            Self::UserDefined(x) => x.as_to_sql().unwrap(),
         }
     }
 }

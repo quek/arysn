@@ -6,7 +6,7 @@ use async_recursion::async_recursion;
 pub struct Role {
     pub id: i64,
     pub user_id: i64,
-    pub name: String,
+    pub role_type: i32,
     pub screens: Option<Vec<Screen>>,
     pub user: Option<User>,
 }
@@ -14,7 +14,7 @@ pub struct Role {
 pub struct RoleNew {
     pub id: Option<i64>,
     pub user_id: i64,
-    pub name: String,
+    pub role_type: i32,
 }
 impl Role {
     pub fn select() -> RoleBuilder {
@@ -32,8 +32,8 @@ impl Role {
     pub async fn update(&self, client: &tokio_postgres::Client) -> anyhow::Result<()> {
         client
             .execute(
-                "UPDATE roles SET user_id = $1, name = $2 WHERE id = $3",
-                &[&self.user_id, &self.name, &self.id],
+                "UPDATE roles SET user_id = $1, role_type = $2 WHERE id = $3",
+                &[&self.user_id, &self.role_type, &self.id],
             )
             .await?;
         Ok(())
@@ -43,7 +43,7 @@ impl RoleNew {
     pub async fn insert(&self, client: &tokio_postgres::Client) -> anyhow::Result<Role> {
         let mut target_columns: Vec<&str> = vec![];
         target_columns.push(stringify!(user_id));
-        target_columns.push(stringify!(name));
+        target_columns.push(stringify!(role_type));
         let target_columns = target_columns.join(", ");
         let mut bind_count: i32 = 0;
         bind_count += 1;
@@ -58,7 +58,7 @@ impl RoleNew {
         );
         let mut params: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = vec![];
         params.push(&self.user_id);
-        params.push(&self.name);
+        params.push(&self.role_type);
         let row = client.query_one(statement.as_str(), &params[..]).await?;
         Ok(row.into())
     }
@@ -68,7 +68,7 @@ impl From<tokio_postgres::row::Row> for Role {
         Self {
             id: row.get(0usize),
             user_id: row.get(1usize),
-            name: row.get(2usize),
+            role_type: row.get(2usize),
             screens: None,
             user: None,
         }
@@ -94,8 +94,8 @@ impl RoleBuilder {
             builder: self.clone(),
         }
     }
-    pub fn name(&self) -> RoleBuilder_name {
-        RoleBuilder_name {
+    pub fn role_type(&self) -> RoleBuilder_role_type {
+        RoleBuilder_role_type {
             builder: self.clone(),
         }
     }
@@ -292,15 +292,15 @@ impl RoleBuilder_user_id {
     }
 }
 #[allow(non_camel_case_types)]
-pub struct RoleBuilder_name {
+pub struct RoleBuilder_role_type {
     pub builder: RoleBuilder,
 }
-impl RoleBuilder_name {
-    pub fn eq(&self, value: String) -> RoleBuilder {
+impl RoleBuilder_role_type {
+    pub fn eq(&self, value: i32) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
             table: "roles".to_string(),
-            name: stringify!(name).to_string(),
+            name: stringify!(role_type).to_string(),
             value: value.into(),
             operator: "=".to_string(),
         });
@@ -309,11 +309,11 @@ impl RoleBuilder_name {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<String>) -> RoleBuilder {
+    pub fn eq_any(&self, value: Vec<i32>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
             table: "roles".to_string(),
-            name: stringify!(name).to_string(),
+            name: stringify!(role_type).to_string(),
             value: value.into(),
             operator: "in".to_string(),
         });

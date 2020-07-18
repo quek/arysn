@@ -2,6 +2,7 @@ use anyhow::Result;
 use belongs_to::{make_belongs_to, BelongsTo};
 use config::Config;
 use has_many::{make_has_many, HasMany};
+// use inflector::Inflector;
 use log::debug;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -34,7 +35,7 @@ async fn columns(table_name: &String, client: &Client) -> Result<Vec<Column>> {
     let primary_key: Vec<String> = primary_key(table_name, client).await?;
     let sql = format!(
         r"
-SELECT column_name, is_nullable, data_type, column_default
+SELECT column_name, is_nullable, data_type, column_default, udt_name
 FROM
   information_schema.columns
 WHERE
@@ -52,8 +53,9 @@ ORDER BY ordinal_position
             let is_nullable: bool = is_nullable == "YES";
             let data_type: String = row.get(2);
             let column_default: Option<String> = row.get(3);
+            let udt_name: String = row.get(4);
             let (rust_type, mut nullable_rust_type, value_type) =
-                compute_type(&data_type, is_nullable);
+                compute_type(&data_type, is_nullable, &udt_name);
             let rust_type_for_new = if column_default.is_some() && !is_nullable {
                 quote! { Option<#rust_type> }
             } else {
@@ -73,6 +75,7 @@ ORDER BY ordinal_position
                 nullable_rust_type,
                 value_type,
                 is_primary_key,
+                udt_name,
             }
         })
         .collect();
@@ -308,6 +311,18 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
     })
 }
 
+fn enum_query() {
+    let sql = r"
+SELECT t.typname as enum_name,
+       e.enumlabel as enum_value
+FROM pg_type t
+   JOIN pg_enum e ON t.oid = e.enumtypid
+   JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+WHERE t.typname = 'user_status'
+ORDER BY e.enumsortorder
+";
+}
+
 async fn primary_key(table_name: &String, client: &Client) -> Result<Vec<String>> {
     let sql = format!(
         r"
@@ -330,13 +345,22 @@ ORDER BY kcu.ordinal_position
     Ok(result)
 }
 
-fn compute_type(data_type: &str, is_nullable: bool) -> (TokenStream, TokenStream, TokenStream) {
+fn compute_type(
+    data_type: &str,
+    is_nullable: bool,
+    udt_name: &String,
+) -> (TokenStream, TokenStream, TokenStream) {
     let (rust_type, value_type) = match data_type {
         "boolean" => (quote!(bool), quote!(Bool)),
         "integer" => (quote!(i32), quote!(I32)),
         "bigint" => (quote!(i64), quote!(I64)),
         "character varying" => (quote!(String), quote!(String)),
         "timestamp with time zone" => (quote!(chrono::DateTime<chrono::Local>), quote!(DateTime)),
+        // TODO "USER-DEFINED" => {
+        // TODO     let name = format_ident!("{}", udt_name.to_class_case());
+        // TODO     (quote!(#name), quote!(#name))
+        // TODO }
+        "USER-DEFINED" => (quote!(i32), quote!(I32)),
         _ => panic!("unknown sql type: {}", data_type),
     };
     if is_nullable {
@@ -371,6 +395,7 @@ struct Column {
     pub nullable_rust_type: TokenStream,
     pub value_type: TokenStream,
     pub is_primary_key: bool,
+    pub udt_name: String,
 }
 
 fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {

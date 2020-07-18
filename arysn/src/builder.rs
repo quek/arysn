@@ -53,6 +53,9 @@ pub trait BuilderTrait {
                         result.push(x);
                     }
                 }
+                Value::UserDefined(x) => {
+                    result.push(x.as_to_sql().unwrap());
+                }
             }
         }
         result
