@@ -1,5 +1,5 @@
 use crate::filter::Filter;
-use crate::value::Value;
+use tokio_postgres::types::ToSql;
 
 // TODO カラム名がメソッドとしてはえるので名前衝突しないように名前空間がわけたい
 pub trait BuilderTrait {
@@ -9,53 +9,11 @@ pub trait BuilderTrait {
     fn filters(&self) -> Vec<&Filter>;
     fn order_part(&self) -> String;
 
-    fn select_params(&self) -> Vec<&(dyn tokio_postgres::types::ToSql + Sync)> {
-        let mut result: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = vec![];
+    fn select_params(&self) -> Vec<&(dyn ToSql + Sync)> {
+        let mut result: Vec<&(dyn ToSql + Sync)> = vec![];
         for filter in self.filters().iter() {
-            match &filter.value {
-                Value::Bool(x) => {
-                    result.push(x);
-                }
-                Value::I64(x) => {
-                    result.push(x);
-                }
-                Value::I32(x) => {
-                    result.push(x);
-                }
-                Value::String(x) => {
-                    result.push(x);
-                }
-                Value::DateTime(x) => {
-                    result.push(x);
-                }
-                Value::VecBool(xs) => {
-                    for x in xs.iter() {
-                        result.push(x);
-                    }
-                }
-                Value::VecI32(xs) => {
-                    for x in xs.iter() {
-                        result.push(x);
-                    }
-                }
-                Value::VecI64(xs) => {
-                    for x in xs.iter() {
-                        result.push(x);
-                    }
-                }
-                Value::VecString(xs) => {
-                    for x in xs.iter() {
-                        result.push(x);
-                    }
-                }
-                Value::VecDateTime(xs) => {
-                    for x in xs.iter() {
-                        result.push(x);
-                    }
-                }
-                Value::UserDefined(x) => {
-                    result.push(x.as_to_sql().unwrap());
-                }
+            for value in filter.value.iter() {
+                result.push(value.as_to_sql().unwrap());
             }
         }
         result

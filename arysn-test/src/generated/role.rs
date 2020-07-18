@@ -11,11 +11,6 @@ pub enum RoleType {
     #[postgres(name = "user")]
     User,
 }
-impl From<RoleType> for Value {
-    fn from(x: RoleType) -> Self {
-        Value::UserDefined(Box::new(x))
-    }
-}
 #[derive(Clone, Debug)]
 pub struct Role {
     pub id: i64,
@@ -251,7 +246,7 @@ impl RoleBuilder_id {
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(id).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         RoleBuilder {
@@ -261,10 +256,14 @@ impl RoleBuilder_id {
     }
     pub fn eq_any(&self, value: Vec<i64>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(id).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         RoleBuilder {
@@ -283,7 +282,7 @@ impl RoleBuilder_user_id {
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(user_id).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         RoleBuilder {
@@ -293,10 +292,14 @@ impl RoleBuilder_user_id {
     }
     pub fn eq_any(&self, value: Vec<i64>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(user_id).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         RoleBuilder {
@@ -315,7 +318,7 @@ impl RoleBuilder_role_type {
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(role_type).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         RoleBuilder {
@@ -325,10 +328,14 @@ impl RoleBuilder_role_type {
     }
     pub fn eq_any(&self, value: Vec<RoleType>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(role_type).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         RoleBuilder {

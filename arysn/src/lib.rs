@@ -8,5 +8,5 @@ pub mod prelude {
     pub use super::builder::BuilderTrait;
     pub use super::db::connect;
     pub use super::filter::Filter;
-    pub use super::value::Value;
+    pub use super::value::ToSqlValue;
 }

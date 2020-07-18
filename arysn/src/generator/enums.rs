@@ -34,11 +34,6 @@ ORDER BY e.enumsortorder
                 #(#[postgres(name = #enumlabels_pg)]
                 #enumlabels,)*
             }
-            impl From<#enum_name> for Value {
-                fn from(x: #enum_name) -> Self {
-                    Value::UserDefined(Box::new(x))
-                }
-            }
         });
     }
     Ok(result)

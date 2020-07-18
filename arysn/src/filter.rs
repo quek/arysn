@@ -1,37 +1,35 @@
-use crate::value::Value;
+use crate::value::ToSqlValue;
 
 #[derive(Clone, Debug)]
 pub struct Filter {
     pub table: String,
     pub name: String,
-    pub value: Value,
+    pub value: Vec<Box<dyn ToSqlValue>>,
     pub operator: String,
 }
 
 impl Filter {
     pub fn to_sql(&self, bind_index: usize) -> (String, usize) {
         match self.operator.as_str() {
-            "in" => match &self.value {
-                Value::VecI64(x) => {
-                    if x.is_empty() {
-                        ("1 = 2".to_string(), 0)
-                    } else {
-                        (
-                            format!(
-                                "{}.{} in ({})",
-                                &self.table,
-                                &self.name,
-                                (1..=x.len())
-                                    .map(|i| format!("${}", i))
-                                    .collect::<Vec<_>>()
-                                    .join(", ")
-                            ),
-                            x.len(),
-                        )
-                    }
+            "in" => {
+                let len = self.value.len();
+                if len == 0 {
+                    ("1 = 2".to_string(), 0)
+                } else {
+                    (
+                        format!(
+                            "{}.{} in ({})",
+                            &self.table,
+                            &self.name,
+                            (1..=len)
+                                .map(|i| format!("${}", i))
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        ),
+                        len,
+                    )
                 }
-                _ => ("1 = 2".to_string(), 0),
-            },
+            }
             _ => (
                 format!(
                     "{}.{} {} ${}",

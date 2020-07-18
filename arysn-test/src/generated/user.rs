@@ -273,7 +273,7 @@ impl UserBuilder_id {
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(id).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         UserBuilder {
@@ -283,10 +283,14 @@ impl UserBuilder_id {
     }
     pub fn eq_any(&self, value: Vec<i64>) -> UserBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(id).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         UserBuilder {
@@ -305,7 +309,7 @@ impl UserBuilder_name {
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(name).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         UserBuilder {
@@ -315,10 +319,14 @@ impl UserBuilder_name {
     }
     pub fn eq_any(&self, value: Vec<String>) -> UserBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(name).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         UserBuilder {
@@ -337,7 +345,7 @@ impl UserBuilder_title {
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(title).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         UserBuilder {
@@ -347,10 +355,14 @@ impl UserBuilder_title {
     }
     pub fn eq_any(&self, value: Vec<String>) -> UserBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(title).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         UserBuilder {
@@ -369,7 +381,7 @@ impl UserBuilder_age {
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(age).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         UserBuilder {
@@ -379,10 +391,14 @@ impl UserBuilder_age {
     }
     pub fn eq_any(&self, value: Vec<i32>) -> UserBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(age).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         UserBuilder {
@@ -401,7 +417,7 @@ impl UserBuilder_active {
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(active).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         UserBuilder {
@@ -411,10 +427,14 @@ impl UserBuilder_active {
     }
     pub fn eq_any(&self, value: Vec<bool>) -> UserBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(active).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         UserBuilder {
@@ -433,7 +453,7 @@ impl UserBuilder_created_at {
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(created_at).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         UserBuilder {
@@ -443,10 +463,14 @@ impl UserBuilder_created_at {
     }
     pub fn eq_any(&self, value: Vec<chrono::DateTime<chrono::Local>>) -> UserBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "users".to_string(),
             name: stringify!(created_at).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         UserBuilder {

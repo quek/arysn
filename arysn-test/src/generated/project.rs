@@ -185,7 +185,7 @@ impl ProjectBuilder_id {
         filters.push(Filter {
             table: "projects".to_string(),
             name: stringify!(id).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         ProjectBuilder {
@@ -195,10 +195,14 @@ impl ProjectBuilder_id {
     }
     pub fn eq_any(&self, value: Vec<i64>) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "projects".to_string(),
             name: stringify!(id).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         ProjectBuilder {
@@ -217,7 +221,7 @@ impl ProjectBuilder_name {
         filters.push(Filter {
             table: "projects".to_string(),
             name: stringify!(name).to_string(),
-            value: value.into(),
+            value: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         ProjectBuilder {
@@ -227,10 +231,14 @@ impl ProjectBuilder_name {
     }
     pub fn eq_any(&self, value: Vec<String>) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
+        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
+        for x in value {
+            v.push(Box::new(x));
+        }
         filters.push(Filter {
             table: "projects".to_string(),
             name: stringify!(name).to_string(),
-            value: value.into(),
+            value: v,
             operator: "in".to_string(),
         });
         ProjectBuilder {
