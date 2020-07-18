@@ -357,6 +357,7 @@ fn compute_type(
         "integer" => quote!(i32),
         "bigint" => quote!(i64),
         "character varying" => quote!(String),
+        "text" => quote!(String),
         "timestamp with time zone" => quote!(chrono::DateTime<chrono::Local>),
         "timestamp without time zone" => quote!(chrono::NaiveDateTime),
         "USER-DEFINED" => {
