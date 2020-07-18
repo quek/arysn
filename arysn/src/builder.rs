@@ -12,7 +12,7 @@ pub trait BuilderTrait {
     fn select_params(&self) -> Vec<&(dyn ToSql + Sync)> {
         let mut result: Vec<&(dyn ToSql + Sync)> = vec![];
         for filter in self.filters().iter() {
-            for value in filter.value.iter() {
+            for value in filter.values.iter() {
                 result.push(value.as_to_sql().unwrap());
             }
         }

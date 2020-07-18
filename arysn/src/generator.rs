@@ -292,7 +292,7 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                         filters.push(Filter {
                             table: #table_name.to_string(),
                             name: stringify!(#column_names).to_string(),
-                            value: vec![Box::new(value)],
+                            values: vec![Box::new(value)],
                             operator: "=".to_string()
                         });
                         #builder_name {
@@ -301,16 +301,16 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                         }
                     }
 
-                    pub fn eq_any(&self, value: Vec<#rust_types>) -> #builder_name {
+                    pub fn eq_any(&self, values: Vec<#rust_types>) -> #builder_name {
                         let mut filters = self.builder.filters.clone();
-                        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
-                        for x in value {
-                            v.push(Box::new(x));
+                        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+                        for v in values {
+                            vs.push(Box::new(v));
                         }
                         filters.push(Filter {
                             table: #table_name.to_string(),
                             name: stringify!(#column_names).to_string(),
-                            value: v,
+                            values: vs,
                             operator: "in".to_string(),
                         });
                         #builder_name {

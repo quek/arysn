@@ -246,7 +246,7 @@ impl RoleBuilder_id {
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(id).to_string(),
-            value: vec![Box::new(value)],
+            values: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         RoleBuilder {
@@ -254,16 +254,16 @@ impl RoleBuilder_id {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<i64>) -> RoleBuilder {
+    pub fn eq_any(&self, values: Vec<i64>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
-        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
-        for x in value {
-            v.push(Box::new(x));
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
         }
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(id).to_string(),
-            value: v,
+            values: vs,
             operator: "in".to_string(),
         });
         RoleBuilder {
@@ -282,7 +282,7 @@ impl RoleBuilder_user_id {
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(user_id).to_string(),
-            value: vec![Box::new(value)],
+            values: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         RoleBuilder {
@@ -290,16 +290,16 @@ impl RoleBuilder_user_id {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<i64>) -> RoleBuilder {
+    pub fn eq_any(&self, values: Vec<i64>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
-        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
-        for x in value {
-            v.push(Box::new(x));
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
         }
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(user_id).to_string(),
-            value: v,
+            values: vs,
             operator: "in".to_string(),
         });
         RoleBuilder {
@@ -318,7 +318,7 @@ impl RoleBuilder_role_type {
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(role_type).to_string(),
-            value: vec![Box::new(value)],
+            values: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         RoleBuilder {
@@ -326,16 +326,16 @@ impl RoleBuilder_role_type {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<RoleType>) -> RoleBuilder {
+    pub fn eq_any(&self, values: Vec<RoleType>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
-        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
-        for x in value {
-            v.push(Box::new(x));
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
         }
         filters.push(Filter {
             table: "roles".to_string(),
             name: stringify!(role_type).to_string(),
-            value: v,
+            values: vs,
             operator: "in".to_string(),
         });
         RoleBuilder {

@@ -193,7 +193,7 @@ impl ScreenBuilder_id {
         filters.push(Filter {
             table: "screens".to_string(),
             name: stringify!(id).to_string(),
-            value: vec![Box::new(value)],
+            values: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         ScreenBuilder {
@@ -201,16 +201,16 @@ impl ScreenBuilder_id {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<i64>) -> ScreenBuilder {
+    pub fn eq_any(&self, values: Vec<i64>) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
-        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
-        for x in value {
-            v.push(Box::new(x));
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
         }
         filters.push(Filter {
             table: "screens".to_string(),
             name: stringify!(id).to_string(),
-            value: v,
+            values: vs,
             operator: "in".to_string(),
         });
         ScreenBuilder {
@@ -229,7 +229,7 @@ impl ScreenBuilder_role_id {
         filters.push(Filter {
             table: "screens".to_string(),
             name: stringify!(role_id).to_string(),
-            value: vec![Box::new(value)],
+            values: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         ScreenBuilder {
@@ -237,16 +237,16 @@ impl ScreenBuilder_role_id {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<i64>) -> ScreenBuilder {
+    pub fn eq_any(&self, values: Vec<i64>) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
-        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
-        for x in value {
-            v.push(Box::new(x));
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
         }
         filters.push(Filter {
             table: "screens".to_string(),
             name: stringify!(role_id).to_string(),
-            value: v,
+            values: vs,
             operator: "in".to_string(),
         });
         ScreenBuilder {
@@ -265,7 +265,7 @@ impl ScreenBuilder_name {
         filters.push(Filter {
             table: "screens".to_string(),
             name: stringify!(name).to_string(),
-            value: vec![Box::new(value)],
+            values: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         ScreenBuilder {
@@ -273,16 +273,16 @@ impl ScreenBuilder_name {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<String>) -> ScreenBuilder {
+    pub fn eq_any(&self, values: Vec<String>) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
-        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
-        for x in value {
-            v.push(Box::new(x));
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
         }
         filters.push(Filter {
             table: "screens".to_string(),
             name: stringify!(name).to_string(),
-            value: v,
+            values: vs,
             operator: "in".to_string(),
         });
         ScreenBuilder {

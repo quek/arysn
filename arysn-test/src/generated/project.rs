@@ -185,7 +185,7 @@ impl ProjectBuilder_id {
         filters.push(Filter {
             table: "projects".to_string(),
             name: stringify!(id).to_string(),
-            value: vec![Box::new(value)],
+            values: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         ProjectBuilder {
@@ -193,16 +193,16 @@ impl ProjectBuilder_id {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<i64>) -> ProjectBuilder {
+    pub fn eq_any(&self, values: Vec<i64>) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
-        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
-        for x in value {
-            v.push(Box::new(x));
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
         }
         filters.push(Filter {
             table: "projects".to_string(),
             name: stringify!(id).to_string(),
-            value: v,
+            values: vs,
             operator: "in".to_string(),
         });
         ProjectBuilder {
@@ -221,7 +221,7 @@ impl ProjectBuilder_name {
         filters.push(Filter {
             table: "projects".to_string(),
             name: stringify!(name).to_string(),
-            value: vec![Box::new(value)],
+            values: vec![Box::new(value)],
             operator: "=".to_string(),
         });
         ProjectBuilder {
@@ -229,16 +229,16 @@ impl ProjectBuilder_name {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<String>) -> ProjectBuilder {
+    pub fn eq_any(&self, values: Vec<String>) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
-        let mut v: Vec<Box<dyn ToSqlValue>> = vec![];
-        for x in value {
-            v.push(Box::new(x));
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
         }
         filters.push(Filter {
             table: "projects".to_string(),
             name: stringify!(name).to_string(),
-            value: v,
+            values: vs,
             operator: "in".to_string(),
         });
         ProjectBuilder {

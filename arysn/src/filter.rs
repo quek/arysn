@@ -4,7 +4,7 @@ use crate::value::ToSqlValue;
 pub struct Filter {
     pub table: String,
     pub name: String,
-    pub value: Vec<Box<dyn ToSqlValue>>,
+    pub values: Vec<Box<dyn ToSqlValue>>,
     pub operator: String,
 }
 
@@ -12,7 +12,7 @@ impl Filter {
     pub fn to_sql(&self, bind_index: usize) -> (String, usize) {
         match self.operator.as_str() {
             "in" => {
-                let len = self.value.len();
+                let len = self.values.len();
                 if len == 0 {
                     ("1 = 2".to_string(), 0)
                 } else {
