@@ -2,11 +2,25 @@ use super::screen::{Screen, ScreenBuilder};
 use super::user::{User, UserBuilder};
 use arysn::prelude::*;
 use async_recursion::async_recursion;
+use postgres_types::{FromSql, ToSql};
+#[derive(Debug, Clone, ToSql, FromSql)]
+#[postgres(name = "role_type")]
+pub enum RoleType {
+    #[postgres(name = "admin")]
+    Admin,
+    #[postgres(name = "user")]
+    User,
+}
+impl From<RoleType> for Value {
+    fn from(x: RoleType) -> Self {
+        Value::UserDefined(Box::new(x))
+    }
+}
 #[derive(Clone, Debug)]
 pub struct Role {
     pub id: i64,
     pub user_id: i64,
-    pub role_type: i32,
+    pub role_type: RoleType,
     pub screens: Option<Vec<Screen>>,
     pub user: Option<User>,
 }
@@ -14,7 +28,7 @@ pub struct Role {
 pub struct RoleNew {
     pub id: Option<i64>,
     pub user_id: i64,
-    pub role_type: i32,
+    pub role_type: RoleType,
 }
 impl Role {
     pub fn select() -> RoleBuilder {
@@ -296,7 +310,7 @@ pub struct RoleBuilder_role_type {
     pub builder: RoleBuilder,
 }
 impl RoleBuilder_role_type {
-    pub fn eq(&self, value: i32) -> RoleBuilder {
+    pub fn eq(&self, value: RoleType) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
             table: "roles".to_string(),
@@ -309,7 +323,7 @@ impl RoleBuilder_role_type {
             ..self.builder.clone()
         }
     }
-    pub fn eq_any(&self, value: Vec<i32>) -> RoleBuilder {
+    pub fn eq_any(&self, value: Vec<RoleType>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
             table: "roles".to_string(),

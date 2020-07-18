@@ -106,3 +106,9 @@ impl From<Vec<DateTime<Local>>> for Value {
         Self::VecDateTime(x)
     }
 }
+
+// impl<T> From<Vec<T>> for Value where T: tokio_postgres::types::ToSql {
+//     fn from(x: Vec<T>) -> Self {
+//         Self::UserDefined(x)
+//     }
+// }

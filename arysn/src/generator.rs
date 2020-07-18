@@ -2,7 +2,7 @@ use anyhow::Result;
 use belongs_to::{make_belongs_to, BelongsTo};
 use config::Config;
 use has_many::{make_has_many, HasMany};
-// use inflector::Inflector;
+use inflector::Inflector;
 use log::debug;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -12,6 +12,7 @@ use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
 
 mod belongs_to;
+mod enums;
 pub mod config;
 mod has_many;
 
@@ -117,6 +118,13 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         let fn_insert: TokenStream = make_fn_insert(struct_name, &table_name, &columns);
         let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
+        let enums = enums::definitions(&columns, &client).await?;
+        let use_to_sql_from_sql = if enums.is_empty() {
+            quote!()
+        } else {
+            quote!(use postgres_types::{FromSql, ToSql};)
+        };
+        
         let HasMany {
             has_many_use,
             has_many_field,
@@ -142,8 +150,11 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         let output = quote! {
             use arysn::prelude::*;
             use async_recursion::async_recursion;
+            #use_to_sql_from_sql
             #(#has_many_use)*
             #(#belongs_to_use)*
+
+            #(#enums)*
 
             #[derive(Clone, Debug)]
             pub struct #struct_name {
@@ -311,18 +322,6 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
     })
 }
 
-fn enum_query() {
-    let sql = r"
-SELECT t.typname as enum_name,
-       e.enumlabel as enum_value
-FROM pg_type t
-   JOIN pg_enum e ON t.oid = e.enumtypid
-   JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-WHERE t.typname = 'user_status'
-ORDER BY e.enumsortorder
-";
-}
-
 async fn primary_key(table_name: &String, client: &Client) -> Result<Vec<String>> {
     let sql = format!(
         r"
@@ -356,11 +355,10 @@ fn compute_type(
         "bigint" => (quote!(i64), quote!(I64)),
         "character varying" => (quote!(String), quote!(String)),
         "timestamp with time zone" => (quote!(chrono::DateTime<chrono::Local>), quote!(DateTime)),
-        // TODO "USER-DEFINED" => {
-        // TODO     let name = format_ident!("{}", udt_name.to_class_case());
-        // TODO     (quote!(#name), quote!(#name))
-        // TODO }
-        "USER-DEFINED" => (quote!(i32), quote!(I32)),
+        "USER-DEFINED" => {
+            let name = format_ident!("{}", udt_name.to_class_case());
+            (quote!(#name), quote!(#name))
+        }
         _ => panic!("unknown sql type: {}", data_type),
     };
     if is_nullable {
@@ -385,7 +383,7 @@ async fn connect() -> Result<Client> {
     Ok(client)
 }
 
-struct Column {
+pub struct Column {
     pub name: String,
     pub is_nullable: bool,
     pub data_type: String,
