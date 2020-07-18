@@ -15,6 +15,7 @@ env_logger = "*"
 log = "*"
 tokio = { version = "0.2", features = ["full"] }
 tokio-postgres = { version = "0.5", features = ["with-chrono-0_4"] }
+postgres-types = { version = "0.1", features = ["derive"] }
 
 [build-dependencies]
 anyhow = "*"

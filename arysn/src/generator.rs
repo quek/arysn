@@ -2,6 +2,7 @@ use anyhow::Result;
 use belongs_to::{make_belongs_to, BelongsTo};
 use config::Config;
 use has_many::{make_has_many, HasMany};
+use inflector::Inflector;
 use log::debug;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -11,6 +12,7 @@ use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
 
 mod belongs_to;
+mod enums;
 pub mod config;
 mod has_many;
 
@@ -34,7 +36,7 @@ async fn columns(table_name: &String, client: &Client) -> Result<Vec<Column>> {
     let primary_key: Vec<String> = primary_key(table_name, client).await?;
     let sql = format!(
         r"
-SELECT column_name, is_nullable, data_type, column_default
+SELECT column_name, is_nullable, data_type, column_default, udt_name
 FROM
   information_schema.columns
 WHERE
@@ -52,8 +54,9 @@ ORDER BY ordinal_position
             let is_nullable: bool = is_nullable == "YES";
             let data_type: String = row.get(2);
             let column_default: Option<String> = row.get(3);
+            let udt_name: String = row.get(4);
             let (rust_type, mut nullable_rust_type, value_type) =
-                compute_type(&data_type, is_nullable);
+                compute_type(&data_type, is_nullable, &udt_name);
             let rust_type_for_new = if column_default.is_some() && !is_nullable {
                 quote! { Option<#rust_type> }
             } else {
@@ -73,6 +76,7 @@ ORDER BY ordinal_position
                 nullable_rust_type,
                 value_type,
                 is_primary_key,
+                udt_name,
             }
         })
         .collect();
@@ -114,6 +118,13 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         let fn_insert: TokenStream = make_fn_insert(struct_name, &table_name, &columns);
         let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
+        let enums = enums::definitions(&columns, &client).await?;
+        let use_to_sql_from_sql = if enums.is_empty() {
+            quote!()
+        } else {
+            quote!(use postgres_types::{FromSql, ToSql};)
+        };
+        
         let HasMany {
             has_many_use,
             has_many_field,
@@ -139,8 +150,11 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         let output = quote! {
             use arysn::prelude::*;
             use async_recursion::async_recursion;
+            #use_to_sql_from_sql
             #(#has_many_use)*
             #(#belongs_to_use)*
+
+            #(#enums)*
 
             #[derive(Clone, Debug)]
             pub struct #struct_name {
@@ -278,7 +292,7 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                         filters.push(Filter {
                             table: #table_name.to_string(),
                             name: stringify!(#column_names).to_string(),
-                            value: value.into(),
+                            values: vec![Box::new(value)],
                             operator: "=".to_string()
                         });
                         #builder_name {
@@ -287,12 +301,16 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                         }
                     }
 
-                    pub fn eq_any(&self, value: Vec<#rust_types>) -> #builder_name {
+                    pub fn eq_any(&self, values: Vec<#rust_types>) -> #builder_name {
                         let mut filters = self.builder.filters.clone();
+                        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+                        for v in values {
+                            vs.push(Box::new(v));
+                        }
                         filters.push(Filter {
                             table: #table_name.to_string(),
                             name: stringify!(#column_names).to_string(),
-                            value: value.into(),
+                            values: vs,
                             operator: "in".to_string(),
                         });
                         #builder_name {
@@ -330,13 +348,21 @@ ORDER BY kcu.ordinal_position
     Ok(result)
 }
 
-fn compute_type(data_type: &str, is_nullable: bool) -> (TokenStream, TokenStream, TokenStream) {
+fn compute_type(
+    data_type: &str,
+    is_nullable: bool,
+    udt_name: &String,
+) -> (TokenStream, TokenStream, TokenStream) {
     let (rust_type, value_type) = match data_type {
         "boolean" => (quote!(bool), quote!(Bool)),
         "integer" => (quote!(i32), quote!(I32)),
         "bigint" => (quote!(i64), quote!(I64)),
         "character varying" => (quote!(String), quote!(String)),
         "timestamp with time zone" => (quote!(chrono::DateTime<chrono::Local>), quote!(DateTime)),
+        "USER-DEFINED" => {
+            let name = format_ident!("{}", udt_name.to_class_case());
+            (quote!(#name), quote!(#name))
+        }
         _ => panic!("unknown sql type: {}", data_type),
     };
     if is_nullable {
@@ -361,7 +387,7 @@ async fn connect() -> Result<Client> {
     Ok(client)
 }
 
-struct Column {
+pub struct Column {
     pub name: String,
     pub is_nullable: bool,
     pub data_type: String,
@@ -371,6 +397,7 @@ struct Column {
     pub nullable_rust_type: TokenStream,
     pub value_type: TokenStream,
     pub is_primary_key: bool,
+    pub udt_name: String,
 }
 
 fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {

@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS contributions;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS screens;
 DROP TABLE IF EXISTS roles;
+DROP TYPE IF EXISTS role_type;
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
@@ -22,16 +23,18 @@ INSERT INTO users(name, title, age, active, created_at) VALUES
 ,('ユーザ3', 'もののけ', 22, TRUE, CURRENT_TIMESTAMP)
 ;
 
+CREATE TYPE role_type AS ENUM ('admin', 'user');
+
 CREATE TABLE roles (
   id BIGSERIAL PRIMARY KEY,
   user_id BIGINT NOT NULL REFERENCES users ON DELETE CASCADE,
-  name VARCHAR(255) NOT NULL
+  role_type role_type NOT NULL
 );
 
-INSERT INTO roles(user_id, name) VALUES
- (1, '管理')
-,(1, '編集')
-,(2, '参照')
+INSERT INTO roles(user_id, role_type) VALUES
+ (1, 'admin')
+,(1, 'user')
+,(2, 'user')
 ;
 
 CREATE TABLE screens (
