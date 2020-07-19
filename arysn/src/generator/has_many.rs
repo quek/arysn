@@ -5,7 +5,8 @@ use quote::{format_ident, quote};
 
 #[derive(Default)]
 pub struct HasMany {
-    pub has_many_use: Vec<TokenStream>,
+    pub has_many_use_plain: Vec<TokenStream>,
+    pub has_many_use_impl: Vec<TokenStream>,
     pub has_many_field: Vec<TokenStream>,
     pub has_many_init: Vec<TokenStream>,
     pub has_many_builder_field: Vec<TokenStream>,
@@ -26,6 +27,7 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                 .to_table_case()
                 .to_singular()
         );
+        let module_name_impl = format_ident!("{}_impl", module_name);
         let foreign_key = format_ident!("{}_id", config.table_name.to_singular());
         let field_name = &has_many.field;
         let join = format!(
@@ -39,8 +41,12 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
         let builder_field = format_ident!("{}_builder", field_name.to_string());
         let child_builder_name = format_ident!("{}Builder", &struct_name.to_string());
 
-        result.has_many_use.push(quote! {
-            use super::#module_name::{#struct_name, #child_builder_name};
+        result.has_many_use_plain.push(quote! {
+            use super::#module_name::#struct_name;
+        });
+        result.has_many_use_impl.push(quote! {
+            use super::#module_name::#struct_name;
+            use super::#module_name_impl::#child_builder_name;
         });
         result
             .has_many_field

@@ -7,6 +7,7 @@ use log::debug;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use std::io::Write;
+use std::path::PathBuf;
 use std::process::Command;
 use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
@@ -19,15 +20,27 @@ mod has_many;
 pub fn define_ar(config: &Config) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
 
-    let output: TokenStream = define_ar_impl(config).unwrap();
+    let (output_plain, output_impl): (TokenStream, TokenStream) = define_ar_impl(config).unwrap();
+    let path = &config.path;
     {
-        let mut writer = std::io::BufWriter::new(std::fs::File::create(config.path)?);
-        writeln!(writer, "{}", &output.to_string())?;
+        let mut writer = std::io::BufWriter::new(std::fs::File::create(path)?);
+        writeln!(writer, "{}", &output_plain.to_string())?;
     }
     Command::new("rustfmt")
         .arg("--edition")
         .arg("2018")
-        .arg(config.path)
+        .arg(path)
+        .output()?;
+
+    let path = &config.path.replace(".rs", "_impl.rs");
+    {
+        let mut writer = std::io::BufWriter::new(std::fs::File::create(path)?);
+        writeln!(writer, "{}", &output_impl.to_string())?;
+    }
+    Command::new("rustfmt")
+        .arg("--edition")
+        .arg("2018")
+        .arg(path)
         .output()?;
     Ok(())
 }
@@ -82,7 +95,7 @@ ORDER BY ordinal_position
     Ok(result)
 }
 
-fn define_ar_impl(config: &Config) -> Result<TokenStream> {
+fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
     let mut rt = Runtime::new()?;
 
     rt.block_on(async {
@@ -103,6 +116,14 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         }
         let column_index = 0..columns.len();
 
+        let module_name: Ident = format_ident!(
+            "{}",
+            PathBuf::from(&config.path)
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+        );
         let struct_name: &Ident = &config.struct_name;
         let new_struct_name: Ident = format_ident!("{}New", struct_name);
         let builder_name: Ident = format_ident!("{}Builder", struct_name);
@@ -125,7 +146,8 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         };
 
         let HasMany {
-            has_many_use,
+            has_many_use_plain,
+            has_many_use_impl,
             has_many_field,
             has_many_init,
             has_many_builder_field,
@@ -136,7 +158,8 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
         } = make_has_many(config, &builder_name);
 
         let BelongsTo {
-            belongs_to_use,
+            belongs_to_use_plain,
+            belongs_to_use_impl,
             belongs_to_field,
             belongs_to_init,
             belongs_to_builder_field,
@@ -146,12 +169,10 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
             belongs_to_preload,
         } = make_belongs_to(config, &builder_name);
 
-        let output = quote! {
-            use arysn::prelude::*;
-            use async_recursion::async_recursion;
+        let output_plain = quote! {
             #use_to_sql_from_sql
-            #(#has_many_use)*
-            #(#belongs_to_use)*
+            #(#has_many_use_plain)*
+            #(#belongs_to_use_plain)*
 
             #(#enums)*
 
@@ -166,6 +187,13 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
             pub struct #new_struct_name {
                 #(pub #column_names: #rust_types_for_new,)*
             }
+        };
+        let output_impl = quote! {
+            use arysn::prelude::*;
+            use async_recursion::async_recursion;
+            use super::#module_name::*;
+            #(#has_many_use_impl)*
+            #(#belongs_to_use_impl)*
 
             impl #struct_name {
                 pub fn select() -> #builder_name {
@@ -320,8 +348,7 @@ fn define_ar_impl(config: &Config) -> Result<TokenStream> {
                 }
             )*
         };
-        debug!("output: {}", &output);
-        Ok(output.into())
+        Ok((output_plain, output_impl))
     })
 }
 

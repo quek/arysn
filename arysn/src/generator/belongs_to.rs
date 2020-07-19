@@ -5,7 +5,8 @@ use quote::{format_ident, quote};
 
 #[derive(Default)]
 pub struct BelongsTo {
-    pub belongs_to_use: Vec<TokenStream>,
+    pub belongs_to_use_plain: Vec<TokenStream>,
+    pub belongs_to_use_impl: Vec<TokenStream>,
     pub belongs_to_field: Vec<TokenStream>,
     pub belongs_to_init: Vec<TokenStream>,
     pub belongs_to_builder_field: Vec<TokenStream>,
@@ -26,6 +27,7 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
                 .to_table_case()
                 .to_singular()
         );
+        let module_name_impl = format_ident!("{}_impl", module_name);
         let field_name = &belongs_to.field;
         let foreign_key = format_ident!("{}_id", &field_name);
         let join = format!(
@@ -39,8 +41,12 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
         let builder_field = format_ident!("{}_builder", &field_name);
         let child_builder_name = format_ident!("{}Builder", &struct_name.to_string());
 
-        result.belongs_to_use.push(quote! {
-            use super::#module_name::{#struct_name, #child_builder_name};
+        result.belongs_to_use_plain.push(quote! {
+            use super::#module_name::#struct_name;
+        });
+        result.belongs_to_use_impl.push(quote! {
+            use super::#module_name::#struct_name;
+            use super::#module_name_impl::#child_builder_name;
         });
         result
             .belongs_to_field
