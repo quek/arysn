@@ -1,6 +1,7 @@
 use super::contribution::Contribution;
 use super::role::Role;
-#[derive(Clone, Debug)]
+use serde::{Deserialize, Serialize};
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct User {
     pub id: i64,
     pub name: String,
@@ -11,7 +12,7 @@ pub struct User {
     pub roles: Option<Vec<Role>>,
     pub contributions: Option<Vec<Contribution>>,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserNew {
     pub id: Option<i64>,
     pub name: String,

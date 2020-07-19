@@ -1,6 +1,7 @@
 use super::project::Project;
 use super::user::User;
-#[derive(Clone, Debug)]
+use serde::{Deserialize, Serialize};
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Contribution {
     pub id: i64,
     pub project_id: i64,
@@ -8,7 +9,7 @@ pub struct Contribution {
     pub project: Option<Project>,
     pub user: Option<User>,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ContributionNew {
     pub id: Option<i64>,
     pub project_id: i64,

@@ -1,7 +1,8 @@
 use super::screen::Screen;
 use super::user::User;
 use postgres_types::{FromSql, ToSql};
-#[derive(Debug, Clone, ToSql, FromSql)]
+use serde::{Deserialize, Serialize};
+#[derive(Debug, Clone, ToSql, FromSql, Deserialize, Serialize)]
 #[postgres(name = "role_type")]
 pub enum RoleType {
     #[postgres(name = "admin")]
@@ -9,7 +10,7 @@ pub enum RoleType {
     #[postgres(name = "user")]
     User,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Role {
     pub id: i64,
     pub user_id: i64,
@@ -17,7 +18,7 @@ pub struct Role {
     pub screens: Option<Vec<Screen>>,
     pub user: Option<User>,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RoleNew {
     pub id: Option<i64>,
     pub user_id: i64,

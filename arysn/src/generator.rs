@@ -170,20 +170,21 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
         } = make_belongs_to(config, &builder_name);
 
         let output_plain = quote! {
+            use serde::{Deserialize, Serialize};
             #use_to_sql_from_sql
             #(#has_many_use_plain)*
             #(#belongs_to_use_plain)*
 
             #(#enums)*
 
-            #[derive(Clone, Debug)]
+            #[derive(Clone, Debug, Deserialize, Serialize)]
             pub struct #struct_name {
                 #(pub #column_names: #nullable_rust_types,)*
                 #(#has_many_field)*
                 #(#belongs_to_field)*
             }
 
-            #[derive(Clone, Debug)]
+            #[derive(Clone, Debug, Deserialize, Serialize)]
             pub struct #new_struct_name {
                 #(pub #column_names: #rust_types_for_new,)*
             }

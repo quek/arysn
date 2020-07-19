@@ -28,7 +28,7 @@ ORDER BY e.enumsortorder
         let enum_name = &column.rust_type;
         let enum_name_pg = &column.udt_name;
         result.push(quote! {
-            #[derive(Debug, Clone, ToSql, FromSql)]
+            #[derive(Debug, Clone, ToSql, FromSql, Deserialize, Serialize)]
             #[postgres(name = #enum_name_pg)]
             pub enum #enum_name {
                 #(#[postgres(name = #enumlabels_pg)]
