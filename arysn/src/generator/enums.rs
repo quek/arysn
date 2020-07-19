@@ -28,10 +28,18 @@ ORDER BY e.enumsortorder
         let enum_name = &column.rust_type;
         let enum_name_pg = &column.udt_name;
         result.push(quote! {
-            #[derive(Debug, Clone, ToSql, FromSql, Deserialize, Serialize)]
-            #[postgres(name = #enum_name_pg)]
+            #[derive(Debug, Clone, Deserialize, Serialize)]
+            #[cfg_attr(
+                target_arch = "x86_64",
+                derive(ToSql, FromSql),
+                postgres(name = #enum_name_pg)
+            )]
             pub enum #enum_name {
-                #(#[postgres(name = #enumlabels_pg)]
+                #(#[cfg_attr(
+                    target_arch = "x86_64",
+                    derive(ToSql, FromSql),
+                    postgres(name = #enumlabels_pg)
+                )]
                 #enumlabels,)*
             }
         });

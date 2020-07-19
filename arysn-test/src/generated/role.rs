@@ -1,13 +1,26 @@
 use super::screen::Screen;
 use super::user::User;
+#[cfg(target_arch = "x86_64")]
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Clone, ToSql, FromSql, Deserialize, Serialize)]
-#[postgres(name = "role_type")]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[cfg_attr(
+    target_arch = "x86_64",
+    derive(ToSql, FromSql),
+    postgres(name = "role_type")
+)]
 pub enum RoleType {
-    #[postgres(name = "admin")]
+    #[cfg_attr(
+        target_arch = "x86_64",
+        derive(ToSql, FromSql),
+        postgres(name = "admin")
+    )]
     Admin,
-    #[postgres(name = "user")]
+    #[cfg_attr(
+        target_arch = "x86_64",
+        derive(ToSql, FromSql),
+        postgres(name = "user")
+    )]
     User,
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]

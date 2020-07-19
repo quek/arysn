@@ -1,3 +1,4 @@
+#[cfg(target_arch = "x86_64")]
 use super::project::Project;
 use super::user::User;
 use serde::{Deserialize, Serialize};

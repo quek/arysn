@@ -1,3 +1,4 @@
+#[cfg(target_arch = "x86_64")]
 use super::role::Role;
 use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]

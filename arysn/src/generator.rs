@@ -171,6 +171,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
         let output_plain = quote! {
             use serde::{Deserialize, Serialize};
+            #[cfg(target_arch = "x86_64")]
             #use_to_sql_from_sql
             #(#has_many_use_plain)*
             #(#belongs_to_use_plain)*
