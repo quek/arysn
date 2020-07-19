@@ -31,13 +31,11 @@ ORDER BY e.enumsortorder
             #[derive(Debug, Clone, Deserialize, Serialize)]
             #[cfg_attr(
                 target_arch = "x86_64",
-                derive(ToSql, FromSql),
                 postgres(name = #enum_name_pg)
             )]
             pub enum #enum_name {
                 #(#[cfg_attr(
                     target_arch = "x86_64",
-                    derive(ToSql, FromSql),
                     postgres(name = #enumlabels_pg)
                 )]
                 #enumlabels,)*
