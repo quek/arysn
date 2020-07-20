@@ -6,7 +6,7 @@ use common::init;
 mod common;
 
 #[tokio::test]
-async fn it_works() -> Result<()> {
+async fn crud() -> Result<()> {
     init();
 
     let client = connect().await?;

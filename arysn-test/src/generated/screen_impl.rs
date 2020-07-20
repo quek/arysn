@@ -104,13 +104,13 @@ impl ScreenBuilder {
             ..self.clone()
         }
     }
-    fn limit(&self, value: usize) -> Self {
+    pub fn limit(&self, value: usize) -> Self {
         Self {
             limit: Some(value),
             ..self.clone()
         }
     }
-    fn offset(&self, value: usize) -> Self {
+    pub fn offset(&self, value: usize) -> Self {
         Self {
             offset: Some(value),
             ..self.clone()
