@@ -23,7 +23,7 @@ ORDER BY e.enumsortorder
         let enumlabels_pg: Vec<String> = rows.iter().map(|row| row.get(0)).collect();
         let enumlabels: Vec<Ident> = enumlabels_pg
             .iter()
-            .map(|x| format_ident!("{}", x.to_class_case()))
+            .map(|x| format_ident!("{}", x.to_class_case())) // TODO user_status -> UserStatu になる
             .collect();
         let enum_name = &column.rust_type;
         let enum_name_pg = &column.udt_name;
@@ -31,6 +31,7 @@ ORDER BY e.enumsortorder
             #[derive(Debug, Clone, Deserialize, Serialize)]
             #[cfg_attr(
                 target_arch = "x86_64",
+                derive(FromSql, ToSql),
                 postgres(name = #enum_name_pg)
             )]
             pub enum #enum_name {

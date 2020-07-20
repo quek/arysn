@@ -6,21 +6,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[cfg_attr(
     target_arch = "x86_64",
-    derive(ToSql, FromSql),
+    derive(FromSql, ToSql),
     postgres(name = "role_type")
 )]
 pub enum RoleType {
-    #[cfg_attr(
-        target_arch = "x86_64",
-        derive(ToSql, FromSql),
-        postgres(name = "admin")
-    )]
+    #[cfg_attr(target_arch = "x86_64", postgres(name = "admin"))]
     Admin,
-    #[cfg_attr(
-        target_arch = "x86_64",
-        derive(ToSql, FromSql),
-        postgres(name = "user")
-    )]
+    #[cfg_attr(target_arch = "x86_64", postgres(name = "user"))]
     User,
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]
