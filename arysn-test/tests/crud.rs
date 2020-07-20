@@ -53,3 +53,18 @@ async fn crud() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn limit_offset() -> Result<()> {
+    init();
+
+    let cnn = &connect().await?;
+
+    let users = User::select().load(cnn).await?;
+    assert_eq!(users.len(), 3);
+
+    let users = User::select().limit(1).offset(1).load(cnn).await?;
+    assert_eq!(users.len(), 1);
+
+    Ok(())
+}
