@@ -415,7 +415,7 @@ fn compute_type(
         "timestamp with time zone" => quote!(chrono::DateTime<chrono::Local>),
         "timestamp without time zone" => quote!(chrono::NaiveDateTime),
         "USER-DEFINED" => {
-            let name = format_ident!("{}", udt_name.to_class_case());
+            let name = format_ident!("{}", udt_name.to_title_case().replace(" ", ""));
             quote!(#name)
         }
         _ => panic!("unknown sql type: {}", data_type),
