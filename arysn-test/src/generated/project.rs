@@ -1,4 +1,3 @@
-#[cfg(target_arch = "x86_64")]
 use super::contribution::Contribution;
 use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]

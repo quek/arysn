@@ -69,6 +69,8 @@ pub struct RoleBuilder {
     pub filters: Vec<Filter>,
     pub preload: bool,
     pub order: String,
+    pub limit: Option<usize>,
+    pub offset: Option<usize>,
     pub screens_builder: Option<Box<ScreenBuilder>>,
     pub user_builder: Option<Box<UserBuilder>>,
 }
@@ -115,6 +117,18 @@ impl RoleBuilder {
     pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
         Self {
             order: value.as_ref().to_string(),
+            ..self.clone()
+        }
+    }
+    fn limit(&self, value: usize) -> Self {
+        Self {
+            limit: Some(value),
+            ..self.clone()
+        }
+    }
+    fn offset(&self, value: usize) -> Self {
+        Self {
+            offset: Some(value),
             ..self.clone()
         }
     }
@@ -214,6 +228,12 @@ impl BuilderTrait for RoleBuilder {
     }
     fn order_part(&self) -> String {
         self.order.clone()
+    }
+    fn limit(&self) -> Option<usize> {
+        self.limit
+    }
+    fn offset(&self) -> Option<usize> {
+        self.offset
     }
 }
 #[allow(non_camel_case_types)]

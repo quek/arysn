@@ -8,6 +8,8 @@ pub trait BuilderTrait {
     fn join(&self, join_parts: &mut Vec<String>);
     fn filters(&self) -> Vec<&Filter>;
     fn order_part(&self) -> String;
+    fn limit(&self) -> Option<usize>;
+    fn offset(&self) -> Option<usize>;
 
     fn select_params(&self) -> Vec<&(dyn ToSql + Sync)> {
         let mut result: Vec<&(dyn ToSql + Sync)> = vec![];
@@ -37,13 +39,23 @@ pub trait BuilderTrait {
         } else {
             format!(" ORDER BY {}", &self.order_part())
         };
+        let limit = match Self::limit(self) {
+            Some(limit) => format!(" LIMIT {}", limit),
+            _ => "".to_string(),
+        };
+        let offset = match Self::offset(self) {
+            Some(offset) => format!(" OFFSET {}", offset),
+            _ => "".to_string(),
+        };
         // TODO 無条件に DISTINCT 付けるのはどうかと思う
         format!(
-            "SELECT DISTINCT {}.* FROM {}{}{}",
+            "SELECT DISTINCT {}.* FROM {}{}{}{}{}",
             self.select(),
             self.from(),
             where_part,
             order_part,
+            limit,
+            offset
         )
     }
 }

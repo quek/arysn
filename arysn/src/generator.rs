@@ -23,6 +23,7 @@ pub fn define_ar(config: &Config) -> Result<()> {
     let (output_plain, output_impl): (TokenStream, TokenStream) = define_ar_impl(config).unwrap();
     let path = &config.path;
     {
+        println!("path {}", &path);
         let mut writer = std::io::BufWriter::new(std::fs::File::create(path)?);
         writeln!(writer, "{}", &output_plain.to_string())?;
     }
@@ -141,6 +142,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             quote!()
         } else {
             quote!(
+                #[cfg(target_arch = "x86_64")]
                 use postgres_types::{FromSql, ToSql};
             )
         };
@@ -171,7 +173,6 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
         let output_plain = quote! {
             use serde::{Deserialize, Serialize};
-            #[cfg(target_arch = "x86_64")]
             #use_to_sql_from_sql
             #(#has_many_use_plain)*
             #(#belongs_to_use_plain)*
@@ -230,6 +231,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 pub filters: Vec<Filter>,
                 pub preload: bool,
                 pub order: String,
+                pub limit: Option<usize>,
+                pub offset: Option<usize>,
                 #(#has_many_builder_field)*
                 #(#belongs_to_builder_field)*
             }
@@ -246,6 +249,20 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
                     Self {
                         order: value.as_ref().to_string(),
+                        ..self.clone()
+                    }
+                }
+
+                fn limit(&self, value: usize) -> Self {
+                    Self {
+                        limit: Some(value),
+                        ..self.clone()
+                    }
+                }
+
+                fn offset(&self, value: usize) -> Self {
+                    Self {
+                        offset: Some(value),
                         ..self.clone()
                     }
                 }
@@ -307,6 +324,14 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
                 fn order_part(&self) -> String {
                     self.order.clone()
+                }
+
+                fn limit(&self) -> Option<usize> {
+                    self.limit
+                }
+
+                fn offset(&self) -> Option<usize> {
+                    self.offset
                 }
             }
 
