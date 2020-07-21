@@ -68,3 +68,22 @@ async fn limit_offset() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn operators() -> Result<()> {
+    init();
+
+    let cnn = &connect().await?;
+
+    let users = User::select()
+        .id()
+        .gt(1)
+        .id()
+        .lt(3)
+        .order("users.id asc")
+        .load(cnn)
+        .await?;
+    assert_eq!(users[0].id, 2);
+
+    Ok(())
+}

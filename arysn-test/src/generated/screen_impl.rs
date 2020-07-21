@@ -210,6 +210,110 @@ impl ScreenBuilder_id {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: i64, to: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<i64>) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -220,7 +324,41 @@ impl ScreenBuilder_id {
             table: "screens".to_string(),
             name: stringify!(id).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<i64>) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<i64>) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(id).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         ScreenBuilder {
             filters,
@@ -246,6 +384,110 @@ impl ScreenBuilder_role_id {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: i64, to: i64) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<i64>) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -256,7 +498,41 @@ impl ScreenBuilder_role_id {
             table: "screens".to_string(),
             name: stringify!(role_id).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<i64>) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<i64>) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(role_id).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         ScreenBuilder {
             filters,
@@ -282,6 +558,110 @@ impl ScreenBuilder_name {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: String) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: String) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: String) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: String) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: String) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: String, to: String) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<String>) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -292,7 +672,41 @@ impl ScreenBuilder_name {
             table: "screens".to_string(),
             name: stringify!(name).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<String>) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        ScreenBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<String>) -> ScreenBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "screens".to_string(),
+            name: stringify!(name).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         ScreenBuilder {
             filters,

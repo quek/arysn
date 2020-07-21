@@ -204,6 +204,110 @@ impl ProjectBuilder_id {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: i64) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: i64) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: i64) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: i64) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: i64) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: i64, to: i64) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<i64>) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -214,7 +318,41 @@ impl ProjectBuilder_id {
             table: "projects".to_string(),
             name: stringify!(id).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<i64>) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<i64>) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(id).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         ProjectBuilder {
             filters,
@@ -240,6 +378,110 @@ impl ProjectBuilder_name {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: String) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: String) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: String) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: String) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: String) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: String, to: String) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<String>) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -250,7 +492,41 @@ impl ProjectBuilder_name {
             table: "projects".to_string(),
             name: stringify!(name).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<String>) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        ProjectBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<String>) -> ProjectBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "projects".to_string(),
+            name: stringify!(name).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         ProjectBuilder {
             filters,

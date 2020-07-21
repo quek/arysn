@@ -254,6 +254,110 @@ impl RoleBuilder_id {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: i64, to: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<i64>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -264,7 +368,41 @@ impl RoleBuilder_id {
             table: "roles".to_string(),
             name: stringify!(id).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<i64>) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<i64>) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(id).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         RoleBuilder {
             filters,
@@ -290,6 +428,110 @@ impl RoleBuilder_user_id {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: i64, to: i64) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<i64>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -300,7 +542,41 @@ impl RoleBuilder_user_id {
             table: "roles".to_string(),
             name: stringify!(user_id).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<i64>) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<i64>) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         RoleBuilder {
             filters,
@@ -326,6 +602,110 @@ impl RoleBuilder_role_type {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: RoleType) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: RoleType) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: RoleType) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: RoleType) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: RoleType) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: RoleType, to: RoleType) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<RoleType>) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -336,7 +716,41 @@ impl RoleBuilder_role_type {
             table: "roles".to_string(),
             name: stringify!(role_type).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<RoleType>) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        RoleBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<RoleType>) -> RoleBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "roles".to_string(),
+            name: stringify!(role_type).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         RoleBuilder {
             filters,

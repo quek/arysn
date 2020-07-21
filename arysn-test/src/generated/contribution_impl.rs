@@ -257,6 +257,110 @@ impl ContributionBuilder_id {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: i64, to: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<i64>) -> ContributionBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -267,7 +371,41 @@ impl ContributionBuilder_id {
             table: "contributions".to_string(),
             name: stringify!(id).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<i64>) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<i64>) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(id).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         ContributionBuilder {
             filters,
@@ -293,6 +431,110 @@ impl ContributionBuilder_project_id {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: i64, to: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<i64>) -> ContributionBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -303,7 +545,41 @@ impl ContributionBuilder_project_id {
             table: "contributions".to_string(),
             name: stringify!(project_id).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<i64>) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<i64>) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(project_id).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         ContributionBuilder {
             filters,
@@ -329,6 +605,110 @@ impl ContributionBuilder_user_id {
             ..self.builder.clone()
         }
     }
+    pub fn gt(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lt(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn gte(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: ">=".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn lte(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<=".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_eq(&self, value: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(value)],
+            operator: "<>".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_null(&self) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![],
+            operator: "IS NULL".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn is_not_null(&self) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![],
+            operator: "IS NOT NULL".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn between(&self, from: i64, to: i64) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vec![Box::new(from), Box::new(to)],
+            operator: "BETWEEN".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
     pub fn eq_any(&self, values: Vec<i64>) -> ContributionBuilder {
         let mut filters = self.builder.filters.clone();
         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
@@ -339,7 +719,41 @@ impl ContributionBuilder_user_id {
             table: "contributions".to_string(),
             name: stringify!(user_id).to_string(),
             values: vs,
-            operator: "in".to_string(),
+            operator: "IN".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn r#in(&self, values: Vec<i64>) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vs,
+            operator: "IN".to_string(),
+        });
+        ContributionBuilder {
+            filters,
+            ..self.builder.clone()
+        }
+    }
+    pub fn not_in(&self, values: Vec<i64>) -> ContributionBuilder {
+        let mut filters = self.builder.filters.clone();
+        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
+        for v in values {
+            vs.push(Box::new(v));
+        }
+        filters.push(Filter {
+            table: "contributions".to_string(),
+            name: stringify!(user_id).to_string(),
+            values: vs,
+            operator: "NOT IN".to_string(),
         });
         ContributionBuilder {
             filters,
