@@ -68,7 +68,7 @@ pub struct RoleBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
-    pub order: String,
+    pub orders: Vec<OrderItem>,
     pub limit: Option<usize>,
     pub offset: Option<usize>,
     pub screens_builder: Option<Box<ScreenBuilder>>,
@@ -94,13 +94,11 @@ impl RoleBuilder {
     where
         F: FnOnce(&ScreenBuilder) -> ScreenBuilder,
     {
-        RoleBuilder {
-            screens_builder: Some(Box::new(f(self
-                .screens_builder
-                .as_ref()
-                .unwrap_or(&Default::default())))),
-            ..self.clone()
-        }
+        let mut child_builder = f(self.screens_builder.as_ref().unwrap_or(&Default::default()));
+        let mut builder = self.clone();
+        builder.orders.append(&mut child_builder.orders);
+        builder.screens_builder = Some(Box::new(child_builder));
+        builder
     }
     pub fn user<F>(&self, f: F) -> RoleBuilder
     where
@@ -111,12 +109,6 @@ impl RoleBuilder {
                 .user_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
-            ..self.clone()
-        }
-    }
-    pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
-        Self {
-            order: value.as_ref().to_string(),
             ..self.clone()
         }
     }
@@ -226,8 +218,8 @@ impl BuilderTrait for RoleBuilder {
         }
         result
     }
-    fn order_part(&self) -> String {
-        self.order.clone()
+    fn order(&self) -> &Vec<OrderItem> {
+        &self.orders
     }
     fn limit(&self) -> Option<usize> {
         self.limit
@@ -756,5 +748,59 @@ impl RoleBuilder_role_type {
             filters,
             ..self.builder.clone()
         }
+    }
+}
+impl RoleBuilder {
+    pub fn order(&self) -> RoleOrderBuilder {
+        RoleOrderBuilder {
+            builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct RoleOrderBuilder {
+    pub builder: RoleBuilder,
+}
+impl RoleOrderBuilder {
+    pub fn id(&self) -> RoleOrderAscOrDesc {
+        RoleOrderAscOrDesc {
+            field: "id",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn user_id(&self) -> RoleOrderAscOrDesc {
+        RoleOrderAscOrDesc {
+            field: "user_id",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn role_type(&self) -> RoleOrderAscOrDesc {
+        RoleOrderAscOrDesc {
+            field: "role_type",
+            order_builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct RoleOrderAscOrDesc {
+    pub field: &'static str,
+    pub order_builder: RoleOrderBuilder,
+}
+impl RoleOrderAscOrDesc {
+    pub fn asc(&self) -> RoleBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "ASC",
+        });
+        builder
+    }
+    pub fn desc(&self) -> RoleBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "DESC",
+        });
+        builder
     }
 }

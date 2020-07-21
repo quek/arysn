@@ -1,5 +1,6 @@
 use crate::filter::Filter;
 use tokio_postgres::types::ToSql;
+use crate::order_item::OrderItem;
 
 // TODO カラム名がメソッドとしてはえるので名前衝突しないように名前空間がわけたい
 pub trait BuilderTrait {
@@ -7,7 +8,7 @@ pub trait BuilderTrait {
     fn from(&self) -> String;
     fn join(&self, join_parts: &mut Vec<String>);
     fn filters(&self) -> Vec<&Filter>;
-    fn order_part(&self) -> String;
+    fn order(&self) -> &Vec<OrderItem>;
     fn limit(&self) -> Option<usize>;
     fn offset(&self) -> Option<usize>;
 
@@ -34,10 +35,11 @@ pub trait BuilderTrait {
         } else {
             format!(" WHERE {}", filters.join(" AND "))
         };
-        let order_part = if self.order_part().is_empty() {
+        let orders: &Vec<OrderItem> = BuilderTrait::order(self);
+        let order_part = if orders.is_empty() {
             "".to_string()
         } else {
-            format!(" ORDER BY {}", &self.order_part())
+            format!(" ORDER BY {}", orders.iter().map(|x| x.to_sql()).collect::<Vec<_>>().join(", "))
         };
         let limit = match Self::limit(self) {
             Some(limit) => format!(" LIMIT {}", limit),

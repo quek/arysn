@@ -81,7 +81,7 @@ pub struct UserBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
-    pub order: String,
+    pub orders: Vec<OrderItem>,
     pub limit: Option<usize>,
     pub offset: Option<usize>,
     pub roles_builder: Option<Box<RoleBuilder>>,
@@ -122,31 +122,24 @@ impl UserBuilder {
     where
         F: FnOnce(&RoleBuilder) -> RoleBuilder,
     {
-        UserBuilder {
-            roles_builder: Some(Box::new(f(self
-                .roles_builder
-                .as_ref()
-                .unwrap_or(&Default::default())))),
-            ..self.clone()
-        }
+        let mut child_builder = f(self.roles_builder.as_ref().unwrap_or(&Default::default()));
+        let mut builder = self.clone();
+        builder.orders.append(&mut child_builder.orders);
+        builder.roles_builder = Some(Box::new(child_builder));
+        builder
     }
     pub fn contributions<F>(&self, f: F) -> UserBuilder
     where
         F: FnOnce(&ContributionBuilder) -> ContributionBuilder,
     {
-        UserBuilder {
-            contributions_builder: Some(Box::new(f(self
-                .contributions_builder
-                .as_ref()
-                .unwrap_or(&Default::default())))),
-            ..self.clone()
-        }
-    }
-    pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
-        Self {
-            order: value.as_ref().to_string(),
-            ..self.clone()
-        }
+        let mut child_builder = f(self
+            .contributions_builder
+            .as_ref()
+            .unwrap_or(&Default::default()));
+        let mut builder = self.clone();
+        builder.orders.append(&mut child_builder.orders);
+        builder.contributions_builder = Some(Box::new(child_builder));
+        builder
     }
     pub fn limit(&self, value: usize) -> Self {
         Self {
@@ -256,8 +249,8 @@ impl BuilderTrait for UserBuilder {
         }
         result
     }
-    fn order_part(&self) -> String {
-        self.order.clone()
+    fn order(&self) -> &Vec<OrderItem> {
+        &self.orders
     }
     fn limit(&self) -> Option<usize> {
         self.limit
@@ -1312,5 +1305,77 @@ impl UserBuilder_created_at {
             filters,
             ..self.builder.clone()
         }
+    }
+}
+impl UserBuilder {
+    pub fn order(&self) -> UserOrderBuilder {
+        UserOrderBuilder {
+            builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct UserOrderBuilder {
+    pub builder: UserBuilder,
+}
+impl UserOrderBuilder {
+    pub fn id(&self) -> UserOrderAscOrDesc {
+        UserOrderAscOrDesc {
+            field: "id",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn name(&self) -> UserOrderAscOrDesc {
+        UserOrderAscOrDesc {
+            field: "name",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn title(&self) -> UserOrderAscOrDesc {
+        UserOrderAscOrDesc {
+            field: "title",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn age(&self) -> UserOrderAscOrDesc {
+        UserOrderAscOrDesc {
+            field: "age",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn active(&self) -> UserOrderAscOrDesc {
+        UserOrderAscOrDesc {
+            field: "active",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn created_at(&self) -> UserOrderAscOrDesc {
+        UserOrderAscOrDesc {
+            field: "created_at",
+            order_builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct UserOrderAscOrDesc {
+    pub field: &'static str,
+    pub order_builder: UserOrderBuilder,
+}
+impl UserOrderAscOrDesc {
+    pub fn asc(&self) -> UserBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "ASC",
+        });
+        builder
+    }
+    pub fn desc(&self) -> UserBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "DESC",
+        });
+        builder
     }
 }

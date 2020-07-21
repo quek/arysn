@@ -68,7 +68,7 @@ pub struct ContributionBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
-    pub order: String,
+    pub orders: Vec<OrderItem>,
     pub limit: Option<usize>,
     pub offset: Option<usize>,
     pub project_builder: Option<Box<ProjectBuilder>>,
@@ -111,12 +111,6 @@ impl ContributionBuilder {
                 .user_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
-            ..self.clone()
-        }
-    }
-    pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
-        Self {
-            order: value.as_ref().to_string(),
             ..self.clone()
         }
     }
@@ -229,8 +223,8 @@ impl BuilderTrait for ContributionBuilder {
         }
         result
     }
-    fn order_part(&self) -> String {
-        self.order.clone()
+    fn order(&self) -> &Vec<OrderItem> {
+        &self.orders
     }
     fn limit(&self) -> Option<usize> {
         self.limit
@@ -759,5 +753,59 @@ impl ContributionBuilder_user_id {
             filters,
             ..self.builder.clone()
         }
+    }
+}
+impl ContributionBuilder {
+    pub fn order(&self) -> ContributionOrderBuilder {
+        ContributionOrderBuilder {
+            builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct ContributionOrderBuilder {
+    pub builder: ContributionBuilder,
+}
+impl ContributionOrderBuilder {
+    pub fn id(&self) -> ContributionOrderAscOrDesc {
+        ContributionOrderAscOrDesc {
+            field: "id",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn project_id(&self) -> ContributionOrderAscOrDesc {
+        ContributionOrderAscOrDesc {
+            field: "project_id",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn user_id(&self) -> ContributionOrderAscOrDesc {
+        ContributionOrderAscOrDesc {
+            field: "user_id",
+            order_builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct ContributionOrderAscOrDesc {
+    pub field: &'static str,
+    pub order_builder: ContributionOrderBuilder,
+}
+impl ContributionOrderAscOrDesc {
+    pub fn asc(&self) -> ContributionBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "ASC",
+        });
+        builder
+    }
+    pub fn desc(&self) -> ContributionBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "DESC",
+        });
+        builder
     }
 }

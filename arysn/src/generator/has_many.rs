@@ -58,12 +58,11 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
         result.has_many_builder_impl.push(quote! {
             pub fn #field_name<F>(&self, f: F) -> #self_builder_name
             where F: FnOnce(&#child_builder_name) -> #child_builder_name {
-                #self_builder_name {
-                    #builder_field: Some(
-                        Box::new(f(self.#builder_field.as_ref().unwrap_or(&Default::default())))
-                    ),
-                    ..self.clone()
-                }
+                let mut child_builder = f(self.#builder_field.as_ref().unwrap_or(&Default::default()));
+                let mut builder = self.clone();
+                builder.orders.append(&mut child_builder.orders);
+                builder.#builder_field = Some(Box::new(child_builder));
+                builder
             }
         });
         result.has_many_filters_impl.push(quote! {

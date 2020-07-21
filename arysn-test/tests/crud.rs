@@ -80,7 +80,9 @@ async fn operators() -> Result<()> {
         .gt(1)
         .id()
         .lt(3)
-        .order("users.id asc")
+        .order()
+        .id()
+        .asc()
         .load(cnn)
         .await?;
     assert_eq!(users[0].id, 2);

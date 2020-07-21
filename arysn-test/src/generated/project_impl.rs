@@ -61,7 +61,7 @@ pub struct ProjectBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
-    pub order: String,
+    pub orders: Vec<OrderItem>,
     pub limit: Option<usize>,
     pub offset: Option<usize>,
     pub contributions_builder: Option<Box<ContributionBuilder>>,
@@ -81,19 +81,14 @@ impl ProjectBuilder {
     where
         F: FnOnce(&ContributionBuilder) -> ContributionBuilder,
     {
-        ProjectBuilder {
-            contributions_builder: Some(Box::new(f(self
-                .contributions_builder
-                .as_ref()
-                .unwrap_or(&Default::default())))),
-            ..self.clone()
-        }
-    }
-    pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
-        Self {
-            order: value.as_ref().to_string(),
-            ..self.clone()
-        }
+        let mut child_builder = f(self
+            .contributions_builder
+            .as_ref()
+            .unwrap_or(&Default::default()));
+        let mut builder = self.clone();
+        builder.orders.append(&mut child_builder.orders);
+        builder.contributions_builder = Some(Box::new(child_builder));
+        builder
     }
     pub fn limit(&self, value: usize) -> Self {
         Self {
@@ -176,8 +171,8 @@ impl BuilderTrait for ProjectBuilder {
         }
         result
     }
-    fn order_part(&self) -> String {
-        self.order.clone()
+    fn order(&self) -> &Vec<OrderItem> {
+        &self.orders
     }
     fn limit(&self) -> Option<usize> {
         self.limit
@@ -532,5 +527,53 @@ impl ProjectBuilder_name {
             filters,
             ..self.builder.clone()
         }
+    }
+}
+impl ProjectBuilder {
+    pub fn order(&self) -> ProjectOrderBuilder {
+        ProjectOrderBuilder {
+            builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct ProjectOrderBuilder {
+    pub builder: ProjectBuilder,
+}
+impl ProjectOrderBuilder {
+    pub fn id(&self) -> ProjectOrderAscOrDesc {
+        ProjectOrderAscOrDesc {
+            field: "id",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn name(&self) -> ProjectOrderAscOrDesc {
+        ProjectOrderAscOrDesc {
+            field: "name",
+            order_builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct ProjectOrderAscOrDesc {
+    pub field: &'static str,
+    pub order_builder: ProjectOrderBuilder,
+}
+impl ProjectOrderAscOrDesc {
+    pub fn asc(&self) -> ProjectBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "ASC",
+        });
+        builder
+    }
+    pub fn desc(&self) -> ProjectBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "DESC",
+        });
+        builder
     }
 }

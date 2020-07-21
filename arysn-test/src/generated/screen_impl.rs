@@ -65,7 +65,7 @@ pub struct ScreenBuilder {
     pub from: String,
     pub filters: Vec<Filter>,
     pub preload: bool,
-    pub order: String,
+    pub orders: Vec<OrderItem>,
     pub limit: Option<usize>,
     pub offset: Option<usize>,
     pub role_builder: Option<Box<RoleBuilder>>,
@@ -95,12 +95,6 @@ impl ScreenBuilder {
                 .role_builder
                 .as_ref()
                 .unwrap_or(&Default::default())))),
-            ..self.clone()
-        }
-    }
-    pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
-        Self {
-            order: value.as_ref().to_string(),
             ..self.clone()
         }
     }
@@ -182,8 +176,8 @@ impl BuilderTrait for ScreenBuilder {
         }
         result
     }
-    fn order_part(&self) -> String {
-        self.order.clone()
+    fn order(&self) -> &Vec<OrderItem> {
+        &self.orders
     }
     fn limit(&self) -> Option<usize> {
         self.limit
@@ -712,5 +706,59 @@ impl ScreenBuilder_name {
             filters,
             ..self.builder.clone()
         }
+    }
+}
+impl ScreenBuilder {
+    pub fn order(&self) -> ScreenOrderBuilder {
+        ScreenOrderBuilder {
+            builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct ScreenOrderBuilder {
+    pub builder: ScreenBuilder,
+}
+impl ScreenOrderBuilder {
+    pub fn id(&self) -> ScreenOrderAscOrDesc {
+        ScreenOrderAscOrDesc {
+            field: "id",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn role_id(&self) -> ScreenOrderAscOrDesc {
+        ScreenOrderAscOrDesc {
+            field: "role_id",
+            order_builder: self.clone(),
+        }
+    }
+    pub fn name(&self) -> ScreenOrderAscOrDesc {
+        ScreenOrderAscOrDesc {
+            field: "name",
+            order_builder: self.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct ScreenOrderAscOrDesc {
+    pub field: &'static str,
+    pub order_builder: ScreenOrderBuilder,
+}
+impl ScreenOrderAscOrDesc {
+    pub fn asc(&self) -> ScreenBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "ASC",
+        });
+        builder
+    }
+    pub fn desc(&self) -> ScreenBuilder {
+        let mut builder = self.order_builder.builder.clone();
+        builder.orders.push(OrderItem {
+            field: self.field,
+            asc_or_desc: "DESC",
+        });
+        builder
     }
 }

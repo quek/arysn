@@ -11,11 +11,13 @@ use std::path::PathBuf;
 use std::process::Command;
 use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
+use order::order_part;
 
 mod belongs_to;
 pub mod config;
 mod enums;
 mod has_many;
+mod order;
 
 pub fn define_ar(config: &Config) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
@@ -191,6 +193,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 #(pub #column_names: #rust_types_for_new,)*
             }
         };
+
+        let order_part: TokenStream = order_part(struct_name, &builder_name, &columns);
         let output_impl = quote! {
             use arysn::prelude::*;
             use async_recursion::async_recursion;
@@ -230,7 +234,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 pub from: String,
                 pub filters: Vec<Filter>,
                 pub preload: bool,
-                pub order: String,
+                pub orders: Vec<OrderItem>,
                 pub limit: Option<usize>,
                 pub offset: Option<usize>,
                 #(#has_many_builder_field)*
@@ -245,13 +249,6 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 })*
                 #(#has_many_builder_impl)*
                 #(#belongs_to_builder_impl)*
-
-                pub fn order<T: AsRef<str>>(&self, value: T) -> Self {
-                    Self {
-                        order: value.as_ref().to_string(),
-                        ..self.clone()
-                    }
-                }
 
                 pub fn limit(&self, value: usize) -> Self {
                     Self {
@@ -322,8 +319,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     result
                 }
 
-                fn order_part(&self) -> String {
-                    self.order.clone()
+                fn order(&self) -> &Vec<OrderItem> {
+                    &self.orders
                 }
 
                 fn limit(&self) -> Option<usize> {
@@ -522,6 +519,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     }
                 }
             )*
+
+            #order_part
         };
         Ok((output_plain, output_impl))
     })
