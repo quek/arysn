@@ -10,6 +10,7 @@ pub struct Project {
     pub update_user_id: i64,
     pub contributions: Option<Vec<Contribution>>,
     pub create_user: Option<User>,
+    pub update_user: Option<User>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ProjectNew {

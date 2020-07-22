@@ -63,6 +63,7 @@ impl From<tokio_postgres::row::Row> for Project {
             update_user_id: row.get(4usize),
             contributions: None,
             create_user: None,
+            update_user: None,
         }
     }
 }
@@ -77,6 +78,7 @@ pub struct ProjectBuilder {
     pub offset: Option<usize>,
     pub contributions_builder: Option<Box<ContributionBuilder>>,
     pub create_user_builder: Option<Box<UserBuilder>>,
+    pub update_user_builder: Option<Box<UserBuilder>>,
 }
 impl ProjectBuilder {
     pub fn id(&self) -> ProjectBuilder_id {
@@ -125,6 +127,20 @@ impl ProjectBuilder {
             create_user_builder: Some(Box::new(f(self.create_user_builder.as_ref().unwrap_or(
                 &Box::new(UserBuilder {
                     table_name_as: Some("create_user".to_string()),
+                    ..Default::default()
+                }),
+            )))),
+            ..self.clone()
+        }
+    }
+    pub fn update_user<F>(&self, f: F) -> ProjectBuilder
+    where
+        F: FnOnce(&UserBuilder) -> UserBuilder,
+    {
+        ProjectBuilder {
+            update_user_builder: Some(Box::new(f(self.update_user_builder.as_ref().unwrap_or(
+                &Box::new(UserBuilder {
+                    table_name_as: Some("update_user".to_string()),
                     ..Default::default()
                 }),
             )))),
@@ -205,6 +221,26 @@ impl ProjectBuilder {
                 });
             }
         }
+        if let Some(builder) = &self.update_user_builder {
+            if builder.preload {
+                let ids = result.iter().map(|x| x.update_user_id).collect::<Vec<_>>();
+                let parents_builder = User::select().id().eq_any(ids);
+                let parents_builder = UserBuilder {
+                    from: parents_builder.from,
+                    filters: parents_builder.filters,
+                    ..(**builder).clone()
+                };
+                let parents = parents_builder.load(client).await?;
+                result.iter_mut().for_each(|x| {
+                    for parent in parents.iter() {
+                        if x.update_user_id == parent.id {
+                            x.update_user = Some(parent.clone());
+                            break;
+                        }
+                    }
+                });
+            }
+        }
         Ok(result)
     }
 }
@@ -231,6 +267,13 @@ impl BuilderTrait for ProjectBuilder {
             );
             builder.join(join_parts);
         }
+        if let Some(builder) = &self.update_user_builder {
+            join_parts.push(
+                "INNER JOIN users AS update_user ON update_user.id = projects.update_user_id"
+                    .to_string(),
+            );
+            builder.join(join_parts);
+        }
     }
     fn filters(&self) -> Vec<&Filter> {
         let mut result: Vec<&Filter> = self.filters.iter().collect();
@@ -238,6 +281,9 @@ impl BuilderTrait for ProjectBuilder {
             result.append(&mut builder.filters());
         }
         if let Some(builder) = &self.create_user_builder {
+            result.append(&mut builder.filters());
+        }
+        if let Some(builder) = &self.update_user_builder {
             result.append(&mut builder.filters());
         }
         result

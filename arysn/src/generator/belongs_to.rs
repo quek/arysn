@@ -5,8 +5,8 @@ use quote::{format_ident, quote};
 
 #[derive(Default)]
 pub struct BelongsTo {
-    pub belongs_to_use_plain: Vec<TokenStream>,
-    pub belongs_to_use_impl: Vec<TokenStream>,
+    pub belongs_to_use_plain: Vec<Vec<TokenStream>>,
+    pub belongs_to_use_impl: Vec<Vec<TokenStream>>,
     pub belongs_to_field: Vec<TokenStream>,
     pub belongs_to_init: Vec<TokenStream>,
     pub belongs_to_builder_field: Vec<TokenStream>,
@@ -47,13 +47,13 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
         let builder_field = format_ident!("{}_builder", field_ident);
         let parent_builder_ident = format_ident!("{}Builder", struct_ident);
 
-        result.belongs_to_use_plain.push(quote! {
+        result.belongs_to_use_plain.push(vec![quote! {
             use super::#module_ident::#struct_ident;
-        });
-        result.belongs_to_use_impl.push(quote! {
-            use super::#module_ident::#struct_ident;
-            use super::#module_impl_ident::#parent_builder_ident;
-        });
+        }]);
+        result.belongs_to_use_impl.push(vec![
+            quote! ( use super::#module_ident::#struct_ident; ),
+            quote! ( use super::#module_impl_ident::#parent_builder_ident; ),
+        ]);
         result
             .belongs_to_field
             .push(quote! { pub #field_ident: Option<#struct_ident>, });

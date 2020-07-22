@@ -172,6 +172,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             belongs_to_join,
             belongs_to_preload,
         } = make_belongs_to(config, &builder_ident);
+        let belongs_to_use_plain = uniq_token_stream_vec(belongs_to_use_plain);
+        let belongs_to_use_impl = uniq_token_stream_vec(belongs_to_use_impl);
 
         let output_plain = quote! {
             use serde::{Deserialize, Serialize};
@@ -753,4 +755,11 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
             Ok(())
         }
     }
+}
+
+fn uniq_token_stream_vec(x: Vec<Vec<TokenStream>>) -> Vec<TokenStream> {
+    let mut x: Vec<TokenStream> = x.into_iter().flatten().collect();
+    x.sort_by_key(|x| x.to_string());
+    x.dedup_by_key(|x| x.to_string());
+    x
 }

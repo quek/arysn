@@ -62,11 +62,18 @@ fn main() -> Result<()> {
             struct_name: "Contribution",
             foreign_key: "project_id",
         }],
-        belongs_to: vec![BelongsToConfig {
-            field: "create_user",
-            struct_name: "User",
-            foreign_key: "create_user_id",
-        }],
+        belongs_to: vec![
+            BelongsToConfig {
+                field: "create_user",
+                struct_name: "User",
+                foreign_key: "create_user_id",
+            },
+            BelongsToConfig {
+                field: "update_user",
+                struct_name: "User",
+                foreign_key: "update_user_id",
+            },
+        ],
     })?;
 
     define_ar(&Config {
