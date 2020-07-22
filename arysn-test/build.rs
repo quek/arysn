@@ -18,6 +18,16 @@ fn main() -> Result<()> {
                 struct_name: "Contribution",
                 foreign_key: "user_id",
             },
+            HasManyConfig {
+                field: "create_projects",
+                struct_name: "Project",
+                foreign_key: "create_user_id",
+            },
+            HasManyConfig {
+                field: "update_projects",
+                struct_name: "Project",
+                foreign_key: "update_user_id",
+            },
         ],
         belongs_to: vec![],
     };

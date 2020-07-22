@@ -172,14 +172,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             belongs_to_join,
             belongs_to_preload,
         } = make_belongs_to(config, &builder_ident);
-        let belongs_to_use_plain = uniq_token_stream_vec(belongs_to_use_plain);
-        let belongs_to_use_impl = uniq_token_stream_vec(belongs_to_use_impl);
+        let use_plain = uniq_use(has_many_use_plain, belongs_to_use_plain);
+        let use_impl = uniq_use(has_many_use_impl, belongs_to_use_impl);
 
         let output_plain = quote! {
             use serde::{Deserialize, Serialize};
             #use_to_sql_from_sql
-            #(#has_many_use_plain)*
-            #(#belongs_to_use_plain)*
+            #(#use_plain)*
 
             #(#enums)*
 
@@ -201,8 +200,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             use arysn::prelude::*;
             use async_recursion::async_recursion;
             use super::#module_name::*;
-            #(#has_many_use_impl)*
-            #(#belongs_to_use_impl)*
+            #(#use_impl)*
 
             impl #struct_ident {
                 pub fn select() -> #builder_ident {
@@ -757,8 +755,8 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     }
 }
 
-fn uniq_token_stream_vec(x: Vec<Vec<TokenStream>>) -> Vec<TokenStream> {
-    let mut x: Vec<TokenStream> = x.into_iter().flatten().collect();
+fn uniq_use(x: Vec<Vec<TokenStream>>, y: Vec<Vec<TokenStream>>) -> Vec<TokenStream> {
+    let mut x: Vec<TokenStream> = x.into_iter().chain(y.into_iter()).flatten().collect();
     x.sort_by_key(|x| x.to_string());
     x.dedup_by_key(|x| x.to_string());
     x
