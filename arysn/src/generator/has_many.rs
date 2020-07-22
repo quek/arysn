@@ -21,11 +21,23 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
     for has_many in config.has_many.iter() {
         let module_ident = format_ident!("{}", has_many.struct_name.to_table_case().to_singular());
         let module_impl_ident = format_ident!("{}_impl", module_ident);
-        let foreign_key_ident = format_ident!("{}", has_many.foreign_key);
         let field_ident = format_ident!("{}", has_many.field);
+        let foreign_key_ident = format_ident!("{}", has_many.foreign_key);
+        let child_table_name = has_many.struct_name.to_table_case();
+        let child_table_name_as = if has_many.field.to_table_case() != child_table_name {
+            has_many.field
+        } else {
+            &child_table_name
+        };
+        let join_as = if child_table_name == child_table_name_as {
+            "".to_string()
+        } else {
+            format!(" AS {}", child_table_name_as)
+        };
+        // TODO config.table_name は join as が連鎖している場合動かないと思う。動的にする。
         let join = format!(
-            "INNER JOIN {} ON {}.{} = {}.id",
-            field_ident, field_ident, foreign_key_ident, config.table_name,
+            "INNER JOIN {}{} ON {}.{} = {}.id",
+            child_table_name, join_as, child_table_name_as, has_many.foreign_key, config.table_name,
         );
         let struct_ident = format_ident!("{}", has_many.struct_name);
         let builder_field = format_ident!("{}_builder", field_ident.to_string());
@@ -48,8 +60,16 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
         result.has_many_builder_impl.push(quote! {
             pub fn #field_ident<F>(&self, f: F) -> #self_builder_name
             where F: FnOnce(&#child_builder_ident) -> #child_builder_ident {
-                let mut child_builder = f(self.#builder_field.as_ref().unwrap_or(&Default::default()));
+                let mut child_builder = f(self.#builder_field.as_ref().unwrap_or(
+                    &Box::new(#child_builder_ident {
+                        table_name_as: Some(#child_table_name_as.to_string()),
+                        ..Default::default()
+                    })
+                ));
                 let mut builder = self.clone();
+                // TODO join したテーブルの order by. preload の時に使う？
+                // Error: db error: ERROR: SELECT DISTINCTではORDER BYの式は
+                // SELECTリスト内になければなりません
                 builder.orders.append(&mut child_builder.orders);
                 builder.#builder_field = Some(Box::new(child_builder));
                 builder

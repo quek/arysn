@@ -1,5 +1,8 @@
 # TODO
 
+- join したテーブルの order by. preload の時に使う？
+  Error: db error: ERROR: SELECT DISTINCTではORDER BYの式はSELECTリスト内になければなりません
+  `.create_projects(|x| x.preload().id().eq(1).order().id().asc())`
 - 同じテーブルを複数回 join
 - 無条件に distinct 付けるのやめる
 

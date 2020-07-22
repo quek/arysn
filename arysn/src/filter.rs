@@ -21,8 +21,8 @@ impl Filter {
                             "{}.{} IN ({})",
                             &self.table,
                             &self.name,
-                            (1..=len)
-                                .map(|i| format!("${}", i))
+                            (0..len)
+                                .map(|i| format!("${}", i + bind_index))
                                 .collect::<Vec<_>>()
                                 .join(", ")
                         ),
@@ -40,8 +40,8 @@ impl Filter {
                             "{}.{} NOT IN ({})",
                             &self.table,
                             &self.name,
-                            (1..=len)
-                                .map(|i| format!("${}", i))
+                            (0..len)
+                                .map(|i| format!("${}", i + bind_index))
                                 .collect::<Vec<_>>()
                                 .join(", ")
                         ),

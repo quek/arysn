@@ -20,6 +20,7 @@ services:
       CARGO_HOME: /cargo
       DATABASE_URL: postgres://user1:password1@db/arysn_development
       LANG: ja_JP.UTF-8
+      RUST_BACKTRACE: 1
       RUST_LOG: debug
       TZ: Asia/Tokyo
     depends_on:

@@ -195,7 +195,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             }
         };
 
-        let order_part: TokenStream = order_part(&struct_ident, &builder_ident, &columns);
+        let order_part: TokenStream =
+            order_part(&struct_ident, &builder_ident, &columns, &table_name);
         let output_impl = quote! {
             use arysn::prelude::*;
             use async_recursion::async_recursion;

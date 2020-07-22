@@ -35,6 +35,7 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
         } else {
             format!(" AS {}", parent_table_name_as)
         };
+        // TODO config.table_name は join as が連鎖している場合動かないと思う。動的にする。
         let join = format!(
             "INNER JOIN {}{} ON {}.id = {}.{}",
             parent_table_name,
@@ -64,17 +65,19 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
         result.belongs_to_builder_impl.push(quote! {
             pub fn #field_ident<F>(&self, f: F) -> #self_builder_name
             where F: FnOnce(&#parent_builder_ident) -> #parent_builder_ident {
-                #self_builder_name {
-                    #builder_field: Some(
-                        Box::new(f(self.#builder_field.as_ref().unwrap_or(
-                            &Box::new(#parent_builder_ident {
-                                table_name_as: Some(#parent_table_name_as.to_string()),
-                                ..Default::default()
-                            })
-                        )))
-                    ),
-                    ..self.clone()
-                }
+                let mut parent_builder = f(self.#builder_field.as_ref().unwrap_or(
+                    &Box::new(#parent_builder_ident {
+                        table_name_as: Some(#parent_table_name_as.to_string()),
+                        ..Default::default()
+                    })
+                ));
+                let mut builder = self.clone();
+                // TODO join したテーブルの order by. preload の時に使う？
+                // Error: db error: ERROR: SELECT DISTINCTではORDER BYの式は
+                // SELECTリスト内になければなりません
+                builder.orders.append(&mut parent_builder.orders);
+                builder.#builder_field = Some(Box::new(parent_builder));
+                builder
             }
         });
         result.belongs_to_filters_impl.push(quote! {

@@ -6,6 +6,7 @@ pub fn order_part(
     struct_ident: &Ident,
     builder_ident: &Ident,
     columns: &Vec<Column>,
+    table_name: &String,
 ) -> TokenStream {
     let order_builder_ident = format_ident!("{}OrderBuilder", struct_ident);
     let asc_or_desc_ident = format_ident!("{}OrderAscOrDesc", struct_ident);
@@ -49,6 +50,8 @@ pub fn order_part(
             pub fn asc(&self) -> #builder_ident {
                 let mut builder = self.order_builder.builder.clone();
                 builder.orders.push(OrderItem {
+                    table: self.order_builder.builder.table_name_as.as_ref()
+                        .unwrap_or(&#table_name.to_string()).to_string(),
                     field: self.field,
                     asc_or_desc: "ASC",
                 });
@@ -58,6 +61,8 @@ pub fn order_part(
             pub fn desc(&self) -> #builder_ident {
                 let mut builder = self.order_builder.builder.clone();
                 builder.orders.push(OrderItem {
+                    table: self.order_builder.builder.table_name_as.as_ref()
+                        .unwrap_or(&#table_name.to_string()).to_string(),
                     field: self.field,
                     asc_or_desc: "DESC",
                 });
