@@ -45,14 +45,14 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
         );
         let struct_ident = format_ident!("{}", belongs_to.struct_name);
         let builder_field = format_ident!("{}_builder", field_ident);
-        let child_builder_ident = format_ident!("{}Builder", &struct_ident.to_string());
+        let parent_builder_ident = format_ident!("{}Builder", struct_ident);
 
         result.belongs_to_use_plain.push(quote! {
             use super::#module_ident::#struct_ident;
         });
         result.belongs_to_use_impl.push(quote! {
             use super::#module_ident::#struct_ident;
-            use super::#module_impl_ident::#child_builder_ident;
+            use super::#module_impl_ident::#parent_builder_ident;
         });
         result
             .belongs_to_field
@@ -60,13 +60,18 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
         result.belongs_to_init.push(quote! { #field_ident: None, });
         result
             .belongs_to_builder_field
-            .push(quote! { pub #builder_field: Option<Box<#child_builder_ident>>, });
+            .push(quote! { pub #builder_field: Option<Box<#parent_builder_ident>>, });
         result.belongs_to_builder_impl.push(quote! {
             pub fn #field_ident<F>(&self, f: F) -> #self_builder_name
-            where F: FnOnce(&#child_builder_ident) -> #child_builder_ident {
+            where F: FnOnce(&#parent_builder_ident) -> #parent_builder_ident {
                 #self_builder_name {
                     #builder_field: Some(
-                        Box::new(f(self.#builder_field.as_ref().unwrap_or(&Default::default())))
+                        Box::new(f(self.#builder_field.as_ref().unwrap_or(
+                            &Box::new(#parent_builder_ident {
+                                table_name_as: Some(#parent_table_name_as.to_string()),
+                                ..Default::default()
+                            })
+                        )))
                     ),
                     ..self.clone()
                 }
@@ -88,7 +93,7 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
                 if builder.preload {
                     let ids = result.iter().map(|x| x.#foreign_key_ident).collect::<Vec<_>>();
                     let parents_builder = #struct_ident::select().id().eq_any(ids);
-                    let parents_builder = #child_builder_ident {
+                    let parents_builder = #parent_builder_ident {
                         from: parents_builder.from,
                         filters: parents_builder.filters,
                         ..(**builder).clone()

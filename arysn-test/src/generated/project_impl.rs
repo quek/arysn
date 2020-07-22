@@ -69,6 +69,7 @@ impl From<tokio_postgres::row::Row> for Project {
 #[derive(Clone, Debug, Default)]
 pub struct ProjectBuilder {
     pub from: String,
+    pub table_name_as: Option<String>,
     pub filters: Vec<Filter>,
     pub preload: bool,
     pub orders: Vec<OrderItem>,
@@ -121,10 +122,12 @@ impl ProjectBuilder {
         F: FnOnce(&UserBuilder) -> UserBuilder,
     {
         ProjectBuilder {
-            create_user_builder: Some(Box::new(f(self
-                .create_user_builder
-                .as_ref()
-                .unwrap_or(&Default::default())))),
+            create_user_builder: Some(Box::new(f(self.create_user_builder.as_ref().unwrap_or(
+                &Box::new(UserBuilder {
+                    table_name_as: Some("create_user".to_string()),
+                    ..Default::default()
+                }),
+            )))),
             ..self.clone()
         }
     }
@@ -257,7 +260,12 @@ impl ProjectBuilder_id {
     pub fn eq(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -270,7 +278,12 @@ impl ProjectBuilder_id {
     pub fn gt(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -283,7 +296,12 @@ impl ProjectBuilder_id {
     pub fn lt(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -296,7 +314,12 @@ impl ProjectBuilder_id {
     pub fn gte(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -309,7 +332,12 @@ impl ProjectBuilder_id {
     pub fn lte(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -322,7 +350,12 @@ impl ProjectBuilder_id {
     pub fn not_eq(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -335,7 +368,12 @@ impl ProjectBuilder_id {
     pub fn is_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -348,7 +386,12 @@ impl ProjectBuilder_id {
     pub fn is_not_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -361,7 +404,12 @@ impl ProjectBuilder_id {
     pub fn between(&self, from: i64, to: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -378,7 +426,12 @@ impl ProjectBuilder_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -395,7 +448,12 @@ impl ProjectBuilder_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -412,7 +470,12 @@ impl ProjectBuilder_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),
@@ -431,7 +494,12 @@ impl ProjectBuilder_name {
     pub fn eq(&self, value: String) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -444,7 +512,12 @@ impl ProjectBuilder_name {
     pub fn gt(&self, value: String) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -457,7 +530,12 @@ impl ProjectBuilder_name {
     pub fn lt(&self, value: String) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -470,7 +548,12 @@ impl ProjectBuilder_name {
     pub fn gte(&self, value: String) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -483,7 +566,12 @@ impl ProjectBuilder_name {
     pub fn lte(&self, value: String) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -496,7 +584,12 @@ impl ProjectBuilder_name {
     pub fn not_eq(&self, value: String) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -509,7 +602,12 @@ impl ProjectBuilder_name {
     pub fn is_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -522,7 +620,12 @@ impl ProjectBuilder_name {
     pub fn is_not_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -535,7 +638,12 @@ impl ProjectBuilder_name {
     pub fn between(&self, from: String, to: String) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -552,7 +660,12 @@ impl ProjectBuilder_name {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -569,7 +682,12 @@ impl ProjectBuilder_name {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -586,7 +704,12 @@ impl ProjectBuilder_name {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),
@@ -605,7 +728,12 @@ impl ProjectBuilder_parent_project_id {
     pub fn eq(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -618,7 +746,12 @@ impl ProjectBuilder_parent_project_id {
     pub fn gt(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -631,7 +764,12 @@ impl ProjectBuilder_parent_project_id {
     pub fn lt(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -644,7 +782,12 @@ impl ProjectBuilder_parent_project_id {
     pub fn gte(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -657,7 +800,12 @@ impl ProjectBuilder_parent_project_id {
     pub fn lte(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -670,7 +818,12 @@ impl ProjectBuilder_parent_project_id {
     pub fn not_eq(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -683,7 +836,12 @@ impl ProjectBuilder_parent_project_id {
     pub fn is_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -696,7 +854,12 @@ impl ProjectBuilder_parent_project_id {
     pub fn is_not_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -709,7 +872,12 @@ impl ProjectBuilder_parent_project_id {
     pub fn between(&self, from: i64, to: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -726,7 +894,12 @@ impl ProjectBuilder_parent_project_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -743,7 +916,12 @@ impl ProjectBuilder_parent_project_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -760,7 +938,12 @@ impl ProjectBuilder_parent_project_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(parent_project_id).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),
@@ -779,7 +962,12 @@ impl ProjectBuilder_create_user_id {
     pub fn eq(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -792,7 +980,12 @@ impl ProjectBuilder_create_user_id {
     pub fn gt(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -805,7 +998,12 @@ impl ProjectBuilder_create_user_id {
     pub fn lt(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -818,7 +1016,12 @@ impl ProjectBuilder_create_user_id {
     pub fn gte(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -831,7 +1034,12 @@ impl ProjectBuilder_create_user_id {
     pub fn lte(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -844,7 +1052,12 @@ impl ProjectBuilder_create_user_id {
     pub fn not_eq(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -857,7 +1070,12 @@ impl ProjectBuilder_create_user_id {
     pub fn is_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -870,7 +1088,12 @@ impl ProjectBuilder_create_user_id {
     pub fn is_not_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -883,7 +1106,12 @@ impl ProjectBuilder_create_user_id {
     pub fn between(&self, from: i64, to: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -900,7 +1128,12 @@ impl ProjectBuilder_create_user_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -917,7 +1150,12 @@ impl ProjectBuilder_create_user_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -934,7 +1172,12 @@ impl ProjectBuilder_create_user_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(create_user_id).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),
@@ -953,7 +1196,12 @@ impl ProjectBuilder_update_user_id {
     pub fn eq(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -966,7 +1214,12 @@ impl ProjectBuilder_update_user_id {
     pub fn gt(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -979,7 +1232,12 @@ impl ProjectBuilder_update_user_id {
     pub fn lt(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -992,7 +1250,12 @@ impl ProjectBuilder_update_user_id {
     pub fn gte(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -1005,7 +1268,12 @@ impl ProjectBuilder_update_user_id {
     pub fn lte(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -1018,7 +1286,12 @@ impl ProjectBuilder_update_user_id {
     pub fn not_eq(&self, value: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -1031,7 +1304,12 @@ impl ProjectBuilder_update_user_id {
     pub fn is_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -1044,7 +1322,12 @@ impl ProjectBuilder_update_user_id {
     pub fn is_not_null(&self) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -1057,7 +1340,12 @@ impl ProjectBuilder_update_user_id {
     pub fn between(&self, from: i64, to: i64) -> ProjectBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -1074,7 +1362,12 @@ impl ProjectBuilder_update_user_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -1091,7 +1384,12 @@ impl ProjectBuilder_update_user_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -1108,7 +1406,12 @@ impl ProjectBuilder_update_user_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "projects".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"projects".to_string())
+                .to_string(),
             name: stringify!(update_user_id).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),

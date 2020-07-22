@@ -232,6 +232,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             #[derive(Clone, Debug, Default)]
             pub struct #builder_ident {
                 pub from: String,
+                pub table_name_as: Option<String>,
                 pub filters: Vec<Filter>,
                 pub preload: bool,
                 pub orders: Vec<OrderItem>,
@@ -341,7 +342,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     pub fn eq(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: "=".to_string()
@@ -355,7 +357,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     pub fn gt(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: ">".to_string()
@@ -369,7 +372,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     pub fn lt(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: "<".to_string()
@@ -383,7 +387,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     pub fn gte(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: ">=".to_string()
@@ -397,7 +402,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     pub fn lte(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: "<=".to_string()
@@ -411,7 +417,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     pub fn not_eq(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: "<>".to_string()
@@ -425,7 +432,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     pub fn is_null(&self) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![],
                             operator: "IS NULL".to_string()
@@ -439,7 +447,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     pub fn is_not_null(&self) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![],
                             operator: "IS NOT NULL".to_string()
@@ -453,7 +462,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     pub fn between(&self, from: #rust_types, to: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(from), Box::new(to)],
                             operator: "BETWEEN".to_string()
@@ -471,7 +481,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             vs.push(Box::new(v));
                         }
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vs,
                             operator: "IN".to_string(),
@@ -489,7 +500,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             vs.push(Box::new(v));
                         }
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vs,
                             operator: "IN".to_string(),
@@ -507,7 +519,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             vs.push(Box::new(v));
                         }
                         filters.push(Filter {
-                            table: #table_name.to_string(),
+                            table: self.builder.table_name_as.as_ref()
+                                .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vs,
                             operator: "NOT IN".to_string(),

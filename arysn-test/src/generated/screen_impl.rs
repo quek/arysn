@@ -63,6 +63,7 @@ impl From<tokio_postgres::row::Row> for Screen {
 #[derive(Clone, Debug, Default)]
 pub struct ScreenBuilder {
     pub from: String,
+    pub table_name_as: Option<String>,
     pub filters: Vec<Filter>,
     pub preload: bool,
     pub orders: Vec<OrderItem>,
@@ -91,10 +92,12 @@ impl ScreenBuilder {
         F: FnOnce(&RoleBuilder) -> RoleBuilder,
     {
         ScreenBuilder {
-            role_builder: Some(Box::new(f(self
-                .role_builder
-                .as_ref()
-                .unwrap_or(&Default::default())))),
+            role_builder: Some(Box::new(f(self.role_builder.as_ref().unwrap_or(
+                &Box::new(RoleBuilder {
+                    table_name_as: Some("roles".to_string()),
+                    ..Default::default()
+                }),
+            )))),
             ..self.clone()
         }
     }
@@ -194,7 +197,12 @@ impl ScreenBuilder_id {
     pub fn eq(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -207,7 +215,12 @@ impl ScreenBuilder_id {
     pub fn gt(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -220,7 +233,12 @@ impl ScreenBuilder_id {
     pub fn lt(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -233,7 +251,12 @@ impl ScreenBuilder_id {
     pub fn gte(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -246,7 +269,12 @@ impl ScreenBuilder_id {
     pub fn lte(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -259,7 +287,12 @@ impl ScreenBuilder_id {
     pub fn not_eq(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -272,7 +305,12 @@ impl ScreenBuilder_id {
     pub fn is_null(&self) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -285,7 +323,12 @@ impl ScreenBuilder_id {
     pub fn is_not_null(&self) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -298,7 +341,12 @@ impl ScreenBuilder_id {
     pub fn between(&self, from: i64, to: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -315,7 +363,12 @@ impl ScreenBuilder_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -332,7 +385,12 @@ impl ScreenBuilder_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -349,7 +407,12 @@ impl ScreenBuilder_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),
@@ -368,7 +431,12 @@ impl ScreenBuilder_role_id {
     pub fn eq(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -381,7 +449,12 @@ impl ScreenBuilder_role_id {
     pub fn gt(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -394,7 +467,12 @@ impl ScreenBuilder_role_id {
     pub fn lt(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -407,7 +485,12 @@ impl ScreenBuilder_role_id {
     pub fn gte(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -420,7 +503,12 @@ impl ScreenBuilder_role_id {
     pub fn lte(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -433,7 +521,12 @@ impl ScreenBuilder_role_id {
     pub fn not_eq(&self, value: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -446,7 +539,12 @@ impl ScreenBuilder_role_id {
     pub fn is_null(&self) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -459,7 +557,12 @@ impl ScreenBuilder_role_id {
     pub fn is_not_null(&self) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -472,7 +575,12 @@ impl ScreenBuilder_role_id {
     pub fn between(&self, from: i64, to: i64) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -489,7 +597,12 @@ impl ScreenBuilder_role_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -506,7 +619,12 @@ impl ScreenBuilder_role_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -523,7 +641,12 @@ impl ScreenBuilder_role_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(role_id).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),
@@ -542,7 +665,12 @@ impl ScreenBuilder_name {
     pub fn eq(&self, value: String) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -555,7 +683,12 @@ impl ScreenBuilder_name {
     pub fn gt(&self, value: String) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -568,7 +701,12 @@ impl ScreenBuilder_name {
     pub fn lt(&self, value: String) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -581,7 +719,12 @@ impl ScreenBuilder_name {
     pub fn gte(&self, value: String) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -594,7 +737,12 @@ impl ScreenBuilder_name {
     pub fn lte(&self, value: String) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -607,7 +755,12 @@ impl ScreenBuilder_name {
     pub fn not_eq(&self, value: String) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -620,7 +773,12 @@ impl ScreenBuilder_name {
     pub fn is_null(&self) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -633,7 +791,12 @@ impl ScreenBuilder_name {
     pub fn is_not_null(&self) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -646,7 +809,12 @@ impl ScreenBuilder_name {
     pub fn between(&self, from: String, to: String) -> ScreenBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -663,7 +831,12 @@ impl ScreenBuilder_name {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -680,7 +853,12 @@ impl ScreenBuilder_name {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -697,7 +875,12 @@ impl ScreenBuilder_name {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "screens".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"screens".to_string())
+                .to_string(),
             name: stringify!(name).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),

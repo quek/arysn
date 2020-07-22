@@ -66,6 +66,7 @@ impl From<tokio_postgres::row::Row> for Role {
 #[derive(Clone, Debug, Default)]
 pub struct RoleBuilder {
     pub from: String,
+    pub table_name_as: Option<String>,
     pub filters: Vec<Filter>,
     pub preload: bool,
     pub orders: Vec<OrderItem>,
@@ -105,10 +106,12 @@ impl RoleBuilder {
         F: FnOnce(&UserBuilder) -> UserBuilder,
     {
         RoleBuilder {
-            user_builder: Some(Box::new(f(self
-                .user_builder
-                .as_ref()
-                .unwrap_or(&Default::default())))),
+            user_builder: Some(Box::new(f(self.user_builder.as_ref().unwrap_or(
+                &Box::new(UserBuilder {
+                    table_name_as: Some("users".to_string()),
+                    ..Default::default()
+                }),
+            )))),
             ..self.clone()
         }
     }
@@ -236,7 +239,12 @@ impl RoleBuilder_id {
     pub fn eq(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -249,7 +257,12 @@ impl RoleBuilder_id {
     pub fn gt(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -262,7 +275,12 @@ impl RoleBuilder_id {
     pub fn lt(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -275,7 +293,12 @@ impl RoleBuilder_id {
     pub fn gte(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -288,7 +311,12 @@ impl RoleBuilder_id {
     pub fn lte(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -301,7 +329,12 @@ impl RoleBuilder_id {
     pub fn not_eq(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -314,7 +347,12 @@ impl RoleBuilder_id {
     pub fn is_null(&self) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -327,7 +365,12 @@ impl RoleBuilder_id {
     pub fn is_not_null(&self) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -340,7 +383,12 @@ impl RoleBuilder_id {
     pub fn between(&self, from: i64, to: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -357,7 +405,12 @@ impl RoleBuilder_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -374,7 +427,12 @@ impl RoleBuilder_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -391,7 +449,12 @@ impl RoleBuilder_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(id).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),
@@ -410,7 +473,12 @@ impl RoleBuilder_user_id {
     pub fn eq(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -423,7 +491,12 @@ impl RoleBuilder_user_id {
     pub fn gt(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -436,7 +509,12 @@ impl RoleBuilder_user_id {
     pub fn lt(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -449,7 +527,12 @@ impl RoleBuilder_user_id {
     pub fn gte(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -462,7 +545,12 @@ impl RoleBuilder_user_id {
     pub fn lte(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -475,7 +563,12 @@ impl RoleBuilder_user_id {
     pub fn not_eq(&self, value: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -488,7 +581,12 @@ impl RoleBuilder_user_id {
     pub fn is_null(&self) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -501,7 +599,12 @@ impl RoleBuilder_user_id {
     pub fn is_not_null(&self) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -514,7 +617,12 @@ impl RoleBuilder_user_id {
     pub fn between(&self, from: i64, to: i64) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -531,7 +639,12 @@ impl RoleBuilder_user_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -548,7 +661,12 @@ impl RoleBuilder_user_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -565,7 +683,12 @@ impl RoleBuilder_user_id {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(user_id).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),
@@ -584,7 +707,12 @@ impl RoleBuilder_role_type {
     pub fn eq(&self, value: RoleType) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vec![Box::new(value)],
             operator: "=".to_string(),
@@ -597,7 +725,12 @@ impl RoleBuilder_role_type {
     pub fn gt(&self, value: RoleType) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vec![Box::new(value)],
             operator: ">".to_string(),
@@ -610,7 +743,12 @@ impl RoleBuilder_role_type {
     pub fn lt(&self, value: RoleType) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vec![Box::new(value)],
             operator: "<".to_string(),
@@ -623,7 +761,12 @@ impl RoleBuilder_role_type {
     pub fn gte(&self, value: RoleType) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vec![Box::new(value)],
             operator: ">=".to_string(),
@@ -636,7 +779,12 @@ impl RoleBuilder_role_type {
     pub fn lte(&self, value: RoleType) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vec![Box::new(value)],
             operator: "<=".to_string(),
@@ -649,7 +797,12 @@ impl RoleBuilder_role_type {
     pub fn not_eq(&self, value: RoleType) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vec![Box::new(value)],
             operator: "<>".to_string(),
@@ -662,7 +815,12 @@ impl RoleBuilder_role_type {
     pub fn is_null(&self) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vec![],
             operator: "IS NULL".to_string(),
@@ -675,7 +833,12 @@ impl RoleBuilder_role_type {
     pub fn is_not_null(&self) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vec![],
             operator: "IS NOT NULL".to_string(),
@@ -688,7 +851,12 @@ impl RoleBuilder_role_type {
     pub fn between(&self, from: RoleType, to: RoleType) -> RoleBuilder {
         let mut filters = self.builder.filters.clone();
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN".to_string(),
@@ -705,7 +873,12 @@ impl RoleBuilder_role_type {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -722,7 +895,12 @@ impl RoleBuilder_role_type {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vs,
             operator: "IN".to_string(),
@@ -739,7 +917,12 @@ impl RoleBuilder_role_type {
             vs.push(Box::new(v));
         }
         filters.push(Filter {
-            table: "roles".to_string(),
+            table: self
+                .builder
+                .table_name_as
+                .as_ref()
+                .unwrap_or(&"roles".to_string())
+                .to_string(),
             name: stringify!(role_type).to_string(),
             values: vs,
             operator: "NOT IN".to_string(),

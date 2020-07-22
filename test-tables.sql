@@ -60,7 +60,7 @@ CREATE TABLE projects (
 
 INSERT INTO projects (name, parent_project_id, create_user_id, update_user_id) VALUES
  ('ねこの手企画(1)', null, 1, 1)
-,('ねこしっぽ組(2)', 1, 2, 2)
+,('ねこしっぽ組(2)', 1, 2, 1)
 ,('ねこみみ係(3)', 2, 1, 2)
 ;
 
