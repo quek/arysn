@@ -59,7 +59,6 @@ dependencies = [
  "env_logger",
  "log",
  "postgres-types",
- "quote",
  "serde",
  "tokio",
  "tokio-postgres",

@@ -19,45 +19,39 @@ pub struct BelongsTo {
 pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo {
     let mut result: BelongsTo = BelongsTo::default();
     for belongs_to in config.belongs_to.iter() {
-        let module_name = format_ident!(
-            "{}",
-            belongs_to
-                .struct_name
-                .to_string()
-                .to_table_case()
-                .to_singular()
-        );
-        let module_name_impl = format_ident!("{}_impl", module_name);
-        let field_name = &belongs_to.field;
-        let foreign_key = format_ident!("{}_id", &field_name);
+        let module_ident =
+            format_ident!("{}", belongs_to.struct_name.to_table_case().to_singular());
+        let module_impl_ident = format_ident!("{}_impl", module_ident);
+        let field_ident = format_ident!("{}", belongs_to.field);
+        let foreign_key_ident = format_ident!("{}", belongs_to.foreign_key);
         let join = format!(
             "INNER JOIN {} ON {}.id = {}.{}",
-            field_name.to_string().to_table_case(),
-            field_name.to_string().to_table_case(),
+            field_ident.to_string().to_table_case(),
+            field_ident.to_string().to_table_case(),
             config.table_name,
-            foreign_key.to_string()
+            foreign_key_ident.to_string()
         );
-        let struct_name = &belongs_to.struct_name;
-        let builder_field = format_ident!("{}_builder", &field_name);
-        let child_builder_name = format_ident!("{}Builder", &struct_name.to_string());
+        let struct_ident = format_ident!("{}", belongs_to.struct_name);
+        let builder_field = format_ident!("{}_builder", field_ident);
+        let child_builder_ident = format_ident!("{}Builder", &struct_ident.to_string());
 
         result.belongs_to_use_plain.push(quote! {
-            use super::#module_name::#struct_name;
+            use super::#module_ident::#struct_ident;
         });
         result.belongs_to_use_impl.push(quote! {
-            use super::#module_name::#struct_name;
-            use super::#module_name_impl::#child_builder_name;
+            use super::#module_ident::#struct_ident;
+            use super::#module_impl_ident::#child_builder_ident;
         });
         result
             .belongs_to_field
-            .push(quote! { pub #field_name: Option<#struct_name>, });
-        result.belongs_to_init.push(quote! { #field_name: None, });
+            .push(quote! { pub #field_ident: Option<#struct_ident>, });
+        result.belongs_to_init.push(quote! { #field_ident: None, });
         result
             .belongs_to_builder_field
-            .push(quote! { pub #builder_field: Option<Box<#child_builder_name>>, });
+            .push(quote! { pub #builder_field: Option<Box<#child_builder_ident>>, });
         result.belongs_to_builder_impl.push(quote! {
-            pub fn #field_name<F>(&self, f: F) -> #self_builder_name
-            where F: FnOnce(&#child_builder_name) -> #child_builder_name {
+            pub fn #field_ident<F>(&self, f: F) -> #self_builder_name
+            where F: FnOnce(&#child_builder_ident) -> #child_builder_ident {
                 #self_builder_name {
                     #builder_field: Some(
                         Box::new(f(self.#builder_field.as_ref().unwrap_or(&Default::default())))
@@ -80,9 +74,9 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
         result.belongs_to_preload.push(quote! {
             if let Some(builder) = &self.#builder_field {
                 if builder.preload {
-                    let ids = result.iter().map(|x| x.#foreign_key).collect::<Vec<_>>();
-                    let parents_builder = #struct_name::select().id().eq_any(ids);
-                    let parents_builder = #child_builder_name {
+                    let ids = result.iter().map(|x| x.#foreign_key_ident).collect::<Vec<_>>();
+                    let parents_builder = #struct_ident::select().id().eq_any(ids);
+                    let parents_builder = #child_builder_ident {
                         from: parents_builder.from,
                         filters: parents_builder.filters,
                         ..(**builder).clone()
@@ -90,8 +84,8 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
                     let parents = parents_builder.load(client).await?;
                     result.iter_mut().for_each(|x| {
                         for parent in parents.iter() {
-                            if x.#foreign_key == parent.id {
-                                x.#field_name = Some(parent.clone());
+                            if x.#foreign_key_ident == parent.id {
+                                x.#field_ident = Some(parent.clone());
                                 break;
                             }
                         }

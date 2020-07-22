@@ -52,13 +52,16 @@ INSERT INTO screens(role_id, name) VALUES
 
 CREATE TABLE projects (
   id BIGSERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL
+  name VARCHAR(255) NOT NULL,
+  parent_project_id BIGINT REFERENCES projects ON DELETE RESTRICT,
+  create_user_id BIGINT NOT NULL REFERENCES users ON DELETE RESTRICT,
+  update_user_id BIGINT NOT NULL REFERENCES users ON DELETE RESTRICT
 );
 
-INSERT INTO projects (name) VALUES
- ('ねこの手企画(1)')
-,('ねこしっぽ組(2)')
-,('ねこみみ係(3)')
+INSERT INTO projects (name, parent_project_id, create_user_id, update_user_id) VALUES
+ ('ねこの手企画(1)', null, 1, 1)
+,('ねこしっぽ組(2)', 1, 2, 2)
+,('ねこみみ係(3)', 2, 1, 2)
 ;
 
 CREATE TABLE contributions (

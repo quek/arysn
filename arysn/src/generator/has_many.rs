@@ -19,45 +19,35 @@ pub struct HasMany {
 pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
     let mut result: HasMany = HasMany::default();
     for has_many in config.has_many.iter() {
-        let module_name = format_ident!(
-            "{}",
-            has_many
-                .struct_name
-                .to_string()
-                .to_table_case()
-                .to_singular()
-        );
-        let module_name_impl = format_ident!("{}_impl", module_name);
-        let foreign_key = format_ident!("{}_id", config.table_name.to_singular());
-        let field_name = &has_many.field;
+        let module_ident = format_ident!("{}", has_many.struct_name.to_table_case().to_singular());
+        let module_impl_ident = format_ident!("{}_impl", module_ident);
+        let foreign_key_ident = format_ident!("{}", has_many.foreign_key);
+        let field_ident = format_ident!("{}", has_many.field);
         let join = format!(
             "INNER JOIN {} ON {}.{} = {}.id",
-            field_name.to_string(),
-            field_name.to_string(),
-            foreign_key.to_string(),
-            config.table_name,
+            field_ident, field_ident, foreign_key_ident, config.table_name,
         );
-        let struct_name = &has_many.struct_name;
-        let builder_field = format_ident!("{}_builder", field_name.to_string());
-        let child_builder_name = format_ident!("{}Builder", &struct_name.to_string());
+        let struct_ident = format_ident!("{}", has_many.struct_name);
+        let builder_field = format_ident!("{}_builder", field_ident.to_string());
+        let child_builder_ident = format_ident!("{}Builder", &struct_ident.to_string());
 
         result.has_many_use_plain.push(quote! {
-            use super::#module_name::#struct_name;
+            use super::#module_ident::#struct_ident;
         });
         result.has_many_use_impl.push(quote! {
-            use super::#module_name::#struct_name;
-            use super::#module_name_impl::#child_builder_name;
+            use super::#module_ident::#struct_ident;
+            use super::#module_impl_ident::#child_builder_ident;
         });
         result
             .has_many_field
-            .push(quote! { pub #field_name: Option<Vec<#struct_name>>, });
-        result.has_many_init.push(quote! { #field_name: None, });
+            .push(quote! { pub #field_ident: Option<Vec<#struct_ident>>, });
+        result.has_many_init.push(quote! { #field_ident: None, });
         result
             .has_many_builder_field
-            .push(quote! { pub #builder_field: Option<Box<#child_builder_name>>, });
+            .push(quote! { pub #builder_field: Option<Box<#child_builder_ident>>, });
         result.has_many_builder_impl.push(quote! {
-            pub fn #field_name<F>(&self, f: F) -> #self_builder_name
-            where F: FnOnce(&#child_builder_name) -> #child_builder_name {
+            pub fn #field_ident<F>(&self, f: F) -> #self_builder_name
+            where F: FnOnce(&#child_builder_ident) -> #child_builder_ident {
                 let mut child_builder = f(self.#builder_field.as_ref().unwrap_or(&Default::default()));
                 let mut builder = self.clone();
                 builder.orders.append(&mut child_builder.orders);
@@ -80,8 +70,8 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
             if let Some(builder) = &self.#builder_field {
                 if builder.preload {
                     let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
-                    let children_builder = #struct_name::select().#foreign_key().eq_any(ids);
-                    let children_builder = #child_builder_name {
+                    let children_builder = #struct_ident::select().#foreign_key_ident().eq_any(ids);
+                    let children_builder = #child_builder_ident {
                         from: children_builder.from,
                         filters: children_builder.filters,
                         ..(**builder).clone()
@@ -90,11 +80,11 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                     result.iter_mut().for_each(|x| {
                         let mut ys = vec![];
                         for child in children.iter() {
-                            if x.id == child.#foreign_key {
+                            if x.id == child.#foreign_key_ident {
                                 ys.push(child.clone());
                             }
                         }
-                        x.#field_name = Some(ys);
+                        x.#field_ident = Some(ys);
                     });
                 }
             }

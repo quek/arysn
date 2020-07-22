@@ -4,6 +4,7 @@ use config::Config;
 use has_many::{make_has_many, HasMany};
 use inflector::Inflector;
 use log::debug;
+use order::order_part;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use std::io::Write;
@@ -11,7 +12,6 @@ use std::path::PathBuf;
 use std::process::Command;
 use tokio::runtime::Runtime;
 use tokio_postgres::{Client, NoTls};
-use order::order_part;
 
 mod belongs_to;
 pub mod config;
@@ -127,16 +127,16 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 .to_str()
                 .unwrap()
         );
-        let struct_name: &Ident = &config.struct_name;
-        let new_struct_name: Ident = format_ident!("{}New", struct_name);
-        let builder_name: Ident = format_ident!("{}Builder", struct_name);
-        let builder_name_columns: Vec<Ident> = columns
+        let struct_ident: Ident = format_ident!("{}", &config.struct_name);
+        let new_struct_ident: Ident = format_ident!("{}New", struct_ident);
+        let builder_ident: Ident = format_ident!("{}Builder", struct_ident);
+        let builder_columns: Vec<Ident> = columns
             .iter()
-            .map(|column| format_ident!("{}_{}", &builder_name, &column.name))
+            .map(|column| format_ident!("{}_{}", &builder_ident, &column.name))
             .collect();
 
         let fn_delete: TokenStream = make_fn_delete(&table_name, &columns);
-        let fn_insert: TokenStream = make_fn_insert(struct_name, &table_name, &columns);
+        let fn_insert: TokenStream = make_fn_insert(&struct_ident, &table_name, &columns);
         let fn_update: TokenStream = make_fn_update(&table_name, &columns);
 
         let enums = enums::definitions(&columns, &client).await?;
@@ -159,7 +159,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             has_many_filters_impl,
             has_many_join,
             has_many_preload,
-        } = make_has_many(config, &builder_name);
+        } = make_has_many(config, &builder_ident);
 
         let BelongsTo {
             belongs_to_use_plain,
@@ -171,7 +171,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             belongs_to_filters_impl,
             belongs_to_join,
             belongs_to_preload,
-        } = make_belongs_to(config, &builder_name);
+        } = make_belongs_to(config, &builder_ident);
 
         let output_plain = quote! {
             use serde::{Deserialize, Serialize};
@@ -182,19 +182,19 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             #(#enums)*
 
             #[derive(Clone, Debug, Deserialize, Serialize)]
-            pub struct #struct_name {
+            pub struct #struct_ident {
                 #(pub #column_names: #nullable_rust_types,)*
                 #(#has_many_field)*
                 #(#belongs_to_field)*
             }
 
             #[derive(Clone, Debug, Deserialize, Serialize)]
-            pub struct #new_struct_name {
+            pub struct #new_struct_ident {
                 #(pub #column_names: #rust_types_for_new,)*
             }
         };
 
-        let order_part: TokenStream = order_part(struct_name, &builder_name, &columns);
+        let order_part: TokenStream = order_part(&struct_ident, &builder_ident, &columns);
         let output_impl = quote! {
             use arysn::prelude::*;
             use async_recursion::async_recursion;
@@ -202,22 +202,22 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             #(#has_many_use_impl)*
             #(#belongs_to_use_impl)*
 
-            impl #struct_name {
-                pub fn select() -> #builder_name {
-                    #builder_name {
+            impl #struct_ident {
+                pub fn select() -> #builder_ident {
+                    #builder_ident {
                         from: #table_name.to_string(),
-                        ..#builder_name::default()
+                        ..#builder_ident::default()
                     }
                 }
                 #fn_delete
                 #fn_update
             }
 
-            impl #new_struct_name {
+            impl #new_struct_ident {
                 #fn_insert
             }
 
-            impl From<tokio_postgres::row::Row> for #struct_name {
+            impl From<tokio_postgres::row::Row> for #struct_ident {
                 fn from(row: tokio_postgres::row::Row) -> Self {
                     Self {
                         #(
@@ -230,7 +230,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             }
 
             #[derive(Clone, Debug, Default)]
-            pub struct #builder_name {
+            pub struct #builder_ident {
                 pub from: String,
                 pub filters: Vec<Filter>,
                 pub preload: bool,
@@ -241,9 +241,9 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 #(#belongs_to_builder_field)*
             }
 
-            impl #builder_name {
-                #(pub fn #column_names(&self) -> #builder_name_columns {
-                    #builder_name_columns {
+            impl #builder_ident {
+                #(pub fn #column_names(&self) -> #builder_columns {
+                    #builder_columns {
                         builder: self.clone()
                     }
                 })*
@@ -272,31 +272,31 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 }
 
                 pub async fn first(&self, client: &tokio_postgres::Client) ->
-                    anyhow::Result<#struct_name> {
+                    anyhow::Result<#struct_ident> {
                     let params = self.select_params();
                     let row = client
                         .query_one(self.select_sql().as_str(), &params[..])
                         .await?;
-                    let x: #struct_name = #struct_name::from(row);
+                    let x: #struct_ident = #struct_ident::from(row);
                     Ok(x)
                 }
 
                 #[async_recursion]
                 pub async fn load(&self, client: &tokio_postgres::Client) ->
-                    anyhow::Result<Vec<#struct_name>> {
+                    anyhow::Result<Vec<#struct_ident>> {
                     let params = self.select_params();
                     let rows = client
                         .query(self.select_sql().as_str(), &params[..])
                         .await?;
-                    let mut result: Vec<#struct_name> = rows.into_iter()
-                            .map(|row| #struct_name::from(row)).collect();
+                    let mut result: Vec<#struct_ident> = rows.into_iter()
+                            .map(|row| #struct_ident::from(row)).collect();
                     #(#has_many_preload)*
                     #(#belongs_to_preload)*
                     Ok(result)
                 }
             }
 
-            impl BuilderTrait for #builder_name {
+            impl BuilderTrait for #builder_ident {
                 fn select(&self) -> String {
                     #table_name.to_string()
                 }
@@ -334,11 +334,11 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
             #(
                 #[allow(non_camel_case_types)]
-                pub struct #builder_name_columns {
-                    pub builder: #builder_name,
+                pub struct #builder_columns {
+                    pub builder: #builder_ident,
                 }
-                impl #builder_name_columns {
-                    pub fn eq(&self, value: #rust_types) -> #builder_name {
+                impl #builder_columns {
+                    pub fn eq(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
                             table: #table_name.to_string(),
@@ -346,13 +346,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vec![Box::new(value)],
                             operator: "=".to_string()
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn gt(&self, value: #rust_types) -> #builder_name {
+                    pub fn gt(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
                             table: #table_name.to_string(),
@@ -360,13 +360,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vec![Box::new(value)],
                             operator: ">".to_string()
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn lt(&self, value: #rust_types) -> #builder_name {
+                    pub fn lt(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
                             table: #table_name.to_string(),
@@ -374,13 +374,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vec![Box::new(value)],
                             operator: "<".to_string()
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn gte(&self, value: #rust_types) -> #builder_name {
+                    pub fn gte(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
                             table: #table_name.to_string(),
@@ -388,13 +388,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vec![Box::new(value)],
                             operator: ">=".to_string()
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn lte(&self, value: #rust_types) -> #builder_name {
+                    pub fn lte(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
                             table: #table_name.to_string(),
@@ -402,13 +402,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vec![Box::new(value)],
                             operator: "<=".to_string()
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn not_eq(&self, value: #rust_types) -> #builder_name {
+                    pub fn not_eq(&self, value: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
                             table: #table_name.to_string(),
@@ -416,13 +416,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vec![Box::new(value)],
                             operator: "<>".to_string()
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn is_null(&self) -> #builder_name {
+                    pub fn is_null(&self) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
                             table: #table_name.to_string(),
@@ -430,13 +430,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vec![],
                             operator: "IS NULL".to_string()
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn is_not_null(&self) -> #builder_name {
+                    pub fn is_not_null(&self) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
                             table: #table_name.to_string(),
@@ -444,13 +444,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vec![],
                             operator: "IS NOT NULL".to_string()
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn between(&self, from: #rust_types, to: #rust_types) -> #builder_name {
+                    pub fn between(&self, from: #rust_types, to: #rust_types) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         filters.push(Filter {
                             table: #table_name.to_string(),
@@ -458,13 +458,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vec![Box::new(from), Box::new(to)],
                             operator: "BETWEEN".to_string()
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn eq_any(&self, values: Vec<#rust_types>) -> #builder_name {
+                    pub fn eq_any(&self, values: Vec<#rust_types>) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
                         for v in values {
@@ -476,13 +476,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vs,
                             operator: "IN".to_string(),
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn r#in(&self, values: Vec<#rust_types>) -> #builder_name {
+                    pub fn r#in(&self, values: Vec<#rust_types>) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
                         for v in values {
@@ -494,13 +494,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vs,
                             operator: "IN".to_string(),
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
                     }
 
-                    pub fn not_in(&self, values: Vec<#rust_types>) -> #builder_name {
+                    pub fn not_in(&self, values: Vec<#rust_types>) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
                         for v in values {
@@ -512,7 +512,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             values: vs,
                             operator: "NOT IN".to_string(),
                         });
-                        #builder_name {
+                        #builder_ident {
                             filters,
                             ..self.builder.clone()
                         }
@@ -627,7 +627,7 @@ fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     }
 }
 
-fn make_fn_insert(struct_name: &Ident, table_name: &String, colums: &Vec<Column>) -> TokenStream {
+fn make_fn_insert(struct_ident: &Ident, table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let (_key_columns, rest_columns): (Vec<&Column>, Vec<&Column>) =
         colums.iter().partition(|cloumn| cloumn.is_primary_key);
 
@@ -686,7 +686,7 @@ fn make_fn_insert(struct_name: &Ident, table_name: &String, colums: &Vec<Column>
         .collect();
 
     quote! {
-        pub async fn insert(&self, client: &tokio_postgres::Client) -> anyhow::Result<#struct_name> {
+        pub async fn insert(&self, client: &tokio_postgres::Client) -> anyhow::Result<#struct_ident> {
             let mut target_columns: Vec<&str> = vec![];
             #(#target_columns)*
             let target_columns = target_columns.join(", ");
