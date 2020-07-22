@@ -1,5 +1,6 @@
 # TODO
 
+- has_one
 - join したテーブルの order by. preload の時に使う？
   Error: db error: ERROR: SELECT DISTINCTではORDER BYの式はSELECTリスト内になければなりません
   `.create_projects(|x| x.preload().id().eq(1).order().id().asc())`
