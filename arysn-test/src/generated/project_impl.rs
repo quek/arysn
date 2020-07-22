@@ -223,7 +223,8 @@ impl BuilderTrait for ProjectBuilder {
         }
         if let Some(builder) = &self.create_user_builder {
             join_parts.push(
-                "INNER JOIN create_users ON create_users.id = projects.create_user_id".to_string(),
+                "INNER JOIN users AS create_user ON create_user.id = projects.create_user_id"
+                    .to_string(),
             );
             builder.join(join_parts);
         }

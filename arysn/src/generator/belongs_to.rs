@@ -24,10 +24,22 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
         let module_impl_ident = format_ident!("{}_impl", module_ident);
         let field_ident = format_ident!("{}", belongs_to.field);
         let foreign_key_ident = format_ident!("{}", belongs_to.foreign_key);
+        let parent_table_name = belongs_to.struct_name.to_table_case();
+        let parent_table_name_as = if belongs_to.field.to_table_case() != parent_table_name {
+            belongs_to.field
+        } else {
+            &parent_table_name
+        };
+        let join_as = if parent_table_name == parent_table_name_as {
+            "".to_string()
+        } else {
+            format!(" AS {}", parent_table_name_as)
+        };
         let join = format!(
-            "INNER JOIN {} ON {}.id = {}.{}",
-            field_ident.to_string().to_table_case(),
-            field_ident.to_string().to_table_case(),
+            "INNER JOIN {}{} ON {}.id = {}.{}",
+            parent_table_name,
+            join_as,
+            parent_table_name_as,
             config.table_name,
             foreign_key_ident.to_string()
         );
