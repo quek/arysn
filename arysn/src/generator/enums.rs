@@ -28,7 +28,7 @@ ORDER BY e.enumsortorder
         let enum_name = &column.rust_type;
         let enum_name_pg = &column.udt_name;
         result.push(quote! {
-            #[derive(Debug, Clone, Deserialize, Serialize)]
+            #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
             #[cfg_attr(
                 target_arch = "x86_64",
                 derive(FromSql, ToSql),
