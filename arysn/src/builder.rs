@@ -1,6 +1,6 @@
 use crate::filter::Filter;
-use tokio_postgres::types::ToSql;
 use crate::order_item::OrderItem;
+use tokio_postgres::types::ToSql;
 
 // TODO カラム名がメソッドとしてはえるので名前衝突しないように名前空間がわけたい
 pub trait BuilderTrait {
@@ -11,6 +11,36 @@ pub trait BuilderTrait {
     fn order(&self) -> &Vec<OrderItem>;
     fn limit(&self) -> Option<usize>;
     fn offset(&self) -> Option<usize>;
+
+    fn count(&self) -> (String, Vec<&(dyn ToSql + Sync)>) {
+        let mut index: usize = 1;
+        let mut filters: Vec<String> = vec![];
+        for filter in self.filters().iter() {
+            let (s, i) = filter.to_sql(index);
+            filters.push(s);
+            index += i;
+        }
+        let where_part = if filters.is_empty() {
+            "".to_string()
+        } else {
+            format!(" WHERE {}", filters.join(" AND "))
+        };
+        let sql = format!(
+            "SELECT COUNT(DISTINCT {}.*) FROM {}{}",
+            self.select(),
+            self.from(),
+            where_part,
+        );
+
+        let mut params: Vec<&(dyn ToSql + Sync)> = vec![];
+        for filter in self.filters().iter() {
+            for value in filter.values.iter() {
+                params.push(value.as_to_sql().unwrap());
+            }
+        }
+
+        (sql, params)
+    }
 
     fn select_params(&self) -> Vec<&(dyn ToSql + Sync)> {
         let mut result: Vec<&(dyn ToSql + Sync)> = vec![];
@@ -39,7 +69,14 @@ pub trait BuilderTrait {
         let order_part = if orders.is_empty() {
             "".to_string()
         } else {
-            format!(" ORDER BY {}", orders.iter().map(|x| x.to_sql()).collect::<Vec<_>>().join(", "))
+            format!(
+                " ORDER BY {}",
+                orders
+                    .iter()
+                    .map(|x| x.to_sql())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
         };
         let limit = match Self::limit(self) {
             Some(limit) => format!(" LIMIT {}", limit),

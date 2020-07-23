@@ -273,6 +273,14 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     }
                 }
 
+                pub async fn count(&self, client: &tokio_postgres::Client) ->
+                    anyhow::Result<i64> {
+                    let (sql, params) = BuilderTrait::count(self);
+                    let row = client .query_one(sql.as_str(), &params).await?;
+                    let x: i64 = row.get(0);
+                    Ok(x)
+                }
+
                 pub async fn first(&self, client: &tokio_postgres::Client) ->
                     anyhow::Result<#struct_ident> {
                     let params = self.select_params();
