@@ -13,6 +13,9 @@ async fn has_one() -> Result<()> {
 
     let users = User::select()
         .profile(|profile| profile.preload())
+        .order()
+        .id()
+        .asc()
         .load(conn)
         .await?;
     assert_eq!(users.len(), 2);
@@ -22,6 +25,21 @@ async fn has_one() -> Result<()> {
     let user = &users[1];
     let profile = user.profile.as_ref().unwrap();
     assert_eq!(profile.birth_date, NaiveDate::from_ymd(2000, 1, 1));
+
+    let users = User::select()
+        .profile(|profile| {
+            profile
+                .preload()
+                .birth_date()
+                .lt(NaiveDate::from_ymd(2000, 1, 1))
+        })
+        .load(conn)
+        .await?;
+    assert_eq!(users.len(), 1);
+    assert_eq!(
+        users[0].profile.as_ref().unwrap().birth_date,
+        NaiveDate::from_ymd(1999, 12, 31)
+    );
 
     Ok(())
 }
