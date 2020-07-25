@@ -52,7 +52,7 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
         ]);
         result
             .has_one_field
-            .push(quote! { pub #field_ident: Option<#struct_ident>, });
+            .push(quote! { pub #field_ident: Option<Box<#struct_ident>>, });
         result.has_one_init.push(quote! { #field_ident: None, });
         result
             .has_one_builder_field
@@ -98,9 +98,9 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
                     };
                     let children = children_builder.load(client).await?;
                     result.iter_mut().for_each(|x| {
-                        for child in children {
+                        for child in children.iter() {
                             if x.id == child.#foreign_key_ident {
-                                x.#field_ident = Some(child);
+                                x.#field_ident = Some(Box::new(child.clone()));
                                 break;
                             }
                         }
