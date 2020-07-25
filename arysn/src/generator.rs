@@ -598,6 +598,7 @@ fn compute_type(
         "character varying" => quote!(String),
         "date" => quote!(chrono::NaiveDate),
         "integer" => quote!(i32),
+        "smallint" => quote!(i16),
         "text" => quote!(String),
         "timestamp with time zone" => quote!(chrono::DateTime<chrono::Local>),
         "timestamp without time zone" => quote!(chrono::NaiveDateTime),
