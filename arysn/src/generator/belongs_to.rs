@@ -1,4 +1,5 @@
 use crate::generator::config::Config;
+use crate::generator::Column;
 use inflector::Inflector;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -16,9 +17,17 @@ pub struct BelongsTo {
     pub belongs_to_preload: Vec<TokenStream>,
 }
 
-pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo {
+pub fn make_belongs_to(
+    config: &Config,
+    self_builder_name: &Ident,
+    columns: &Vec<Column>,
+) -> BelongsTo {
     let mut result: BelongsTo = BelongsTo::default();
     for belongs_to in config.belongs_to.iter() {
+        let column = columns
+            .iter()
+            .find(|column| column.name == belongs_to.foreign_key)
+            .unwrap();
         let module_ident =
             format_ident!("{}", belongs_to.struct_name.to_table_case().to_singular());
         let module_impl_ident = format_ident!("{}_impl", module_ident);
@@ -91,25 +100,32 @@ pub fn make_belongs_to(config: &Config, self_builder_name: &Ident) -> BelongsTo 
                 builder.join(join_parts);
             }
         });
-        result.belongs_to_preload.push(quote! {
-            if let Some(builder) = &self.#builder_field {
-                if builder.preload {
-                    let ids = result.iter().map(|x| x.#foreign_key_ident).collect::<Vec<_>>();
-                    let parents_builder = #struct_ident::select().id().eq_any(ids);
-                    let parents_builder = #parent_builder_ident {
-                        from: parents_builder.from,
-                        filters: parents_builder.filters,
-                        ..(**builder).clone()
-                    };
-                    let parents = parents_builder.load(client).await?;
-                    result.iter_mut().for_each(|x| {
-                        for parent in parents.iter() {
-                            if x.#foreign_key_ident == parent.id {
-                                x.#field_ident = Some(parent.clone());
-                                break;
+        result.belongs_to_preload.push({
+            let (map, parent_id) = if column.is_nullable {
+                (quote!(filter_map), quote!(Some(parent.id)))
+            } else {
+                (quote!(map), quote!(parent.id))
+            };
+            quote! {
+                if let Some(builder) = &self.#builder_field {
+                    if builder.preload {
+                        let ids = result.iter().#map(|x| x.#foreign_key_ident).collect::<Vec<_>>();
+                        let parents_builder = #struct_ident::select().id().eq_any(ids);
+                        let parents_builder = #parent_builder_ident {
+                            from: parents_builder.from,
+                            filters: parents_builder.filters,
+                            ..(**builder).clone()
+                        };
+                        let parents = parents_builder.load(client).await?;
+                        result.iter_mut().for_each(|x| {
+                            for parent in parents.iter() {
+                                if x.#foreign_key_ident == #parent_id {
+                                    x.#field_ident = Some(parent.clone());
+                                    break;
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         });

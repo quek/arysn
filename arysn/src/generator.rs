@@ -181,7 +181,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             belongs_to_filters_impl,
             belongs_to_join,
             belongs_to_preload,
-        } = make_belongs_to(config, &builder_ident);
+        } = make_belongs_to(config, &builder_ident, &columns);
         let use_plain = uniq_use(has_many_use_plain, has_one_use_plain, belongs_to_use_plain);
         let use_impl = uniq_use(has_many_use_impl, has_one_use_impl, belongs_to_use_impl);
 

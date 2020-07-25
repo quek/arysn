@@ -101,6 +101,11 @@ fn main() -> Result<()> {
                 struct_name: "User",
                 foreign_key: "update_user_id",
             },
+            BelongsToConfig {
+                field: "check_user",
+                struct_name: "User",
+                foreign_key: "check_user_id",
+            },
         ],
     })?;
 

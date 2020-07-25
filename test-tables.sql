@@ -1,3 +1,5 @@
+BEGIN;
+
 SET log_statement = 'all';
 SET TIME ZONE 'Japan';
 
@@ -69,13 +71,14 @@ CREATE TABLE projects (
   name VARCHAR(255) NOT NULL,
   parent_project_id BIGINT REFERENCES projects ON DELETE RESTRICT,
   create_user_id BIGINT NOT NULL REFERENCES users ON DELETE RESTRICT,
-  update_user_id BIGINT NOT NULL REFERENCES users ON DELETE RESTRICT
+  update_user_id BIGINT NOT NULL REFERENCES users ON DELETE RESTRICT,
+  check_user_id BIGINT REFERENCES users ON DELETE RESTRICT
 );
 
-INSERT INTO projects (name, parent_project_id, create_user_id, update_user_id) VALUES
- ('ねこの手企画(1)', null, 1, 1)
-,('ねこしっぽ組(2)', 1, 2, 1)
-,('ねこみみ係(3)', 2, 1, 2)
+INSERT INTO projects (name, parent_project_id, create_user_id, update_user_id, check_user_id) VALUES
+ ('ねこの手企画(1)', null, 1, 1, 1)
+,('ねこしっぽ組(2)', 1, 2, 1, NULL)
+,('ねこみみ係(3)', 2, 1, 2, NULL)
 ;
 
 CREATE TABLE contributions (
@@ -90,3 +93,5 @@ INSERT INTO contributions (project_id, user_id) VALUES
 ,(3, 1)
 ,(1, 2)
 ;
+
+COMMIT;
