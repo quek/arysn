@@ -39,23 +39,31 @@ pub fn make_belongs_to(
         } else {
             &parent_table_name
         };
-        let join_as = if parent_table_name == parent_table_name_as {
-            "".to_string()
-        } else {
-            format!(" AS {}", parent_table_name_as)
-        };
-        // TODO config.table_name は join as が連鎖している場合動かないと思う。動的にする。
-        let join = format!(
-            "INNER JOIN {}{} ON {}.id = {}.{}",
-            parent_table_name,
-            join_as,
-            parent_table_name_as,
-            config.table_name,
-            foreign_key_ident.to_string()
-        );
         let struct_ident = format_ident!("{}", belongs_to.struct_name);
         let builder_field = format_ident!("{}_builder", field_ident);
         let parent_builder_ident = format_ident!("{}Builder", struct_ident);
+        // TODO config.table_name は join as が連鎖している場合動かないと思う。動的にする。
+        let join = {
+            let x = format!(
+                "INNER JOIN {} ON {}.id = {}.{}",
+                parent_table_name,
+                parent_table_name_as,
+                config.table_name,
+                foreign_key_ident.to_string()
+            );
+            let y = format!(
+                "INNER JOIN {} AS {{0}} ON {{0}}.id = {}.{}",
+                parent_table_name,
+                config.table_name,
+                foreign_key_ident.to_string()
+            );
+            quote! {
+                match &self.#builder_field.as_ref().map(|x| x.table_name_as.as_ref()).flatten() {
+                    Some(table_name_as) => format!(#y, table_name_as),
+                    None => #x.to_string(),
+                }
+            }
+        };
 
         result.belongs_to_use_plain.push(vec![quote! {
             use super::#module_ident::#struct_ident;
@@ -96,7 +104,7 @@ pub fn make_belongs_to(
         });
         result.belongs_to_join.push(quote! {
             if let Some(builder) = &self.#builder_field {
-                join_parts.push(#join.to_string());
+                join_parts.push(#join);
                 builder.join(join_parts);
             }
         });

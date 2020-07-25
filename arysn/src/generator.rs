@@ -266,6 +266,13 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 #(#has_one_builder_impl)*
                 #(#belongs_to_builder_impl)*
 
+                pub fn r#as(&self, name: String) -> Self {
+                    Self  {
+                        table_name_as: Some(name),
+                        ..self.clone()
+                    }
+                }
+
                 pub fn limit(&self, value: usize) -> Self {
                     Self {
                         limit: Some(value),
