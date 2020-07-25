@@ -1,5 +1,7 @@
 pub mod contribution;
 pub mod contribution_impl;
+pub mod profile;
+pub mod profile_impl;
 pub mod project;
 pub mod project_impl;
 pub mod role;

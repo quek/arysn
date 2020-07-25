@@ -1,9 +1,9 @@
 use anyhow::Result;
-use arysn::generator::config::{BelongsToConfig, Config, HasManyConfig};
+use arysn::generator::config::{BelongsToConfig, Config, HasManyConfig, HasOneConfig};
 use arysn::generator::define_ar;
 
 fn main() -> Result<()> {
-    let config = Config {
+    define_ar(&Config {
         path: "src/generated/user.rs",
         table_name: "users",
         struct_name: "User",
@@ -29,11 +29,28 @@ fn main() -> Result<()> {
                 foreign_key: "update_user_id",
             },
         ],
+        has_one: vec![HasOneConfig {
+            field: "profile",
+            struct_name: "Profile",
+            foreign_key: "user_id",
+        }],
         belongs_to: vec![],
-    };
-    define_ar(&config)?;
+    })?;
 
-    let config = Config {
+    define_ar(&Config {
+        path: "src/generated/profile.rs",
+        table_name: "profiles",
+        struct_name: "Profile",
+        has_many: vec![],
+        has_one: vec![],
+        belongs_to: vec![BelongsToConfig {
+            field: "user",
+            struct_name: "User",
+            foreign_key: "user_id",
+        }],
+    })?;
+
+    define_ar(&Config {
         path: "src/generated/role.rs",
         table_name: "roles",
         struct_name: "Role",
@@ -42,26 +59,26 @@ fn main() -> Result<()> {
             struct_name: "Screen",
             foreign_key: "role_id",
         }],
+        has_one: vec![],
         belongs_to: vec![BelongsToConfig {
             field: "user",
             struct_name: "User",
             foreign_key: "user_id",
         }],
-    };
-    define_ar(&config)?;
+    })?;
 
-    let config = Config {
+    define_ar(&Config {
         path: "src/generated/screen.rs",
         table_name: "screens",
         struct_name: "Screen",
         has_many: vec![],
+        has_one: vec![],
         belongs_to: vec![BelongsToConfig {
             field: "role",
             struct_name: "Role",
             foreign_key: "role_id",
         }],
-    };
-    define_ar(&config)?;
+    })?;
 
     define_ar(&Config {
         path: "src/generated/project.rs",
@@ -72,6 +89,7 @@ fn main() -> Result<()> {
             struct_name: "Contribution",
             foreign_key: "project_id",
         }],
+        has_one: vec![],
         belongs_to: vec![
             BelongsToConfig {
                 field: "create_user",
@@ -91,6 +109,7 @@ fn main() -> Result<()> {
         table_name: "contributions",
         struct_name: "Contribution",
         has_many: vec![],
+        has_one: vec![],
         belongs_to: vec![
             BelongsToConfig {
                 field: "project",

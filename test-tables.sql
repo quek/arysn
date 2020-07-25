@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS contributions;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS screens;
 DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS profiles;
 DROP TYPE IF EXISTS role_type;
 DROP TABLE IF EXISTS users;
 
@@ -24,6 +25,19 @@ INSERT INTO users(name, title, age, active, created_at) VALUES
 ;
 
 CREATE TYPE role_type AS ENUM ('admin', 'user');
+
+CREATE TABLE profiles (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users ON DELETE CASCADE,
+  birth_date DATE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO profiles(user_id, birth_date) VALUES
+ (1, '1999-12-31')
+,(2, '2000-01-01')
+;
 
 CREATE TABLE roles (
   id BIGSERIAL PRIMARY KEY,

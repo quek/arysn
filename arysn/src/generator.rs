@@ -2,6 +2,7 @@ use anyhow::Result;
 use belongs_to::{make_belongs_to, BelongsTo};
 use config::Config;
 use has_many::{make_has_many, HasMany};
+use has_one::{make_has_one, HasOne};
 use inflector::Inflector;
 use log::debug;
 use order::order_part;
@@ -17,6 +18,7 @@ mod belongs_to;
 pub mod config;
 mod enums;
 mod has_many;
+mod has_one;
 mod order;
 
 pub fn define_ar(config: &Config) -> Result<()> {
@@ -71,17 +73,13 @@ ORDER BY ordinal_position
             let data_type: String = row.get(2);
             let column_default: Option<String> = row.get(3);
             let udt_name: String = row.get(4);
-            let (rust_type, mut nullable_rust_type) =
-                compute_type(&data_type, is_nullable, &udt_name);
+            let (rust_type, nullable_rust_type) = compute_type(&data_type, is_nullable, &udt_name);
             let rust_type_for_new = if column_default.is_some() && !is_nullable {
                 quote! { Option<#rust_type> }
             } else {
                 nullable_rust_type.clone()
             };
             let is_primary_key = primary_key.iter().any(|x| x == &name);
-            if !is_primary_key && column_default.is_some() {
-                nullable_rust_type = quote!(Option<#rust_type>);
-            }
             Column {
                 name,
                 is_nullable,
@@ -161,6 +159,18 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             has_many_preload,
         } = make_has_many(config, &builder_ident);
 
+        let HasOne {
+            has_one_use_plain,
+            has_one_use_impl,
+            has_one_field,
+            has_one_init,
+            has_one_builder_field,
+            has_one_builder_impl,
+            has_one_filters_impl,
+            has_one_join,
+            has_one_preload,
+        } = make_has_one(config, &builder_ident);
+
         let BelongsTo {
             belongs_to_use_plain,
             belongs_to_use_impl,
@@ -172,8 +182,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             belongs_to_join,
             belongs_to_preload,
         } = make_belongs_to(config, &builder_ident);
-        let use_plain = uniq_use(has_many_use_plain, belongs_to_use_plain);
-        let use_impl = uniq_use(has_many_use_impl, belongs_to_use_impl);
+        let use_plain = uniq_use(has_many_use_plain, has_one_use_plain, belongs_to_use_plain);
+        let use_impl = uniq_use(has_many_use_impl, has_one_use_impl, belongs_to_use_impl);
 
         let output_plain = quote! {
             use serde::{Deserialize, Serialize};
@@ -186,6 +196,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             pub struct #struct_ident {
                 #(pub #column_names: #nullable_rust_types,)*
                 #(#has_many_field)*
+                #(#has_one_field)*
                 #(#belongs_to_field)*
             }
 
@@ -225,6 +236,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             #column_names: row.get(#column_index),
                         )*
                         #(#has_many_init)*
+                        #(#has_one_init)*
                         #(#belongs_to_init)*
                     }
                 }
@@ -240,6 +252,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 pub limit: Option<usize>,
                 pub offset: Option<usize>,
                 #(#has_many_builder_field)*
+                #(#has_one_builder_field)*
                 #(#belongs_to_builder_field)*
             }
 
@@ -250,6 +263,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     }
                 })*
                 #(#has_many_builder_impl)*
+                #(#has_one_builder_impl)*
                 #(#belongs_to_builder_impl)*
 
                 pub fn limit(&self, value: usize) -> Self {
@@ -301,6 +315,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     let mut result: Vec<#struct_ident> = rows.into_iter()
                             .map(|row| #struct_ident::from(row)).collect();
                     #(#has_many_preload)*
+                    #(#has_one_preload)*
                     #(#belongs_to_preload)*
                     Ok(result)
                 }
@@ -319,12 +334,14 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
                 fn join(&self, join_parts: &mut Vec<String>) {
                     #(#has_many_join)*
+                    #(#has_one_join)*
                     #(#belongs_to_join)*
                 }
 
                 fn filters(&self) -> Vec<&Filter> {
                     let mut result: Vec<&Filter> = self.filters.iter().collect();
                     #(#has_many_filters_impl)*
+                    #(#has_one_filters_impl)*
                     #(#belongs_to_filters_impl)*
                     result
                 }
@@ -576,10 +593,11 @@ fn compute_type(
     udt_name: &String,
 ) -> (TokenStream, TokenStream) {
     let rust_type = match data_type {
-        "boolean" => quote!(bool),
-        "integer" => quote!(i32),
         "bigint" => quote!(i64),
+        "boolean" => quote!(bool),
         "character varying" => quote!(String),
+        "date" => quote!(chrono::NaiveDate),
+        "integer" => quote!(i32),
         "text" => quote!(String),
         "timestamp with time zone" => quote!(chrono::DateTime<chrono::Local>),
         "timestamp without time zone" => quote!(chrono::NaiveDateTime),
@@ -764,8 +782,17 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     }
 }
 
-fn uniq_use(x: Vec<Vec<TokenStream>>, y: Vec<Vec<TokenStream>>) -> Vec<TokenStream> {
-    let mut x: Vec<TokenStream> = x.into_iter().chain(y.into_iter()).flatten().collect();
+fn uniq_use(
+    x: Vec<Vec<TokenStream>>,
+    y: Vec<Vec<TokenStream>>,
+    z: Vec<Vec<TokenStream>>,
+) -> Vec<TokenStream> {
+    let mut x: Vec<TokenStream> = x
+        .into_iter()
+        .chain(y.into_iter())
+        .chain(z.into_iter())
+        .flatten()
+        .collect();
     x.sort_by_key(|x| x.to_string());
     x.dedup_by_key(|x| x.to_string());
     x
