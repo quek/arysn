@@ -309,7 +309,14 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             .query_opt(self.select_sql().as_str(), &params[..])
                             .await?;
                     match row {
-                        Some(row) => Ok(#struct_ident::from(row)),
+                        Some(row) => {
+                            #[allow(unused_mut)]
+                            let mut result = vec![#struct_ident::from(row)];
+                            #(#has_many_preload)*
+                            #(#has_one_preload)*
+                            #(#belongs_to_preload)*
+                            Ok(result.pop().unwrap())
+                        },
                         None => Err(arysn::Error::NotFound),
                     }
                 }
