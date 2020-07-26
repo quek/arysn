@@ -16,5 +16,11 @@ async fn simple() -> Result<()> {
     let simples = Simple::select().load(&client).await?;
     assert_eq!(simples.len(), 0);
 
+    let err = Simple::select().first(&client).await;
+    match err {
+        Err(arysn::Error::NotFound) => assert!(true),
+        _ => assert!(false),
+    }
+
     Ok(())
 }

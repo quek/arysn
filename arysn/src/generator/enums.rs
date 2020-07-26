@@ -1,5 +1,5 @@
+use crate::error::Result;
 use crate::generator::Column;
-use anyhow::Result;
 use inflector::Inflector;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};

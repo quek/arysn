@@ -1,9 +1,12 @@
 mod builder;
 mod db;
+mod error;
 mod filter;
 pub mod generator;
-mod value;
 mod order_item;
+mod value;
+
+pub use error::{ArysnError as Error, Result};
 
 pub mod prelude {
     pub use super::builder::BuilderTrait;

@@ -1,4 +1,4 @@
-use anyhow::Result;
+use crate::error::Result;
 use belongs_to::{make_belongs_to, BelongsTo};
 use config::Config;
 use has_many::{make_has_many, HasMany};
@@ -295,7 +295,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 }
 
                 pub async fn count(&self, client: &tokio_postgres::Client) ->
-                    anyhow::Result<i64> {
+                    arysn::Result<i64> {
                     let (sql, params) = BuilderTrait::count(self);
                     let row = client .query_one(sql.as_str(), &params).await?;
                     let x: i64 = row.get(0);
@@ -303,18 +303,20 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 }
 
                 pub async fn first(&self, client: &tokio_postgres::Client) ->
-                    anyhow::Result<#struct_ident> {
+                    arysn::Result<#struct_ident> {
                     let params = self.select_params();
                     let row = client
-                        .query_one(self.select_sql().as_str(), &params[..])
-                        .await?;
-                    let x: #struct_ident = #struct_ident::from(row);
-                    Ok(x)
+                            .query_opt(self.select_sql().as_str(), &params[..])
+                            .await?;
+                    match row {
+                        Some(row) => Ok(#struct_ident::from(row)),
+                        None => Err(arysn::Error::NotFound),
+                    }
                 }
 
                 #[async_recursion]
                 pub async fn load(&self, client: &tokio_postgres::Client) ->
-                    anyhow::Result<Vec<#struct_ident>> {
+                    arysn::Result<Vec<#struct_ident>> {
                     let params = self.select_params();
                     let rows = client
                         .query(self.select_sql().as_str(), &params[..])
@@ -671,7 +673,7 @@ fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let params = quote! { &[#(&self.#params),*] };
 
     quote! {
-        pub async fn delete(&self, client: &tokio_postgres::Client) -> anyhow::Result<()> {
+        pub async fn delete(&self, client: &tokio_postgres::Client) -> arysn::Result<()> {
             client.execute(#statement, #params).await?;
             Ok(())
         }
@@ -737,7 +739,7 @@ fn make_fn_insert(struct_ident: &Ident, table_name: &String, colums: &Vec<Column
         .collect();
 
     quote! {
-        pub async fn insert(&self, client: &tokio_postgres::Client) -> anyhow::Result<#struct_ident> {
+        pub async fn insert(&self, client: &tokio_postgres::Client) -> arysn::Result<#struct_ident> {
             let mut target_columns: Vec<&str> = vec![];
             #(#target_columns)*
             let target_columns = target_columns.join(", ");
@@ -786,7 +788,7 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let params = quote! { &[#(&self.#params),*] };
 
     quote! {
-        pub async fn update(&self, client: &tokio_postgres::Client) -> anyhow::Result<()> {
+        pub async fn update(&self, client: &tokio_postgres::Client) -> arysn::Result<()> {
             client.execute(#statement, #params).await?;
             Ok(())
         }
