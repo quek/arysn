@@ -9,14 +9,15 @@ mod common;
 async fn crud() -> Result<()> {
     init();
 
-    let client = connect().await?;
+    let mut conn = connect().await?;
+    let conn = &conn.transaction().await?;
 
     let users = User::select()
         .id()
         .eq(1)
         .name()
         .eq("ユーザ1".to_string())
-        .load(&client)
+        .load(conn)
         .await?;
     assert_eq!(users.len(), 1);
     let user = &users[0];
@@ -28,9 +29,9 @@ async fn crud() -> Result<()> {
     let mut user = user.clone();
     let age = user.age + 100;
     user.age = age;
-    user.update(&client).await?;
+    user.update(conn).await?;
 
-    let user = User::select().id().eq(1).first(&client).await?;
+    let user = User::select().id().eq(1).first(conn).await?;
     assert_eq!(user.age, age);
 
     let user = UserNew {
@@ -41,13 +42,13 @@ async fn crud() -> Result<()> {
         active: true,
         created_at: None,
     };
-    let user = user.insert(&client).await?;
+    let user = user.insert(conn).await?;
     assert_eq!(user.name, "こねら".to_string());
     assert_eq!(user.title, Some("さば".to_string()));
     assert_eq!(user.age, 3);
     assert_eq!(user.active, true);
-    user.delete(&client).await?;
-    let user = User::select().id().eq(user.id).first(&client).await;
+    user.delete(conn).await?;
+    let user = User::select().id().eq(user.id).first(conn).await;
     log::debug!("{:?}", &user);
     assert_eq!(user.is_err(), true);
 
@@ -72,8 +73,8 @@ async fn limit_offset() -> Result<()> {
 #[tokio::test]
 async fn operators() -> Result<()> {
     init();
-
-    let cnn = &connect().await?;
+    let mut conn = connect().await?;
+    let conn = &conn.transaction().await?;
 
     let users = User::select()
         .id()
@@ -83,7 +84,7 @@ async fn operators() -> Result<()> {
         .order()
         .id()
         .asc()
-        .load(cnn)
+        .load(conn)
         .await?;
     assert_eq!(users[0].id, 2);
 

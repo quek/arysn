@@ -9,7 +9,8 @@ mod common;
 #[tokio::test]
 async fn join_as_belongs_to() -> Result<()> {
     init();
-    let conn = &connect().await?;
+    let mut conn = connect().await?;
+    let conn = &conn.transaction().await?;
 
     let projects = Project::select()
         .create_user(|x| x.preload().id().eq(2))
@@ -26,7 +27,8 @@ async fn join_as_belongs_to() -> Result<()> {
 #[tokio::test]
 async fn join_as_has_many() -> Result<()> {
     init();
-    let conn = &connect().await?;
+    let mut conn = connect().await?;
+    let conn = &conn.transaction().await?;
 
     let users = User::select()
         .order()

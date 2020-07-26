@@ -294,16 +294,16 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     }
                 }
 
-                pub async fn count(&self, client: &tokio_postgres::Client) ->
-                    arysn::Result<i64> {
+                pub async fn count<T>(&self, client: &T) -> arysn::Result<i64>
+                where T: tokio_postgres::GenericClient + std::marker::Sync {
                     let (sql, params) = BuilderTrait::count(self);
                     let row = client .query_one(sql.as_str(), &params).await?;
                     let x: i64 = row.get(0);
                     Ok(x)
                 }
 
-                pub async fn first(&self, client: &tokio_postgres::Client) ->
-                    arysn::Result<#struct_ident> {
+                pub async fn first<T>(&self, client: &T) -> arysn::Result<#struct_ident>
+                where T: tokio_postgres::GenericClient + std::marker::Sync {
                     let params = self.select_params();
                     let row = client
                             .query_opt(self.select_sql().as_str(), &params[..])
@@ -322,8 +322,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 }
 
                 #[async_recursion]
-                pub async fn load(&self, client: &tokio_postgres::Client) ->
-                    arysn::Result<Vec<#struct_ident>> {
+                pub async fn load<T>(&self, client: &T) -> arysn::Result<Vec<#struct_ident>>
+                    where T: tokio_postgres::GenericClient + std::marker::Sync {
                     let params = self.select_params();
                     let rows = client
                         .query(self.select_sql().as_str(), &params[..])
@@ -680,7 +680,8 @@ fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let params = quote! { &[#(&self.#params),*] };
 
     quote! {
-        pub async fn delete(&self, client: &tokio_postgres::Client) -> arysn::Result<()> {
+        pub async fn delete<T>(&self, client: &T) -> arysn::Result<()>
+        where T: tokio_postgres::GenericClient + std::marker::Sync {
             client.execute(#statement, #params).await?;
             Ok(())
         }
@@ -746,7 +747,8 @@ fn make_fn_insert(struct_ident: &Ident, table_name: &String, colums: &Vec<Column
         .collect();
 
     quote! {
-        pub async fn insert(&self, client: &tokio_postgres::Client) -> arysn::Result<#struct_ident> {
+        pub async fn insert<T>(&self, client: &T) -> arysn::Result<#struct_ident>
+        where T: tokio_postgres::GenericClient + std::marker::Sync {
             let mut target_columns: Vec<&str> = vec![];
             #(#target_columns)*
             let target_columns = target_columns.join(", ");
@@ -795,7 +797,8 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let params = quote! { &[#(&self.#params),*] };
 
     quote! {
-        pub async fn update(&self, client: &tokio_postgres::Client) -> arysn::Result<()> {
+        pub async fn update<T>(&self, client: &T) -> arysn::Result<()>
+        where T: tokio_postgres::GenericClient + std::marker::Sync {
             client.execute(#statement, #params).await?;
             Ok(())
         }

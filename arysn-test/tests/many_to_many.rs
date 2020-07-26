@@ -8,7 +8,8 @@ mod common;
 #[tokio::test]
 async fn many_to_many() -> Result<()> {
     init();
-    let conn = &connect().await?;
+    let mut conn = connect().await?;
+    let conn = &conn.transaction().await?;
 
     let users = User::select()
         .contributions(|contribution| {

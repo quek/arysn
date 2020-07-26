@@ -8,7 +8,8 @@ mod common;
 #[tokio::test]
 async fn belongs_to() -> Result<()> {
     init();
-    let conn = &connect().await?;
+    let mut conn = connect().await?;
+    let conn = &conn.transaction().await?;
     let roles = Role::select()
         .user(|user| user.id().eq(1))
         .load(conn)

@@ -11,12 +11,13 @@ mod common;
 #[tokio::test]
 async fn simple() -> Result<()> {
     init();
-    let client = connect().await?;
+    let mut conn = connect().await?;
+    let conn = &conn.transaction().await?;
 
-    let simples = Simple::select().load(&client).await?;
+    let simples = Simple::select().load(conn).await?;
     assert_eq!(simples.len(), 0);
 
-    let err = Simple::select().first(&client).await;
+    let err = Simple::select().first(conn).await;
     match err {
         Err(arysn::Error::NotFound) => assert!(true),
         _ => assert!(false),

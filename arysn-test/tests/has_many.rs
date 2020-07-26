@@ -9,7 +9,8 @@ mod common;
 #[tokio::test]
 async fn has_many() -> Result<()> {
     init();
-    let conn = &connect().await?;
+    let mut conn = connect().await?;
+    let conn = &conn.transaction().await?;
 
     let users = User::select()
         .active()
