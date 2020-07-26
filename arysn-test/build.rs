@@ -4,6 +4,15 @@ use arysn::generator::define_ar;
 
 fn main() -> Result<()> {
     define_ar(&Config {
+        path: "src/generated/simple.rs",
+        table_name: "simples",
+        struct_name: "Simple",
+        has_many: vec![],
+        has_one: vec![],
+        belongs_to: vec![],
+    })?;
+
+    define_ar(&Config {
         path: "src/generated/user.rs",
         table_name: "users",
         struct_name: "User",

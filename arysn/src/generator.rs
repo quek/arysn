@@ -319,6 +319,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     let rows = client
                         .query(self.select_sql().as_str(), &params[..])
                         .await?;
+                    #[allow(unused_mut)]
                     let mut result: Vec<#struct_ident> = rows.into_iter()
                             .map(|row| #struct_ident::from(row)).collect();
                     #(#has_many_preload)*
@@ -339,6 +340,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     result.join(" ")
                 }
 
+                #[allow(unused_variables)]
                 fn join(&self, join_parts: &mut Vec<String>) {
                     #(#has_many_join)*
                     #(#has_one_join)*
@@ -346,6 +348,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 }
 
                 fn filters(&self) -> Vec<&Filter> {
+                    #[allow(unused_mut)]
                     let mut result: Vec<&Filter> = self.filters.iter().collect();
                     #(#has_many_filters_impl)*
                     #(#has_one_filters_impl)*
