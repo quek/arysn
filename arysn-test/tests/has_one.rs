@@ -18,13 +18,23 @@ async fn has_one() -> Result<()> {
         .asc()
         .load(conn)
         .await?;
-    assert_eq!(users.len(), 2);
+    // preload だけなら profile のないのもとってくる
+    assert_eq!(users.len(), 3);
     let user = &users[0];
     let profile = user.profile.as_ref().unwrap();
     assert_eq!(profile.birth_date, NaiveDate::from_ymd(1999, 12, 31));
     let user = &users[1];
     let profile = user.profile.as_ref().unwrap();
     assert_eq!(profile.birth_date, NaiveDate::from_ymd(2000, 1, 1));
+
+    let users = User::select()
+        .profile(|profile| profile.preload().id().is_not_null())
+        .order()
+        .id()
+        .asc()
+        .load(conn)
+        .await?;
+    assert_eq!(users.len(), 2);
 
     let users = User::select()
         .profile(|profile| {

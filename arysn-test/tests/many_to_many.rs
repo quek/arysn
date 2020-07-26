@@ -11,7 +11,11 @@ async fn many_to_many() -> Result<()> {
     let conn = &connect().await?;
 
     let users = User::select()
-        .contributions(|contribution| contribution.preload().project(|project| project.preload()))
+        .contributions(|contribution| {
+            contribution
+                .preload()
+                .project(|project| project.preload().id().is_not_null())
+        })
         .order()
         .id()
         .asc()
