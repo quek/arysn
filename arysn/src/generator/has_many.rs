@@ -67,17 +67,13 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
         result.has_many_builder_impl.push(quote! {
             pub fn #field_ident<F>(&self, f: F) -> #self_builder_name
             where F: FnOnce(&#child_builder_ident) -> #child_builder_ident {
-                let mut child_builder = f(self.#builder_field.as_ref().unwrap_or(
+                let child_builder = f(self.#builder_field.as_ref().unwrap_or(
                     &Box::new(#child_builder_ident {
                         table_name_as: Some(#child_table_name_as.to_string()),
                         ..Default::default()
                     })
                 ));
                 let mut builder = self.clone();
-                // TODO join したテーブルの order by. preload の時に使う？
-                // Error: db error: ERROR: SELECT DISTINCTではORDER BYの式は
-                // SELECTリスト内になければなりません
-                builder.orders.append(&mut child_builder.orders);
                 builder.#builder_field = Some(Box::new(child_builder));
                 builder
             }
@@ -103,6 +99,7 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                     let children_builder = #child_builder_ident {
                         from: children_builder.from,
                         filters: children_builder.filters,
+                        orders: children_builder.orders,
                         ..(**builder).clone()
                     };
                     let children = children_builder.load(client).await?;

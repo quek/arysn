@@ -82,17 +82,13 @@ pub fn make_belongs_to(
         result.belongs_to_builder_impl.push(quote! {
             pub fn #field_ident<F>(&self, f: F) -> #self_builder_name
             where F: FnOnce(&#parent_builder_ident) -> #parent_builder_ident {
-                let mut parent_builder = f(self.#builder_field.as_ref().unwrap_or(
+                let parent_builder = f(self.#builder_field.as_ref().unwrap_or(
                     &Box::new(#parent_builder_ident {
                         table_name_as: Some(#parent_table_name_as.to_string()),
                         ..Default::default()
                     })
                 ));
                 let mut builder = self.clone();
-                // TODO join したテーブルの order by. preload の時に使う？
-                // Error: db error: ERROR: SELECT DISTINCTではORDER BYの式は
-                // SELECTリスト内になければなりません
-                builder.orders.append(&mut parent_builder.orders);
                 builder.#builder_field = Some(Box::new(parent_builder));
                 builder
             }
@@ -124,6 +120,7 @@ pub fn make_belongs_to(
                         let parents_builder = #parent_builder_ident {
                             from: parents_builder.from,
                             filters: parents_builder.filters,
+                            orders: parents_builder.orders,
                             ..(**builder).clone()
                         };
                         let parents = parents_builder.load(client).await?;
