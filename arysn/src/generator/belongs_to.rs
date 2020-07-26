@@ -120,7 +120,6 @@ pub fn make_belongs_to(
                         let parents_builder = #parent_builder_ident {
                             from: parents_builder.from,
                             filters: parents_builder.filters,
-                            orders: parents_builder.orders,
                             ..(**builder).clone()
                         };
                         let parents = parents_builder.load(client).await?;

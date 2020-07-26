@@ -99,7 +99,6 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                     let children_builder = #child_builder_ident {
                         from: children_builder.from,
                         filters: children_builder.filters,
-                        orders: children_builder.orders,
                         ..(**builder).clone()
                     };
                     let children = children_builder.load(client).await?;
