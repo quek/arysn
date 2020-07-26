@@ -89,8 +89,10 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
         });
         result.has_many_join.push(quote! {
             if let Some(builder) = &self.#builder_field {
-                join_parts.push(#join);
-                builder.join(join_parts);
+                if !builder.filters().is_empty() {
+                    join_parts.push(#join);
+                    builder.join(join_parts);
+                }
             }
         });
         result.has_many_preload.push(quote! {

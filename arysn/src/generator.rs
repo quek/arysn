@@ -340,11 +340,9 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 }
 
                 fn join(&self, join_parts: &mut Vec<String>) {
-                    if !self.filters().is_empty() {
-                        #(#has_many_join)*
-                        #(#has_one_join)*
-                        #(#belongs_to_join)*
-                    }
+                    #(#has_many_join)*
+                    #(#has_one_join)*
+                    #(#belongs_to_join)*
                 }
 
                 fn filters(&self) -> Vec<&Filter> {

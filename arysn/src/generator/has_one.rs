@@ -82,8 +82,10 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
         });
         result.has_one_join.push(quote! {
             if let Some(builder) = &self.#builder_field {
-                join_parts.push(#join.to_string());
-                builder.join(join_parts);
+                if !builder.filters().is_empty() {
+                    join_parts.push(#join.to_string());
+                    builder.join(join_parts);
+                }
             }
         });
         result.has_one_preload.push(quote! {
