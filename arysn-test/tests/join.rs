@@ -42,9 +42,9 @@ async fn join_as_has_many() -> Result<()> {
     let user = &users[0];
     assert_eq!(user.id, 1);
     let create_projects = user.create_projects.as_ref().unwrap();
-    assert_eq!(create_projects.len(), 2);
+    assert_eq!(create_projects.len(), 1);
     let update_projects = user.update_projects.as_ref().unwrap();
-    assert_eq!(update_projects.len(), 2);
+    assert_eq!(update_projects.len(), 1);
     let user = &users[1];
     assert_eq!(user.id, 2);
     let create_projects = user.create_projects.as_ref().unwrap();

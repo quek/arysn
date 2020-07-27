@@ -93,7 +93,6 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
                         from: children_builder.from,
                         filters: builder.filters.iter().cloned()
                             .chain(children_builder.filters.into_iter())
-                            .filter(|x| x.preload)
                             .map(|x| Filter {
                                 table: #child_table_name.to_string(),
                                 preload: false,

@@ -124,7 +124,6 @@ pub fn make_belongs_to(
                             from: parents_builder.from,
                             filters: builder.filters.iter().cloned()
                                 .chain(parents_builder.filters.into_iter())
-                                .filter(|x| x.preload)
                                 .map(|x| Filter {
                                     table: #parent_table_name.to_string(),
                                     preload: false,
