@@ -27,7 +27,10 @@ pub fn make_belongs_to(
         let column = columns
             .iter()
             .find(|column| column.name == belongs_to.foreign_key)
-            .unwrap();
+            .expect(&format!(
+                "{} is not found in {}",
+                &belongs_to.foreign_key, &config.table_name
+            ));
         let module_ident =
             format_ident!("{}", belongs_to.struct_name.to_table_case().to_singular());
         let module_impl_ident = format_ident!("{}_impl", module_ident);
@@ -119,7 +122,15 @@ pub fn make_belongs_to(
                         let parents_builder = #struct_ident::select().id().eq_any(ids);
                         let parents_builder = #parent_builder_ident {
                             from: parents_builder.from,
-                            filters: parents_builder.filters,
+                            filters: builder.filters.iter().cloned()
+                                .chain(parents_builder.filters.into_iter())
+                                .filter(|x| x.preload)
+                                .map(|x| Filter {
+                                    table: #parent_table_name.to_string(),
+                                    preload: false,
+                                    ..x
+                                })
+                                .collect::<Vec<_>>(),
                             ..(**builder).clone()
                         };
                         let parents = parents_builder.load(client).await?;

@@ -1,5 +1,6 @@
 # TODO
 
+- or
 - transaction
 - 同じテーブルを複数回 join
 - 無条件に distinct 付けるのやめる

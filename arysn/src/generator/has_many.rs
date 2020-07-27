@@ -98,7 +98,15 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                     let children_builder = #struct_ident::select().#foreign_key_ident().eq_any(ids);
                     let children_builder = #child_builder_ident {
                         from: children_builder.from,
-                        filters: children_builder.filters,
+                        filters: builder.filters.iter().cloned()
+                            .chain(children_builder.filters.into_iter())
+                            .filter(|x| x.preload)
+                            .map(|x| Filter {
+                                table: #child_table_name.to_string(),
+                                preload: false,
+                                ..x
+                            })
+                            .collect::<Vec<_>>(),
                         ..(**builder).clone()
                     };
                     let children = children_builder.load(client).await?;

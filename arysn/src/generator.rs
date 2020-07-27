@@ -358,7 +358,10 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
                 fn filters(&self) -> Vec<&Filter> {
                     #[allow(unused_mut)]
-                    let mut result: Vec<&Filter> = self.filters.iter().collect();
+                    let mut result: Vec<&Filter> = self.filters
+                        .iter()
+                        .filter(|x| !x.preload)
+                        .collect();
                     #(#has_many_filters_impl)*
                     #(#has_one_filters_impl)*
                     #(#belongs_to_filters_impl)*
@@ -391,7 +394,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
-                            operator: "=".to_string()
+                            operator: "=".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -406,7 +410,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
-                            operator: ">".to_string()
+                            operator: ">".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -421,7 +426,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
-                            operator: "<".to_string()
+                            operator: "<".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -436,7 +442,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
-                            operator: ">=".to_string()
+                            operator: ">=".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -451,7 +458,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
-                            operator: "<=".to_string()
+                            operator: "<=".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -466,7 +474,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
-                            operator: "<>".to_string()
+                            operator: "<>".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -481,7 +490,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![],
-                            operator: "IS NULL".to_string()
+                            operator: "IS NULL".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -496,7 +506,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![],
-                            operator: "IS NOT NULL".to_string()
+                            operator: "IS NOT NULL".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -511,7 +522,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(from), Box::new(to)],
-                            operator: "BETWEEN".to_string()
+                            operator: "BETWEEN".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -531,6 +543,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             name: stringify!(#column_names).to_string(),
                             values: vs,
                             operator: "IN".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -550,6 +563,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             name: stringify!(#column_names).to_string(),
                             values: vs,
                             operator: "IN".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,
@@ -569,6 +583,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                             name: stringify!(#column_names).to_string(),
                             values: vs,
                             operator: "NOT IN".to_string(),
+                            preload: self.builder.preload,
                         });
                         #builder_ident {
                             filters,

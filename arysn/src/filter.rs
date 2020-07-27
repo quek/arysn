@@ -6,6 +6,7 @@ pub struct Filter {
     pub name: String,
     pub values: Vec<Box<dyn ToSqlValue>>,
     pub operator: String,
+    pub preload: bool,
 }
 
 impl Filter {

@@ -32,8 +32,6 @@ INSERT INTO users(name, title, age, active, created_at) VALUES
 ,('ユーザ3', 'もののけ', 22, TRUE, CURRENT_TIMESTAMP)
 ;
 
-CREATE TYPE role_type AS ENUM ('admin', 'user');
-
 CREATE TABLE profiles (
   id BIGSERIAL PRIMARY KEY,
   user_id BIGINT NOT NULL REFERENCES users ON DELETE CASCADE,
@@ -46,6 +44,8 @@ INSERT INTO profiles(user_id, birth_date) VALUES
  (1, '1999-12-31')
 ,(2, '2000-01-01')
 ;
+
+CREATE TYPE role_type AS ENUM ('admin', 'user');
 
 CREATE TABLE roles (
   id BIGSERIAL PRIMARY KEY,

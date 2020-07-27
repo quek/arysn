@@ -15,7 +15,7 @@ async fn many_to_many() -> Result<()> {
         .contributions(|contribution| {
             contribution
                 .preload()
-                .project(|project| project.preload().id().is_not_null())
+                .project(|project| project.id().is_not_null().preload())
         })
         .order()
         .id()

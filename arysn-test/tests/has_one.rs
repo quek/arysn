@@ -29,7 +29,7 @@ async fn has_one() -> Result<()> {
     assert_eq!(profile.birth_date, NaiveDate::from_ymd(2000, 1, 1));
 
     let users = User::select()
-        .profile(|profile| profile.preload().id().is_not_null())
+        .profile(|profile| profile.id().is_not_null().preload())
         .order()
         .id()
         .asc()
@@ -40,9 +40,9 @@ async fn has_one() -> Result<()> {
     let users = User::select()
         .profile(|profile| {
             profile
-                .preload()
                 .birth_date()
                 .lt(NaiveDate::from_ymd(2000, 1, 1))
+                .preload()
         })
         .load(conn)
         .await?;

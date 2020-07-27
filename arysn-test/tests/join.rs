@@ -13,7 +13,7 @@ async fn join_as_belongs_to() -> Result<()> {
     let conn = &conn.transaction().await?;
 
     let projects = Project::select()
-        .create_user(|x| x.preload().id().eq(2))
+        .create_user(|x| x.id().eq(2).preload())
         .update_user(|x| x.preload())
         .load(conn)
         .await?;
@@ -34,10 +34,7 @@ async fn join_as_has_many() -> Result<()> {
         .order()
         .id()
         .asc()
-        // Error: db error: ERROR: SELECT DISTINCTではORDER BYの式はSELECTリスト内になければなりません
-        // .create_projects(|x| x.preload().id().eq(1).order().id().asc())
-        // .update_projects(|x| x.preload().id().r#in(vec![1, 2]).order().id().asc())
-        .create_projects(|x| x.preload().id().r#in(vec![1, 2]))
+        .create_projects(|x| x.id().r#in(vec![1, 2]).preload())
         .update_projects(|x| x.id().r#in(vec![1, 3]).preload())
         .load(conn)
         .await?;
@@ -45,8 +42,6 @@ async fn join_as_has_many() -> Result<()> {
     let user = &users[0];
     assert_eq!(user.id, 1);
     let create_projects = user.create_projects.as_ref().unwrap();
-    // preload は最初の SQL に関係なく紐付くレコードを全て取ってくる。でいい？
-    // log::debug!("{:#?} {:#?}", user, create_projects);
     assert_eq!(create_projects.len(), 2);
     let update_projects = user.update_projects.as_ref().unwrap();
     assert_eq!(update_projects.len(), 2);
