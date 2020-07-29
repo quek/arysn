@@ -23,7 +23,10 @@ pub trait BuilderTrait {
         let where_part = if filters.is_empty() {
             "".to_string()
         } else {
-            format!(" WHERE {}", filters.join(" AND "))
+            format!(
+                " WHERE {}",
+                filters.join(" AND ").replace(" AND OR AND ", " OR ")
+            )
         };
         let sql = format!(
             "SELECT COUNT(DISTINCT {}.*) FROM {}{}",
@@ -63,7 +66,10 @@ pub trait BuilderTrait {
         let where_part = if filters.is_empty() {
             "".to_string()
         } else {
-            format!(" WHERE {}", filters.join(" AND "))
+            format!(
+                " WHERE {}",
+                filters.join(" AND ").replace(" AND OR AND ", " OR ")
+            )
         };
         let orders: &Vec<OrderItem> = BuilderTrait::order(self);
         let order_part = if orders.is_empty() {

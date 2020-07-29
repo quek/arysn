@@ -50,6 +50,7 @@ impl Filter {
                     )
                 }
             }
+            "OR" => ("OR".to_string(), 0),
             "IS NULL" => (format!("{}.{} IS NULL", &self.table, &self.name), 0),
             "IS NOT NULL" => (format!("{}.{} IS NOT NULL", &self.table, &self.name), 0),
             "BETWEEN" => (

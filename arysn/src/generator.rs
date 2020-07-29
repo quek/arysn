@@ -280,6 +280,20 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     }
                 }
 
+                pub fn or(&self) -> Self {
+                    let mut builder = self.clone();
+                    builder.filters.push(
+                        Filter {
+                            table: "".to_string(),
+                            name: "".to_string(),
+                            values: vec![],
+                            operator: "OR".to_string(),
+                            preload: builder.preload,
+                        }
+                    );
+                    builder
+                }
+
                 pub fn offset(&self, value: usize) -> Self {
                     Self {
                         offset: Some(value),
