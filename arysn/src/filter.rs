@@ -12,6 +12,8 @@ pub struct Filter {
 impl Filter {
     pub fn to_sql(&self, bind_index: usize) -> (String, usize) {
         match self.operator.as_str() {
+            "(" => ("(".to_string(), 0),
+            ")" => (")".to_string(), 0),
             "IN" => {
                 let len = self.values.len();
                 if len == 0 {

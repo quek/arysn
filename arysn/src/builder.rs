@@ -25,7 +25,11 @@ pub trait BuilderTrait {
         } else {
             format!(
                 " WHERE {}",
-                filters.join(" AND ").replace(" AND OR AND ", " OR ")
+                filters
+                    .join(" AND ")
+                    .replace(" AND OR AND ", " OR ")
+                    .replace("( AND ", "(")
+                    .replace(" AND )", ")")
             )
         };
         let sql = format!(
@@ -68,7 +72,11 @@ pub trait BuilderTrait {
         } else {
             format!(
                 " WHERE {}",
-                filters.join(" AND ").replace(" AND OR AND ", " OR ")
+                filters
+                    .join(" AND ")
+                    .replace(" AND OR AND ", " OR ")
+                    .replace("( AND ", "(")
+                    .replace(" AND )", ")")
             )
         };
         let orders: &Vec<OrderItem> = BuilderTrait::order(self);

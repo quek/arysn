@@ -350,6 +350,30 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     #(#belongs_to_preload)*
                     Ok(result)
                 }
+
+                pub fn r#where<F>(&self, f: F) -> Self
+                where F: FnOnce(&Self) -> Self {
+                    let mut builder = self.clone();
+                    builder.filters.clear();
+                    let mut builder = f(&builder);
+                    let mut result = self.clone();
+                    result.filters.push(Filter {
+                        table: "".to_string(),
+                        name: "".to_string(),
+                        values: vec![],
+                        operator: "(".to_string(),
+                        preload: builder.preload,
+                    });
+                    result.filters.append(&mut builder.filters);
+                    result.filters.push(Filter {
+                        table: "".to_string(),
+                        name: "".to_string(),
+                        values: vec![],
+                        operator: ")".to_string(),
+                        preload: builder.preload,
+                    });
+                    result
+                }
             }
 
             impl BuilderTrait for #builder_ident {

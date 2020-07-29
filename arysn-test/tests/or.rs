@@ -22,13 +22,15 @@ async fn or() -> Result<()> {
         .await?;
     assert_eq!(users.len(), 3);
 
-    // // WHERE active = TRUE AND (age = 10 OR age = 20 OR age = 30)
-    // let users = User::select()
-    //     .active()
-    //     .eq(true)
-    //     .r#where(|b| b.age().eq(10).or().age().eq(2).or().age().eq(30))
-    //     .load(conn).await?;
-    // assert_eq!(users.len(), 1);
+    // WHERE active = TRUE AND (age = 21 OR age = 22)
+    let users = User::select()
+        .active()
+        .eq(true)
+        // r#where って名前どうなの？ でも()付けるだけなんだよね
+        .r#where(|b| b.age().eq(21).or().age().eq(22))
+        .load(conn)
+        .await?;
+    assert_eq!(users.len(), 1);
 
     Ok(())
 }
