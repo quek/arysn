@@ -18,7 +18,7 @@ async fn preload() -> Result<()> {
         .await?;
     assert_eq!(users.len(), 1);
     let user = &users[0];
-    assert!(user.roles.is_none());
+    assert!(user.roles.is_empty());
 
     let users = User::select()
         .roles(|roles| roles.role_type().eq(RoleType::Admin).preload())
@@ -26,7 +26,7 @@ async fn preload() -> Result<()> {
         .await?;
     assert_eq!(users.len(), 1);
     let user = &users[0];
-    let roles = user.roles.as_ref().unwrap();
+    let roles = &user.roles;
     assert_eq!(roles.len(), 1);
     assert_eq!(roles[0].role_type, RoleType::Admin);
 
@@ -39,14 +39,14 @@ async fn preload() -> Result<()> {
         .await?;
     assert_eq!(users.len(), 3);
     let user = &users[0];
-    let roles = user.roles.as_ref().unwrap();
+    let roles = &user.roles;
     assert_eq!(roles.len(), 1);
     assert_eq!(roles[0].role_type, RoleType::Admin);
     let user = &users[1];
-    let roles = user.roles.as_ref().unwrap();
+    let roles = &user.roles;
     assert_eq!(roles.len(), 0);
     let user = &users[2];
-    let roles = user.roles.as_ref().unwrap();
+    let roles = &user.roles;
     assert_eq!(roles.len(), 0);
 
     Ok(())

@@ -59,8 +59,8 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
         ]);
         result
             .has_many_field
-            .push(quote! { pub #field_ident: Option<Vec<#struct_ident>>, });
-        result.has_many_init.push(quote! { #field_ident: None, });
+            .push(quote! { pub #field_ident: Vec<#struct_ident>, });
+        result.has_many_init.push(quote! { #field_ident: vec![], });
         result
             .has_many_builder_field
             .push(quote! { pub #builder_field: Option<Box<#child_builder_ident>>, });
@@ -116,7 +116,7 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                                 ys.push(child.clone());
                             }
                         }
-                        x.#field_ident = Some(ys);
+                        x.#field_ident = ys;
                     });
                 }
             }

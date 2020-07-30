@@ -24,7 +24,7 @@ async fn many_to_many() -> Result<()> {
         .await?;
     assert_eq!(users.len(), 2);
     let user = &users[0];
-    assert_eq!(user.contributions.as_ref().unwrap().len(), 3);
+    assert_eq!(user.contributions.len(), 3);
 
     Ok(())
 }

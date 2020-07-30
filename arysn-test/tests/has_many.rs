@@ -20,7 +20,7 @@ async fn has_many() -> Result<()> {
         .await?;
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].id, 1);
-    assert_eq!(users[0].roles.is_none(), true);
+    assert_eq!(users[0].roles.is_empty(), true);
 
     let users = User::select()
         .roles(|roles| {
@@ -30,10 +30,7 @@ async fn has_many() -> Result<()> {
         })
         .load(conn)
         .await?;
-    let screen = &users[0].roles.as_ref().unwrap()[0]
-        .screens
-        .as_ref()
-        .unwrap()[0];
+    let screen = &users[0].roles[0].screens[0];
     assert_eq!(screen.id, 1);
 
     Ok(())

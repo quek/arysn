@@ -41,15 +41,15 @@ async fn join_as_has_many() -> Result<()> {
     assert_eq!(users.len(), 2);
     let user = &users[0];
     assert_eq!(user.id, 1);
-    let create_projects = user.create_projects.as_ref().unwrap();
+    let create_projects = &user.create_projects;
     assert_eq!(create_projects.len(), 1);
-    let update_projects = user.update_projects.as_ref().unwrap();
+    let update_projects = &user.update_projects;
     assert_eq!(update_projects.len(), 1);
     let user = &users[1];
     assert_eq!(user.id, 2);
-    let create_projects = user.create_projects.as_ref().unwrap();
+    let create_projects = &user.create_projects;
     assert_eq!(create_projects.len(), 1);
-    let update_projects = user.update_projects.as_ref().unwrap();
+    let update_projects = &user.update_projects;
     assert_eq!(update_projects.len(), 1);
 
     Ok(())
