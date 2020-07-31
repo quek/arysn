@@ -135,7 +135,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
         let fn_delete: TokenStream = make_fn_delete(&table_name, &columns);
         let fn_insert: TokenStream = make_fn_insert(&struct_ident, &table_name, &columns);
-        let fn_update: TokenStream = make_fn_update(&table_name, &columns);
+        let fn_update: TokenStream = make_fn_update(&struct_ident, &table_name, &columns);
 
         let enums = enums::definitions(&columns, &client).await?;
         let use_to_sql_from_sql = if enums.is_empty() {
@@ -824,7 +824,7 @@ fn make_fn_insert(struct_ident: &Ident, table_name: &String, colums: &Vec<Column
     }
 }
 
-fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
+fn make_fn_update(struct_ident: &Ident, table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let (key_columns, rest_columns): (Vec<&Column>, Vec<&Column>) =
         colums.iter().partition(|cloumn| cloumn.is_primary_key);
 
@@ -840,7 +840,10 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
         .map(|(index, column)| format!("{} = ${}", &column.name, index + rest_columns.len() + 1))
         .collect::<Vec<_>>()
         .join(", ");
-    let statement = format!("UPDATE {} SET {} WHERE {}", table_name, set_sql, where_sql);
+    let statement = format!(
+        "UPDATE {} SET {} WHERE {} RETURNING *",
+        table_name, set_sql, where_sql
+    );
 
     let params = rest_columns
         .iter()
@@ -850,10 +853,10 @@ fn make_fn_update(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let params = quote! { &[#(&self.#params),*] };
 
     quote! {
-        pub async fn update<T>(&self, client: &T) -> arysn::Result<()>
+        pub async fn update<T>(&self, client: &T) -> arysn::Result<#struct_ident>
         where T: tokio_postgres::GenericClient + std::marker::Sync {
-            client.execute(#statement, #params).await?;
-            Ok(())
+            let row = client.query_one(#statement, #params).await?;
+            Ok(row.into())
         }
     }
 }
