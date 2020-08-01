@@ -21,3 +21,17 @@ impl From<std::io::Error> for ArysnError {
         ArysnError::Other(error.into())
     }
 }
+
+pub trait Optional<T> {
+    fn optional(self) -> Result<Option<T>>;
+}
+
+impl<T> Optional<T> for Result<T> {
+    fn optional(self) -> Result<Option<T>> {
+        match self {
+            Ok(value) => Ok(Some(value)),
+            Err(ArysnError::NotFound) => Ok(None),
+            Err(e) => Err(e),
+        }
+    }
+}
