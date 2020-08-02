@@ -26,18 +26,38 @@ pub enum Connection<'a> {
 }
 
 impl<'a> Connection<'a> {
-    pub async fn transaction<'b>(&'b mut self) -> Result<Connection<'b>> {
-        let transaction = match self {
-            Connection::ClientConnection(x) => {
-                Connection::ClientTransaction(x.transaction().await?)
+    pub async fn commit(self) -> Result<()> {
+        match self {
+            Connection::ClientConnection(_) => {
+                unimplemented!();
             }
             Connection::ClientTransaction(x) => {
-                Connection::ClientTransaction(x.transaction().await?)
+                x.commit().await?;
             }
-            Connection::PoolConnection(x) => Connection::PoolTransaction(x.transaction().await?),
-            Connection::PoolTransaction(x) => Connection::PoolTransaction(x.transaction().await?),
-        };
-        Ok(transaction)
+            Connection::PoolConnection(_) => {
+                unimplemented!();
+            }
+            Connection::PoolTransaction(x) => {
+                x.commit().await?;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn execute<T>(
+        &self,
+        statement: &T,
+        params: &[&(dyn ToSql + Sync)],
+    ) -> std::result::Result<u64, tokio_postgres::Error>
+    where
+        T: ?Sized + ToStatement,
+    {
+        match self {
+            Connection::ClientConnection(x) => x.execute(statement, params).await,
+            Connection::ClientTransaction(x) => x.execute(statement, params).await,
+            Connection::PoolConnection(x) => x.execute(statement, params).await,
+            Connection::PoolTransaction(x) => x.execute(statement, params).await,
+        }
     }
 
     pub async fn query<T>(
@@ -88,19 +108,17 @@ impl<'a> Connection<'a> {
         }
     }
 
-    pub async fn execute<T>(
-        &self,
-        statement: &T,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> std::result::Result<u64, tokio_postgres::Error>
-    where
-        T: ?Sized + ToStatement,
-    {
-        match self {
-            Connection::ClientConnection(x) => x.execute(statement, params).await,
-            Connection::ClientTransaction(x) => x.execute(statement, params).await,
-            Connection::PoolConnection(x) => x.execute(statement, params).await,
-            Connection::PoolTransaction(x) => x.execute(statement, params).await,
-        }
+    pub async fn transaction<'b>(&'b mut self) -> Result<Connection<'b>> {
+        let transaction = match self {
+            Connection::ClientConnection(x) => {
+                Connection::ClientTransaction(x.transaction().await?)
+            }
+            Connection::ClientTransaction(x) => {
+                Connection::ClientTransaction(x.transaction().await?)
+            }
+            Connection::PoolConnection(x) => Connection::PoolTransaction(x.transaction().await?),
+            Connection::PoolTransaction(x) => Connection::PoolTransaction(x.transaction().await?),
+        };
+        Ok(transaction)
     }
 }
