@@ -10,13 +10,13 @@ mod common;
 async fn has_many() -> Result<()> {
     init();
     let mut conn = connect().await?;
-    let conn = &conn.transaction().await?;
+    let conn = conn.transaction().await?;
 
     let users = User::select()
         .active()
         .eq(true)
         .roles(|roles| roles.role_type().eq(RoleType::Admin))
-        .load(conn)
+        .load(&conn)
         .await?;
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].id, 1);
@@ -28,7 +28,7 @@ async fn has_many() -> Result<()> {
                 .preload()
                 .screens(|screens| screens.id().eq(1).preload())
         })
-        .load(conn)
+        .load(&conn)
         .await?;
     let screen = &users[0].roles[0].screens[0];
     assert_eq!(screen.id, 1);

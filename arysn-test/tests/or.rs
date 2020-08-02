@@ -9,7 +9,7 @@ mod common;
 async fn or() -> Result<()> {
     init();
     let mut conn = connect().await?;
-    let conn = &conn.transaction().await?;
+    let conn = conn.transaction().await?;
 
     // WEHER active = TRUE OR age = 21
     let users = User::select()
@@ -18,7 +18,7 @@ async fn or() -> Result<()> {
         .or()
         .age()
         .eq(21)
-        .load(conn)
+        .load(&conn)
         .await?;
     assert_eq!(users.len(), 3);
 
@@ -28,7 +28,7 @@ async fn or() -> Result<()> {
         .eq(true)
         // r#where って名前どうなの？ でも()付けるだけなんだよね
         .r#where(|b| b.age().eq(21).or().age().eq(22))
-        .load(conn)
+        .load(&conn)
         .await?;
     assert_eq!(users.len(), 1);
 

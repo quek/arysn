@@ -308,18 +308,16 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                     }
                 }
 
-                pub async fn count<T>(&self, client: &T) -> arysn::Result<i64>
-                where T: tokio_postgres::GenericClient + std::marker::Sync {
+                pub async fn count<'a>(&self, conn: &arysn::Connection<'a>) -> arysn::Result<i64> {
                     let (sql, params) = BuilderTrait::count(self);
-                    let row = client .query_one(sql.as_str(), &params).await?;
+                    let row = conn.query_one(sql.as_str(), &params).await?;
                     let x: i64 = row.get(0);
                     Ok(x)
                 }
 
-                pub async fn first<T>(&self, client: &T) -> arysn::Result<#struct_ident>
-                where T: tokio_postgres::GenericClient + std::marker::Sync {
+                pub async fn first<'a>(&self, conn: &arysn::Connection<'a>) -> arysn::Result<#struct_ident> {
                     let params = self.select_params();
-                    let row = client
+                    let row = conn
                             .query_opt(self.select_sql().as_str(), &params[..])
                             .await?;
                     match row {
@@ -336,10 +334,9 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 }
 
                 #[async_recursion]
-                pub async fn load<T>(&self, client: &T) -> arysn::Result<Vec<#struct_ident>>
-                    where T: tokio_postgres::GenericClient + std::marker::Sync {
+                pub async fn load<'a>(&self, conn: &arysn::Connection<'a>) -> arysn::Result<Vec<#struct_ident>> {
                     let params = self.select_params();
-                    let rows = client
+                    let rows = conn
                         .query(self.select_sql().as_str(), &params[..])
                         .await?;
                     #[allow(unused_mut)]
@@ -733,9 +730,8 @@ fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     let params = quote! { &[#(&self.#params),*] };
 
     quote! {
-        pub async fn delete<T>(&self, client: &T) -> arysn::Result<()>
-        where T: tokio_postgres::GenericClient + std::marker::Sync {
-            client.execute(#statement, #params).await?;
+        pub async fn delete<'a>(&self, conn: &arysn::Connection<'a>) -> arysn::Result<()> {
+            conn.execute(#statement, #params).await?;
             Ok(())
         }
     }
@@ -800,8 +796,7 @@ fn make_fn_insert(struct_ident: &Ident, table_name: &String, colums: &Vec<Column
         .collect();
 
     quote! {
-        pub async fn insert<T>(&self, client: &T) -> arysn::Result<#struct_ident>
-        where T: tokio_postgres::GenericClient + std::marker::Sync {
+        pub async fn insert<'a>(&self, conn: &arysn::Connection<'a>) -> arysn::Result<#struct_ident> {
             let mut target_columns: Vec<&str> = vec![];
             #(#target_columns)*
             let target_columns = target_columns.join(", ");
@@ -818,7 +813,7 @@ fn make_fn_insert(struct_ident: &Ident, table_name: &String, colums: &Vec<Column
             let mut params: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = vec![];
             #(#params)*
 
-            let row = client.query_one(statement.as_str(), &params[..]).await?;
+            let row = conn.query_one(statement.as_str(), &params[..]).await?;
             Ok(row.into())
         }
     }
@@ -853,9 +848,8 @@ fn make_fn_update(struct_ident: &Ident, table_name: &String, colums: &Vec<Column
     let params = quote! { &[#(&self.#params),*] };
 
     quote! {
-        pub async fn update<T>(&self, client: &T) -> arysn::Result<#struct_ident>
-        where T: tokio_postgres::GenericClient + std::marker::Sync {
-            let row = client.query_one(#statement, #params).await?;
+        pub async fn update<'a>(&self, conn: &arysn::Connection<'a>) -> arysn::Result<#struct_ident> {
+            let row = conn.query_one(#statement, #params).await?;
             Ok(row.into())
         }
     }

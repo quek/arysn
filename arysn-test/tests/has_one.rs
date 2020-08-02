@@ -10,14 +10,14 @@ mod common;
 async fn has_one() -> Result<()> {
     init();
     let mut conn = connect().await?;
-    let conn = &conn.transaction().await?;
+    let conn = conn.transaction().await?;
 
     let users = User::select()
         .profile(|profile| profile.preload())
         .order()
         .id()
         .asc()
-        .load(conn)
+        .load(&conn)
         .await?;
     // preload だけなら profile のないのもとってくる
     assert_eq!(users.len(), 3);
@@ -33,7 +33,7 @@ async fn has_one() -> Result<()> {
         .order()
         .id()
         .asc()
-        .load(conn)
+        .load(&conn)
         .await?;
     assert_eq!(users.len(), 2);
 
@@ -44,7 +44,7 @@ async fn has_one() -> Result<()> {
                 .lt(NaiveDate::from_ymd(2000, 1, 1))
                 .preload()
         })
-        .load(conn)
+        .load(&conn)
         .await?;
     assert_eq!(users.len(), 1);
     assert_eq!(

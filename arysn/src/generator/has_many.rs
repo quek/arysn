@@ -108,7 +108,7 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                             .collect::<Vec<_>>(),
                         ..(**builder).clone()
                     };
-                    let children = children_builder.load(client).await?;
+                    let children = children_builder.load(conn).await?;
                     result.iter_mut().for_each(|x| {
                         let mut ys = vec![];
                         for child in children.iter() {

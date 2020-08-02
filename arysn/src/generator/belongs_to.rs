@@ -132,7 +132,7 @@ pub fn make_belongs_to(
                                 .collect::<Vec<_>>(),
                             ..(**builder).clone()
                         };
-                        let parents = parents_builder.load(client).await?;
+                        let parents = parents_builder.load(conn).await?;
                         result.iter_mut().for_each(|x| {
                             for parent in parents.iter() {
                                 if x.#foreign_key_ident == #parent_id {

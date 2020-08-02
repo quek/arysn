@@ -10,11 +10,11 @@ mod common;
 async fn preload() -> Result<()> {
     init();
     let mut conn = connect().await?;
-    let conn = &conn.transaction().await?;
+    let conn = conn.transaction().await?;
 
     let users = User::select()
         .roles(|roles| roles.role_type().eq(RoleType::Admin))
-        .load(conn)
+        .load(&conn)
         .await?;
     assert_eq!(users.len(), 1);
     let user = &users[0];
@@ -22,7 +22,7 @@ async fn preload() -> Result<()> {
 
     let users = User::select()
         .roles(|roles| roles.role_type().eq(RoleType::Admin).preload())
-        .load(conn)
+        .load(&conn)
         .await?;
     assert_eq!(users.len(), 1);
     let user = &users[0];
@@ -35,7 +35,7 @@ async fn preload() -> Result<()> {
         .order()
         .id()
         .asc()
-        .load(conn)
+        .load(&conn)
         .await?;
     assert_eq!(users.len(), 3);
     let user = &users[0];

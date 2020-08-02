@@ -59,12 +59,12 @@ async fn crud() -> Result<()> {
 async fn limit_offset() -> Result<()> {
     init();
 
-    let cnn = &connect().await?;
+    let conn = &connect().await?;
 
-    let users = User::select().load(cnn).await?;
+    let users = User::select().load(conn).await?;
     assert_eq!(users.len(), 3);
 
-    let users = User::select().limit(1).offset(1).load(cnn).await?;
+    let users = User::select().limit(1).offset(1).load(conn).await?;
     assert_eq!(users.len(), 1);
 
     Ok(())

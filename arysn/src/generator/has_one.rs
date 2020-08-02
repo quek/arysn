@@ -101,7 +101,7 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
                             .collect::<Vec<_>>(),
                         ..(**builder).clone()
                     };
-                    let children = children_builder.load(client).await?;
+                    let children = children_builder.load(conn).await?;
                     result.iter_mut().for_each(|x| {
                         for child in children.iter() {
                             if x.id == child.#foreign_key_ident {

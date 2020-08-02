@@ -6,6 +6,7 @@ pub mod generator;
 mod order_item;
 mod value;
 
+pub use db::Connection;
 pub use error::{ArysnError as Error, Optional, Result};
 
 pub mod prelude {
