@@ -163,6 +163,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             has_one_use_plain,
             has_one_use_impl,
             has_one_field,
+            has_one_reader,
             has_one_init,
             has_one_builder_field,
             has_one_builder_impl,
@@ -175,6 +176,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             belongs_to_use_plain,
             belongs_to_use_impl,
             belongs_to_field,
+            belongs_to_reader,
             belongs_to_init,
             belongs_to_builder_field,
             belongs_to_builder_impl,
@@ -198,6 +200,11 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 #(#has_many_field)*
                 #(#has_one_field)*
                 #(#belongs_to_field)*
+            }
+
+            impl #struct_ident {
+                #(#has_one_reader)*
+                #(#belongs_to_reader)*
             }
 
             #[derive(Clone, Debug, Deserialize, Serialize)]

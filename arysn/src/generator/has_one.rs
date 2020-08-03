@@ -8,6 +8,7 @@ pub struct HasOne {
     pub has_one_use_plain: Vec<Vec<TokenStream>>,
     pub has_one_use_impl: Vec<Vec<TokenStream>>,
     pub has_one_field: Vec<TokenStream>,
+    pub has_one_reader: Vec<TokenStream>,
     pub has_one_init: Vec<TokenStream>,
     pub has_one_builder_field: Vec<TokenStream>,
     pub has_one_builder_impl: Vec<TokenStream>,
@@ -53,6 +54,11 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
         result
             .has_one_field
             .push(quote! { pub #field_ident: Option<Box<#struct_ident>>, });
+        result.has_one_reader.push(quote! {
+            pub fn #field_ident(&self) -> &#struct_ident {
+                self.#field_ident.as_ref().unwrap()
+            }
+        });
         result.has_one_init.push(quote! { #field_ident: None, });
         result
             .has_one_builder_field

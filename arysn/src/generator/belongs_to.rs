@@ -9,6 +9,7 @@ pub struct BelongsTo {
     pub belongs_to_use_plain: Vec<Vec<TokenStream>>,
     pub belongs_to_use_impl: Vec<Vec<TokenStream>>,
     pub belongs_to_field: Vec<TokenStream>,
+    pub belongs_to_reader: Vec<TokenStream>,
     pub belongs_to_init: Vec<TokenStream>,
     pub belongs_to_builder_field: Vec<TokenStream>,
     pub belongs_to_builder_impl: Vec<TokenStream>,
@@ -78,6 +79,11 @@ pub fn make_belongs_to(
         result
             .belongs_to_field
             .push(quote! { pub #field_ident: Option<#struct_ident>, });
+        result.belongs_to_reader.push(quote! {
+            pub fn #field_ident(&self) -> &#struct_ident {
+                self.#field_ident.as_ref().unwrap()
+            }
+        });
         result.belongs_to_init.push(quote! { #field_ident: None, });
         result
             .belongs_to_builder_field
