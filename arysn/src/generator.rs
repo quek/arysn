@@ -204,11 +204,11 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
             impl #struct_ident {
                 #(
-                    #[allow(unused_mut)]
+                    #[allow(dead_code)]
                     #has_one_reader
                 )*
                 #(
-                    #[allow(unused_mut)]
+                    #[allow(dead_code)]
                     #belongs_to_reader
                 )*
             }
