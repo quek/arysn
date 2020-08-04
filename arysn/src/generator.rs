@@ -203,8 +203,14 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             }
 
             impl #struct_ident {
-                #(#has_one_reader)*
-                #(#belongs_to_reader)*
+                #(
+                    #[allow(unused_mut)]
+                    #has_one_reader
+                )*
+                #(
+                    #[allow(unused_mut)]
+                    #belongs_to_reader
+                )*
             }
 
             #[derive(Clone, Debug, Deserialize, Serialize)]
