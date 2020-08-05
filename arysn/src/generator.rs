@@ -750,11 +750,8 @@ fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {
     }
 }
 
-fn make_fn_insert(struct_ident: &Ident, table_name: &String, colums: &Vec<Column>) -> TokenStream {
-    let (_key_columns, rest_columns): (Vec<&Column>, Vec<&Column>) =
-        colums.iter().partition(|cloumn| cloumn.is_primary_key);
-
-    let target_columns: Vec<TokenStream> = rest_columns
+fn make_fn_insert(struct_ident: &Ident, table_name: &String, columns: &Vec<Column>) -> TokenStream {
+    let target_columns: Vec<TokenStream> = columns
         .iter()
         .map(|column| {
             let name = format_ident!("{}", &column.name);
@@ -772,7 +769,7 @@ fn make_fn_insert(struct_ident: &Ident, table_name: &String, colums: &Vec<Column
         })
         .collect();
 
-    let count_bind: Vec<TokenStream> = rest_columns
+    let count_bind: Vec<TokenStream> = columns
         .iter()
         .map(|column| {
             let name = format_ident!("{}", &column.name);
@@ -790,7 +787,7 @@ fn make_fn_insert(struct_ident: &Ident, table_name: &String, colums: &Vec<Column
         })
         .collect();
 
-    let params: Vec<TokenStream> = rest_columns
+    let params: Vec<TokenStream> = columns
         .iter()
         .map(|column| {
             let name = format_ident!("{}", &column.name);
