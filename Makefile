@@ -11,3 +11,6 @@ create-test-tables:
 
 psql:
 	docker exec -it arysn_db_1 psql -U user1 arysn_development
+
+publish:
+	cargo publish --manifest-path arysn/Cargo.toml
