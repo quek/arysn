@@ -5,13 +5,13 @@ pub struct Filter {
     pub table: String,
     pub name: String,
     pub values: Vec<Box<dyn ToSqlValue>>,
-    pub operator: String,
+    pub operator: &'static str,
     pub preload: bool,
 }
 
 impl Filter {
     pub fn to_sql(&self, bind_index: usize) -> (String, usize) {
-        match self.operator.as_str() {
+        match self.operator {
             "(" => ("(".to_string(), 0),
             ")" => (")".to_string(), 0),
             "IN" => {
