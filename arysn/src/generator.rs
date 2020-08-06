@@ -436,187 +436,154 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 }
                 impl #builder_columns {
                     pub fn eq(&self, value: #rust_types) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        let mut builder = self.builder.clone();
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: "=",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn gt(&self, value: #rust_types) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        let mut builder = self.builder.clone();
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: ">",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn lt(&self, value: #rust_types) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        let mut builder = self.builder.clone();
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: "<",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn gte(&self, value: #rust_types) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        let mut builder = self.builder.clone();
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: ">=",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn lte(&self, value: #rust_types) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        let mut builder = self.builder.clone();
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: "<=",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn not_eq(&self, value: #rust_types) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        let mut builder = self.builder.clone();
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(value)],
                             operator: "<>",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn is_null(&self) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        let mut builder = self.builder.clone();
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![],
                             operator: "IS NULL",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn is_not_null(&self) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        let mut builder = self.builder.clone();
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![],
                             operator: "IS NOT NULL",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn between(&self, from: #rust_types, to: #rust_types) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        let mut builder = self.builder.clone();
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vec![Box::new(from), Box::new(to)],
                             operator: "BETWEEN",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn r#in(&self, values: Vec<#rust_types>) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
+                        let mut builder = self.builder.clone();
                         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
                         for v in values {
                             vs.push(Box::new(v));
                         }
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vs,
                             operator: "IN",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
 
                     pub fn not_in(&self, values: Vec<#rust_types>) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
+                        let mut builder = self.builder.clone();
                         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
                         for v in values {
                             vs.push(Box::new(v));
                         }
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
+                        builder.filters.push(Filter {
+                            table: builder.table_name_as.as_ref()
                                 .unwrap_or(&#table_name.to_string()).to_string(),
                             name: stringify!(#column_names).to_string(),
                             values: vs,
                             operator: "NOT IN",
-                            preload: self.builder.preload,
+                            preload: builder.preload,
                         });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
+                        builder
                     }
                 }
             )*
