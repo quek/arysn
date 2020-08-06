@@ -5,6 +5,8 @@ authors = ["Tahara Yoshinori <read.eval.print@gmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "ORM code generator"
+categories = ["database", "development-tools::build-utils"]
+keywords = ["orm", "database"]
 
 [dependencies]
 Inflector = "0.11"
