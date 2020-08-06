@@ -94,7 +94,7 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
             if let Some(builder) = &self.#builder_field {
                 if builder.preload {
                     let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
-                    let children_builder = #struct_ident::select().#foreign_key_ident().eq_any(ids);
+                    let children_builder = #struct_ident::select().#foreign_key_ident().r#in(ids);
                     let children_builder = #child_builder_ident {
                         from: children_builder.from,
                         filters: builder.filters.iter().cloned()

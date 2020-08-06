@@ -579,26 +579,6 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                         }
                     }
 
-                    pub fn eq_any(&self, values: Vec<#rust_types>) -> #builder_ident {
-                        let mut filters = self.builder.filters.clone();
-                        let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
-                        for v in values {
-                            vs.push(Box::new(v));
-                        }
-                        filters.push(Filter {
-                            table: self.builder.table_name_as.as_ref()
-                                .unwrap_or(&#table_name.to_string()).to_string(),
-                            name: stringify!(#column_names).to_string(),
-                            values: vs,
-                            operator: "IN".to_string(),
-                            preload: self.builder.preload,
-                        });
-                        #builder_ident {
-                            filters,
-                            ..self.builder.clone()
-                        }
-                    }
-
                     pub fn r#in(&self, values: Vec<#rust_types>) -> #builder_ident {
                         let mut filters = self.builder.filters.clone();
                         let mut vs: Vec<Box<dyn ToSqlValue>> = vec![];
