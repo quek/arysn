@@ -1,5 +1,3 @@
-# メモ
+arysn is Rust ORM code generator.
 
-tokio-postgres を actix-web で使う
-https://github.com/nemesiscodex/actix-todo
-コネクションプールには deadpool-postgres を使うのがよい？
+see arysn-test/build.rs, arysn-test/tests
