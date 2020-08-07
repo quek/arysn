@@ -1,12 +1,13 @@
 [package]
 name = "arysn"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Tahara Yoshinori <read.eval.print@gmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "ORM code generator"
 categories = ["database", "development-tools::build-utils"]
 keywords = ["orm", "database"]
+readme = "../README.md"
 
 [dependencies]
 Inflector = "0.11"
