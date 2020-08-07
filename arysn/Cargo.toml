@@ -1,6 +1,6 @@
 [package]
 name = "arysn"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Tahara Yoshinori <read.eval.print@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -8,6 +8,7 @@ description = "ORM code generator"
 categories = ["database", "development-tools::build-utils"]
 keywords = ["orm", "database"]
 readme = "../README.md"
+repository = "https://github.com/quek/arysn"
 
 [dependencies]
 Inflector = "0.11"
