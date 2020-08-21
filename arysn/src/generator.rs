@@ -387,6 +387,10 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             }
 
             impl BuilderTrait for #builder_ident {
+                fn all_columns(&self) -> Vec<&'static str> {
+                    vec![#(stringify!(#column_names),)*]
+                }
+
                 fn select(&self) -> String {
                     #table_name.to_string()
                 }

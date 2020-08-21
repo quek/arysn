@@ -4,6 +4,7 @@ use tokio_postgres::types::ToSql;
 
 // TODO カラム名がメソッドとしてはえるので名前衝突しないように名前空間がわけたい
 pub trait BuilderTrait {
+    fn all_columns(&self) -> Vec<&'static str>;
     fn select(&self) -> String;
     fn from(&self) -> String;
     fn join(&self, join_parts: &mut Vec<String>);
@@ -60,6 +61,11 @@ pub trait BuilderTrait {
     }
 
     fn select_sql(&self) -> String {
+        let select = BuilderTrait::all_columns(self)
+            .iter()
+            .map(|column| format!("{}.{}", BuilderTrait::select(self), column))
+            .collect::<Vec<_>>()
+            .join(", ");
         let mut index: usize = 1;
         let mut filters: Vec<String> = vec![];
         for filter in self.filters().iter() {
@@ -102,8 +108,8 @@ pub trait BuilderTrait {
         };
         // TODO 無条件に DISTINCT 付けるのはどうかと思う
         format!(
-            "SELECT DISTINCT {}.* FROM {}{}{}{}{}",
-            self.select(),
+            "SELECT DISTINCT {} FROM {}{}{}{}{}",
+            select,
             self.from(),
             where_part,
             order_part,
