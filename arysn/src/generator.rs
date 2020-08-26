@@ -635,6 +635,7 @@ fn compute_type(
         "text" => quote!(String),
         "timestamp with time zone" => quote!(chrono::DateTime<chrono::Local>),
         "timestamp without time zone" => quote!(chrono::NaiveDateTime),
+        "uuid" => quote!(uuid::Uuid),
         "USER-DEFINED" => {
             let name = format_ident!("{}", udt_name.to_title_case().replace(" ", ""));
             quote!(#name)

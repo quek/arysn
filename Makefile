@@ -9,6 +9,11 @@ all:
 create-test-tables:
 	cat test-tables.sql | docker exec -i arysn_db_1 psql -U user1 arysn_development
 
+recreate-test-tables:
+	docker-compose down
+	docker volume rm arysn_postgresql_data
+	docker-compose up -d
+
 psql:
 	docker exec -it arysn_db_1 psql -U user1 arysn_development
 
