@@ -118,3 +118,15 @@ SQL looks like this
 SELECT * FORM users;
 SELECT * FROM rolse WERE WHERE role_types='admin' id IN (....);
 ```
+
+# UUID
+
+To use the UUID, you need to specify features for tokio-postgres and uuid.
+
+Cargo.toml
+
+``` toml
+[dependencies]
+tokio-postgres = { version = "0.5", features = ["with-chrono-0_4", "with-uuid-0_8"] }
+uuid = { version = "0.8", features = ["serde"] }
+```
