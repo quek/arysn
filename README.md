@@ -61,7 +61,7 @@ user_impl.rs and role_impl.rs contain DB access code.
 let conn = ... // tokio-postgres or deadpool-postgres client
 let users: Vec<User> = User::select().active().eq(true).load(&conn).await?;
 
-let user: Vec = User::select().id(1).first(&conn).await?;
+let user: User = User::select().id(1).first(&conn).await?;
 
 use arysn::Optional;
 let user: Option<Vec> = User::select().id(1).first(&conn).await.optional()?;
