@@ -61,7 +61,7 @@ user_impl.rs and role_impl.rs contain DB access code.
 let conn = ... // tokio-postgres or deadpool-postgres client
 let users: Vec<User> = User::select().active().eq(true).load(&conn).await?;
 
-let user: Vec = User::select().id(1).first(&conn).await?;
+let user: User = User::select().id(1).first(&conn).await?;
 
 use arysn::Optional;
 let user: Option<Vec> = User::select().id(1).first(&conn).await.optional()?;
@@ -117,4 +117,16 @@ SQL looks like this
 ``` sql
 SELECT * FORM users;
 SELECT * FROM rolse WERE WHERE role_types='admin' id IN (....);
+```
+
+# UUID
+
+To use the UUID, you need to specify features for tokio-postgres and uuid.
+
+Cargo.toml
+
+``` toml
+[dependencies]
+tokio-postgres = { version = "0.5", features = ["with-chrono-0_4", "with-uuid-0_8"] }
+uuid = { version = "0.8", features = ["serde"] }
 ```

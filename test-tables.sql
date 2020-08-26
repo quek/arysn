@@ -60,7 +60,7 @@ INSERT INTO roles(user_id, role_type) VALUES
 ;
 
 CREATE TABLE screens (
-  id BIGSERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   role_id BIGINT NOT NULL REFERENCES roles ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL
 );
