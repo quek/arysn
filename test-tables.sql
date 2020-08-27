@@ -3,6 +3,7 @@ BEGIN;
 SET log_statement = 'all';
 SET TIME ZONE 'Japan';
 
+DROP TABLE IF EXISTS gis_things;
 DROP TABLE IF EXISTS contributions;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS screens;
@@ -98,6 +99,15 @@ INSERT INTO contributions (project_id, user_id) VALUES
 ,(2, 1)
 ,(3, 1)
 ,(1, 2)
+;
+
+CREATE TABLE gis_things (
+  id BIGSERIAL PRIMARY KEY,
+  latlng GEOGRAPHY(POINT)
+);
+
+INSERT INTO gis_things (latlng) VALUES
+('SRID=4326;POINT(139.71019683 35.66432955)')
 ;
 
 COMMIT;
