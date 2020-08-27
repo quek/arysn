@@ -24,4 +24,4 @@ quote = "1"
 syn = "1"
 thiserror = "1.0"
 tokio = { version = "0.2", features = ["full"] }
-tokio-postgres = { version = "0.5", features = ["with-chrono-0_4"] }
+tokio-postgres = { version = "^0.5.5", features = ["with-chrono-0_4"] }

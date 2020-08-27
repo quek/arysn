@@ -54,9 +54,12 @@ async fn columns(table_name: &String, client: &Client) -> Result<Vec<Column>> {
     let primary_key: Vec<String> = primary_key(table_name, client).await?;
     let sql = format!(
         r"
-SELECT column_name, is_nullable, data_type, column_default, udt_name
+SELECT c.column_name, c.is_nullable, c.data_type, c.column_default, c.udt_name
+  , format_type(a.atttypid, a.atttypmod)
 FROM
-  information_schema.columns
+  information_schema.columns AS c
+  INNER JOIN pg_class ON pg_class.relname=c.table_name
+  INNER JOIN pg_attribute AS a ON a.attrelid=pg_class.oid AND c.column_name=a.attname
 WHERE
   table_name = '{}'
 ORDER BY ordinal_position
@@ -73,7 +76,9 @@ ORDER BY ordinal_position
             let data_type: String = row.get(2);
             let column_default: Option<String> = row.get(3);
             let udt_name: String = row.get(4);
-            let (rust_type, nullable_rust_type) = compute_type(&data_type, is_nullable, &udt_name);
+            let format_type: String = row.get(5);
+            let (rust_type, nullable_rust_type) =
+                compute_type(&data_type, is_nullable, &udt_name, &format_type);
             let rust_type_for_new = if column_default.is_some() && !is_nullable {
                 quote! { Option<#rust_type> }
             } else {
@@ -624,19 +629,21 @@ fn compute_type(
     data_type: &str,
     is_nullable: bool,
     udt_name: &String,
+    format_type: &str,
 ) -> (TokenStream, TokenStream) {
-    let rust_type = match data_type {
-        "bigint" => quote!(i64),
-        "boolean" => quote!(bool),
-        "character varying" => quote!(String),
-        "date" => quote!(chrono::NaiveDate),
-        "integer" => quote!(i32),
-        "smallint" => quote!(i16),
-        "text" => quote!(String),
-        "timestamp with time zone" => quote!(chrono::DateTime<chrono::Local>),
-        "timestamp without time zone" => quote!(chrono::NaiveDateTime),
-        "uuid" => quote!(uuid::Uuid),
-        "USER-DEFINED" => {
+    let rust_type = match (data_type, format_type) {
+        ("bigint", _) => quote!(i64),
+        ("boolean", _) => quote!(bool),
+        ("character varying", _) => quote!(String),
+        ("date", _) => quote!(chrono::NaiveDate),
+        ("integer", _) => quote!(i32),
+        ("smallint", _) => quote!(i16),
+        ("text", _) => quote!(String),
+        ("timestamp with time zone", _) => quote!(chrono::DateTime<chrono::Local>),
+        ("timestamp without time zone", _) => quote!(chrono::NaiveDateTime),
+        ("uuid", _) => quote!(uuid::Uuid),
+        ("USER-DEFINED", "geography(Point,4326)") => quote!(geo_types::Point<f64>),
+        ("USER-DEFINED", _) => {
             let name = format_ident!("{}", udt_name.to_title_case().replace(" ", ""));
             quote!(#name)
         }

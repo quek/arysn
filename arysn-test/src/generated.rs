@@ -1,6 +1,7 @@
 pub mod contribution;
 pub mod contribution_impl;
-// pub mod gis_thing;
+pub mod gis_thing;
+pub mod gis_thing_impl;
 pub mod profile;
 pub mod profile_impl;
 pub mod project;

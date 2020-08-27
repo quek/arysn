@@ -103,7 +103,7 @@ INSERT INTO contributions (project_id, user_id) VALUES
 
 CREATE TABLE gis_things (
   id BIGSERIAL PRIMARY KEY,
-  latlng GEOGRAPHY(POINT)
+  latlng GEOGRAPHY(POINT) NOT NULL
 );
 
 INSERT INTO gis_things (latlng) VALUES

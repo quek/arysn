@@ -26,6 +26,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85bb70cc08ec97ca5450e6eba421deeea5f172c0fc61f78b5357b2a8e8be195f"
 
 [[package]]
+name = "approx"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0e60b75072ecd4168020818c0107f2857bb6c4e64252d8d3983f6263b40a5c3"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "arc-swap"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -66,6 +75,7 @@ dependencies = [
  "async-recursion",
  "chrono",
  "env_logger",
+ "geo-types",
  "log",
  "postgres-types",
  "serde",
@@ -411,6 +421,17 @@ checksum = "60fb4bb6bba52f78a471264d9a3b7d026cc0af47b22cd2cffbc0b787ca003e63"
 dependencies = [
  "typenum",
  "version_check",
+]
+
+[[package]]
+name = "geo-types"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "407043938de169e80c31cef3c46c99faccd4d002ea8120c637f29a6958820c62"
+dependencies = [
+ "approx",
+ "num-traits",
+ "serde",
 ]
 
 [[package]]
@@ -791,6 +812,7 @@ dependencies = [
  "bytes",
  "chrono",
  "fallible-iterator",
+ "geo-types",
  "postgres-derive",
  "postgres-protocol",
  "uuid",
