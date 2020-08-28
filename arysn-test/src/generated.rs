@@ -1,6 +1,8 @@
 pub mod contribution;
 pub mod contribution_impl;
+#[cfg(feature = "gis")]
 pub mod gis_thing;
+#[cfg(feature = "gis")]
 pub mod gis_thing_impl;
 pub mod profile;
 pub mod profile_impl;

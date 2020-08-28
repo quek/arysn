@@ -19,3 +19,6 @@ psql:
 
 publish:
 	cargo publish --manifest-path arysn/Cargo.toml
+
+test-gis:
+	docker exec --workdir /app/arysn-test arysn_dev_1 cargo test --features "gis" -- --nocapture

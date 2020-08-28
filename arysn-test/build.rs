@@ -138,6 +138,7 @@ fn main() -> Result<()> {
         ],
     })?;
 
+    #[cfg(feature = "gis")]
     define_ar(&Config {
         path: "src/generated/gis_thing.rs",
         table_name: "gis_things",
