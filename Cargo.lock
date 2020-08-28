@@ -72,7 +72,6 @@ dependencies = [
  "chrono",
  "env_logger",
  "log",
- "postgis",
  "postgres-types",
  "serde",
  "tokio",
