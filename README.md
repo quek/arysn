@@ -130,3 +130,15 @@ Cargo.toml
 tokio-postgres = { version = "0.5", features = ["with-chrono-0_4", "with-uuid-0_8"] }
 uuid = { version = "0.8", features = ["serde"] }
 ```
+
+# PostGIS
+
+Only PostGIS `POINT` is supported.
+You must specify `gis` featuers.
+
+Cargo.toml
+
+``` toml
+[dependencies]
+arysn = { version = "0.1.8", features = ["gis"] }
+```

@@ -15,10 +15,13 @@ env_logger = "0.7"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "0.2", features = ["full"] }
-tokio-postgres = { version = "0.5", features = ["with-chrono-0_4", "with-uuid-0_8"] }
+tokio-postgres = { version = "^0.5.5", features = ["with-chrono-0_4", "with-uuid-0_8"] }
 uuid = { version = "0.8", features = ["serde"] }
 postgres-types = { version = "0.1", features = ["derive"] }
 
 [build-dependencies]
 anyhow = "1"
 arysn = { path = "../arysn" }
+
+[features]
+gis = ["arysn/gis"]

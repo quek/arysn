@@ -138,5 +138,15 @@ fn main() -> Result<()> {
         ],
     })?;
 
+    #[cfg(feature = "gis")]
+    define_ar(&Config {
+        path: "src/generated/gis_thing.rs",
+        table_name: "gis_things",
+        struct_name: "GisThing",
+        has_many: vec![],
+        has_one: vec![],
+        belongs_to: vec![],
+    })?;
+
     Ok(())
 }

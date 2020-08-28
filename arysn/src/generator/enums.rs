@@ -8,7 +8,7 @@ use tokio_postgres::Client;
 pub async fn definitions(columns: &Vec<Column>, client: &Client) -> Result<Vec<TokenStream>> {
     let mut result = vec![];
     for column in columns.iter() {
-        if column.data_type != "USER-DEFINED" {
+        if column.data_type != "USER-DEFINED" || column.udt_name == "geography" {
             continue;
         }
         let sql = r"

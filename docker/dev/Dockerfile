@@ -15,6 +15,6 @@ RUN rustup component add rust-src
 ADD wait-for-it.sh /
 ADD start.sh /
 
-WORKDIR /app/server
+WORKDIR /app
 
 CMD ["/start.sh"]
