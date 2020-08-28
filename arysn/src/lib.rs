@@ -3,11 +3,13 @@ mod db;
 mod error;
 mod filter;
 pub mod generator;
+mod gis;
 mod order_item;
 mod value;
 
 pub use db::Connection;
 pub use error::{ArysnError as Error, Optional, Result};
+pub use gis::Point;
 
 pub mod prelude {
     pub use super::builder::BuilderTrait;

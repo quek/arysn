@@ -23,7 +23,7 @@ async fn gis() -> Result<()> {
 
     GisThingNew {
         id: None,
-        latlng: postgis::ewkb::Point::new(139.7101234, 35.6641234, None),
+        latlng: arysn::Point::new(139.7101234, 35.6641234, None),
     }
     .insert(&conn)
     .await?;

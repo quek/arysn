@@ -199,7 +199,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
             #(#enums)*
 
-            #[derive(Clone, Debug)]
+            #[derive(Clone, Debug, Deserialize, Serialize)]
             pub struct #struct_ident {
                 #(pub #column_names: #nullable_rust_types,)*
                 #(#has_many_field)*
@@ -218,7 +218,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
                 )*
             }
 
-            #[derive(Clone, Debug)]
+            #[derive(Clone, Debug, Deserialize, Serialize)]
             pub struct #new_struct_ident {
                 #(pub #column_names: #rust_types_for_new,)*
             }
@@ -642,7 +642,7 @@ fn compute_type(
         ("timestamp with time zone", _) => quote!(chrono::DateTime<chrono::Local>),
         ("timestamp without time zone", _) => quote!(chrono::NaiveDateTime),
         ("uuid", _) => quote!(uuid::Uuid),
-        ("USER-DEFINED", "geography(Point,4326)") => quote!(postgis::ewkb::Point),
+        ("USER-DEFINED", "geography(Point,4326)") => quote!(arysn::Point),
         ("USER-DEFINED", _) => {
             let name = format_ident!("{}", udt_name.to_title_case().replace(" ", ""));
             quote!(#name)
