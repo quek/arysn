@@ -133,7 +133,7 @@ uuid = { version = "0.8", features = ["serde"] }
 
 # PostGIS
 
-Only PostGIS `POINT; is supported.
+Only PostGIS `POINT` is supported.
 You must specify `gis` featuers and `postgis` crate is required.
 
 Cargo.toml
