@@ -24,6 +24,7 @@ pub fn make_belongs_to(
     columns: &Vec<Column>,
 ) -> BelongsTo {
     let mut result: BelongsTo = BelongsTo::default();
+    let table_name = config.table_name;
     for belongs_to in config.belongs_to.iter() {
         let column = columns
             .iter()
@@ -46,25 +47,25 @@ pub fn make_belongs_to(
         let struct_ident = format_ident!("{}", belongs_to.struct_name);
         let builder_field = format_ident!("{}_builder", field_ident);
         let parent_builder_ident = format_ident!("{}Builder", struct_ident);
-        // TODO config.table_name は join as が連鎖している場合動かないと思う。動的にする。
         let join = {
             let x = format!(
-                "INNER JOIN {} ON {}.id = {}.{}",
+                "INNER JOIN {} ON {}.id = {{}}.{}",
                 parent_table_name,
                 parent_table_name_as,
-                config.table_name,
                 foreign_key_ident.to_string()
             );
             let y = format!(
-                "INNER JOIN {} AS {{0}} ON {{0}}.id = {}.{}",
+                "INNER JOIN {} AS {{0}} ON {{0}}.id = {{1}}.{}",
                 parent_table_name,
-                config.table_name,
                 foreign_key_ident.to_string()
             );
+            let parent_table_name = quote! {
+                self.table_name_as.as_ref().unwrap_or(&#table_name.to_string())
+            };
             quote! {
                 match &self.#builder_field.as_ref().map(|x| x.table_name_as.as_ref()).flatten() {
-                    Some(table_name_as) => format!(#y, table_name_as),
-                    None => #x.to_string(),
+                    Some(table_name_as) => format!(#y, table_name_as, #parent_table_name),
+                    None => format!(#x, #parent_table_name)
                 }
             }
         };

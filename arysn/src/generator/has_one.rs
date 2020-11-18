@@ -19,6 +19,7 @@ pub struct HasOne {
 
 pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
     let mut result: HasOne = HasOne::default();
+    let table_name = config.table_name;
     for has_one in config.has_one.iter() {
         let module_ident = format_ident!("{}", has_one.struct_name.to_table_case().to_singular());
         let module_impl_ident = format_ident!("{}_impl", module_ident);
@@ -35,10 +36,9 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
         } else {
             format!(" AS {}", child_table_name_as)
         };
-        // TODO config.table_name は join as が連鎖している場合動かないと思う。動的にする。
         let join = format!(
-            "INNER JOIN {}{} ON {}.{} = {}.id",
-            child_table_name, join_as, child_table_name_as, has_one.foreign_key, config.table_name,
+            "INNER JOIN {}{} ON {}.{} = {{}}.id",
+            child_table_name, join_as, child_table_name_as, has_one.foreign_key,
         );
         let struct_ident = format_ident!("{}", has_one.struct_name);
         let builder_field = format_ident!("{}_builder", field_ident.to_string());
@@ -85,7 +85,10 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
         result.has_one_join.push(quote! {
             if let Some(builder) = &self.#builder_field {
                 if !builder.filters().is_empty() {
-                    join_parts.push(#join.to_string());
+                    join_parts.push(
+                        format!(#join,
+                                self.table_name_as.as_ref().unwrap_or(&#table_name.to_string()))
+                    );
                     builder.join(join_parts);
                 }
             }
