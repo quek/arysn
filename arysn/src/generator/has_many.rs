@@ -18,6 +18,7 @@ pub struct HasMany {
 
 pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
     let mut result: HasMany = HasMany::default();
+    let table_name = config.table_name;
     for has_many in config.has_many.iter() {
         let module_ident = format_ident!("{}", has_many.struct_name.to_table_case().to_singular());
         let module_impl_ident = format_ident!("{}_impl", module_ident);
@@ -32,20 +33,22 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
         let struct_ident = format_ident!("{}", has_many.struct_name);
         let builder_field = format_ident!("{}_builder", field_ident.to_string());
         let child_builder_ident = format_ident!("{}Builder", &struct_ident.to_string());
-        // TODO config.table_name は join as が連鎖している場合動かないと思う。動的にする。
         let join = {
             let x = format!(
-                "INNER JOIN {} ON {}.{} = {}.id",
-                child_table_name, child_table_name_as, has_many.foreign_key, config.table_name,
+                "INNER JOIN {} ON {}.{} = {{}}.id",
+                child_table_name, child_table_name_as, has_many.foreign_key,
             );
             let y = format!(
-                "INNER JOIN {} AS {{0}} ON {{0}}.{} = {}.id",
-                child_table_name, has_many.foreign_key, config.table_name,
+                "INNER JOIN {} AS {{0}} ON {{0}}.{} = {{1}}.id",
+                child_table_name, has_many.foreign_key,
             );
+            let parent_table_name = quote! {
+                self.table_name_as.as_ref().unwrap_or(&#table_name.to_string())
+            };
             quote! {
                 match &self.#builder_field.as_ref().map(|x| x.table_name_as.as_ref()).flatten() {
-                    Some(table_name_as) => format!(#y, table_name_as),
-                    None => #x.to_string(),
+                    Some(table_name_as) => format!(#y, table_name_as, #parent_table_name),
+                    None => format!(#x, #parent_table_name)
                 }
             }
         };
