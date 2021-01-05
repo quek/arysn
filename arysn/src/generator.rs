@@ -25,15 +25,15 @@ mod order;
 pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
 
-    let mut types = HashMap::new();
+    let mut enums = HashMap::new();
     for config in configs.iter() {
-        let (output_plain, output_impl, output_types): (
+        let (output_plain, output_impl, output_enums): (
             TokenStream,
             TokenStream,
             HashMap<String, TokenStream>,
         ) = define_ar_impl(config).unwrap();
-        for (key, val) in output_types {
-            types.insert(key, val);
+        for (key, val) in output_enums {
+            enums.insert(key, val);
         }
         let mut path = dir.clone();
         path.push(config.path);
@@ -61,16 +61,16 @@ pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
             .output()?;
     }
 
-    let deftypes: Vec<&TokenStream> = types.values().collect();
+    let defenums: Vec<&TokenStream> = enums.values().collect();
     let output = quote!(
         #[cfg(target_arch = "x86_64")]
         use postgres_types::{FromSql, ToSql};
         use serde::{Deserialize, Serialize};
 
-        #(#deftypes)*
+        #(#defenums)*
     );
     let mut path = dir.clone();
-    path.push("types.rs");
+    path.push("enums.rs");
     {
         let mut writer = std::io::BufWriter::new(std::fs::File::create(path.as_path())?);
         writeln!(writer, "{}", &output.to_string())?;
@@ -179,10 +179,10 @@ fn define_ar_impl(
         let fn_update: TokenStream = make_fn_update(&struct_ident, &table_name, &columns);
 
         let enums = enums::definitions(&columns, &client).await?;
-        let use_types: Vec<TokenStream> = enums.keys().map(|key| {
+        let use_enums: Vec<TokenStream> = enums.keys().map(|key| {
             let ident = format_ident!("{}", key);
             quote! {
-                use super::types::#ident;
+                use super::enums::#ident;
             }
         }).collect();
 
@@ -229,7 +229,7 @@ fn define_ar_impl(
         let output_plain = quote! {
             use serde::{Deserialize, Serialize};
             #(#use_plain)*
-            #(#use_types)*
+            #(#use_enums)*
 
             #[derive(Clone, Debug, Deserialize, Serialize)]
             pub struct #struct_ident {
@@ -262,7 +262,7 @@ fn define_ar_impl(
             use arysn::prelude::*;
             use async_recursion::async_recursion;
             use super::#module_name::*;
-            #(#use_types)*
+            #(#use_enums)*
             #(#use_impl)*
 
             impl #struct_ident {

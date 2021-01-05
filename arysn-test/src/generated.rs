@@ -1,5 +1,6 @@
 pub mod contribution;
 pub mod contribution_impl;
+pub mod enums;
 #[cfg(feature = "gis")]
 pub mod gis_thing;
 #[cfg(feature = "gis")]
@@ -14,6 +15,5 @@ pub mod screen;
 pub mod screen_impl;
 pub mod simple;
 pub mod simple_impl;
-pub mod types;
 pub mod user;
 pub mod user_impl;
