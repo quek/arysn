@@ -3,10 +3,14 @@ use crate::generator::Column;
 use inflector::Inflector;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
+use std::collections::HashMap;
 use tokio_postgres::Client;
 
-pub async fn definitions(columns: &Vec<Column>, client: &Client) -> Result<Vec<TokenStream>> {
-    let mut result = vec![];
+pub async fn definitions(
+    columns: &Vec<Column>,
+    client: &Client,
+) -> Result<HashMap<String, TokenStream>> {
+    let mut result = HashMap::new();
     for column in columns.iter() {
         if column.data_type != "USER-DEFINED" || column.udt_name == "geography" {
             continue;
@@ -27,21 +31,24 @@ ORDER BY e.enumsortorder
             .collect();
         let enum_name = &column.rust_type;
         let enum_name_pg = &column.udt_name;
-        result.push(quote! {
-            #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
-            #[cfg_attr(
-                target_arch = "x86_64",
-                derive(FromSql, ToSql),
-                postgres(name = #enum_name_pg)
-            )]
-            pub enum #enum_name {
-                #(#[cfg_attr(
+        result.insert(
+            enum_name.to_string(),
+            quote! {
+                #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+                #[cfg_attr(
                     target_arch = "x86_64",
-                    postgres(name = #enumlabels_pg)
+                    derive(FromSql, ToSql),
+                    postgres(name = #enum_name_pg)
                 )]
-                #enumlabels,)*
-            }
-        });
+                pub enum #enum_name {
+                    #(#[cfg_attr(
+                        target_arch = "x86_64",
+                        postgres(name = #enumlabels_pg)
+                    )]
+                    #enumlabels,)*
+                }
+            },
+        );
     }
     Ok(result)
 }

@@ -8,6 +8,7 @@ use log::debug;
 use order::order_part;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
+use std::collections::HashMap;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
@@ -21,15 +22,58 @@ mod has_many;
 mod has_one;
 mod order;
 
-pub fn define_ar(config: &Config) -> Result<()> {
+pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
 
-    let (output_plain, output_impl): (TokenStream, TokenStream) = define_ar_impl(config).unwrap();
-    let path = &config.path;
+    let mut types = HashMap::new();
+    for config in configs.iter() {
+        let (output_plain, output_impl, output_types): (
+            TokenStream,
+            TokenStream,
+            HashMap<String, TokenStream>,
+        ) = define_ar_impl(config).unwrap();
+        for (key, val) in output_types {
+            types.insert(key, val);
+        }
+        let mut path = dir.clone();
+        path.push(config.path);
+        {
+            println!("path {}", &path.as_path().to_str().unwrap());
+            let mut writer = std::io::BufWriter::new(std::fs::File::create(path.as_path())?);
+            writeln!(writer, "{}", &output_plain.to_string())?;
+        }
+        Command::new("rustfmt")
+            .arg("--edition")
+            .arg("2018")
+            .arg(path)
+            .output()?;
+
+        let mut path = dir.clone();
+        path.push(&config.path.replace(".rs", "_impl.rs"));
+        {
+            let mut writer = std::io::BufWriter::new(std::fs::File::create(path.as_path())?);
+            writeln!(writer, "{}", &output_impl.to_string())?;
+        }
+        Command::new("rustfmt")
+            .arg("--edition")
+            .arg("2018")
+            .arg(path)
+            .output()?;
+    }
+
+    let deftypes: Vec<&TokenStream> = types.values().collect();
+    let output = quote!(
+        #[cfg(target_arch = "x86_64")]
+        use postgres_types::{FromSql, ToSql};
+        use serde::{Deserialize, Serialize};
+
+        #(#deftypes)*
+    );
+    let mut path = dir.clone();
+    path.push("types.rs");
     {
-        println!("path {}", &path);
-        let mut writer = std::io::BufWriter::new(std::fs::File::create(path)?);
-        writeln!(writer, "{}", &output_plain.to_string())?;
+        let mut writer = std::io::BufWriter::new(std::fs::File::create(path.as_path())?);
+        writeln!(writer, "{}", &output.to_string())?;
     }
     Command::new("rustfmt")
         .arg("--edition")
@@ -37,16 +81,6 @@ pub fn define_ar(config: &Config) -> Result<()> {
         .arg(path)
         .output()?;
 
-    let path = &config.path.replace(".rs", "_impl.rs");
-    {
-        let mut writer = std::io::BufWriter::new(std::fs::File::create(path)?);
-        writeln!(writer, "{}", &output_impl.to_string())?;
-    }
-    Command::new("rustfmt")
-        .arg("--edition")
-        .arg("2018")
-        .arg(path)
-        .output()?;
     Ok(())
 }
 
@@ -101,7 +135,9 @@ ORDER BY ordinal_position
     Ok(result)
 }
 
-fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
+fn define_ar_impl(
+    config: &Config,
+) -> Result<(TokenStream, TokenStream, HashMap<String, TokenStream>)> {
     let mut rt = Runtime::new()?;
 
     rt.block_on(async {
@@ -143,14 +179,12 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
         let fn_update: TokenStream = make_fn_update(&struct_ident, &table_name, &columns);
 
         let enums = enums::definitions(&columns, &client).await?;
-        let use_to_sql_from_sql = if enums.is_empty() {
-            quote!()
-        } else {
-            quote!(
-                #[cfg(target_arch = "x86_64")]
-                use postgres_types::{FromSql, ToSql};
-            )
-        };
+        let use_types: Vec<TokenStream> = enums.keys().map(|key| {
+            let ident = format_ident!("{}", key);
+            quote! {
+                use super::types::#ident;
+            }
+        }).collect();
 
         let HasMany {
             has_many_use_plain,
@@ -194,10 +228,8 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
         let output_plain = quote! {
             use serde::{Deserialize, Serialize};
-            #use_to_sql_from_sql
             #(#use_plain)*
-
-            #(#enums)*
+            #(#use_types)*
 
             #[derive(Clone, Debug, Deserialize, Serialize)]
             pub struct #struct_ident {
@@ -230,6 +262,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
             use arysn::prelude::*;
             use async_recursion::async_recursion;
             use super::#module_name::*;
+            #(#use_types)*
             #(#use_impl)*
 
             impl #struct_ident {
@@ -599,7 +632,7 @@ fn define_ar_impl(config: &Config) -> Result<(TokenStream, TokenStream)> {
 
             #order_part
         };
-        Ok((output_plain, output_impl))
+        Ok((output_plain, output_impl, enums))
     })
 }
 

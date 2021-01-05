@@ -14,5 +14,6 @@ pub mod screen;
 pub mod screen_impl;
 pub mod simple;
 pub mod simple_impl;
+pub mod types;
 pub mod user;
 pub mod user_impl;
