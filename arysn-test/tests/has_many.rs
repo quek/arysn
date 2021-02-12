@@ -1,6 +1,6 @@
 use anyhow::Result;
 use arysn::prelude::*;
-use arysn_test::generated::role::RoleType;
+use arysn_test::generated::enums::RoleType;
 use arysn_test::generated::screen::Screen;
 use arysn_test::generated::user::User;
 use common::init;
