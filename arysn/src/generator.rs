@@ -8,7 +8,7 @@ use log::debug;
 use order::order_part;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
@@ -25,7 +25,7 @@ mod order;
 pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
 
-    let mut enums = HashMap::new();
+    let mut enums = BTreeMap::new();
     for config in configs.iter() {
         let (output_plain, output_impl, output_enums): (
             TokenStream,
