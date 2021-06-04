@@ -24,6 +24,18 @@ mod order;
 
 pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
+    let mut rt = Runtime::new()?;
+
+    let columns_map: HashMap<String, Vec<Column>> = rt.block_on(async {
+        let mut columns_map = HashMap::new();
+        let conn = connect().await.unwrap();
+        for config in configs.iter() {
+            let table_name: String = config.table_name.to_string();
+            let columns: Vec<Column> = columns(&table_name, &conn).await.unwrap();
+            columns_map.insert(table_name, columns);
+        }
+        columns_map
+    });
 
     let mut enums = BTreeMap::new();
     for config in configs.iter() {
@@ -31,7 +43,7 @@ pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
             TokenStream,
             TokenStream,
             HashMap<String, TokenStream>,
-        ) = define_ar_impl(config).unwrap();
+        ) = define_ar_impl(config, &columns_map).unwrap();
         for (key, val) in output_enums {
             enums.insert(key, val);
         }
@@ -137,6 +149,7 @@ ORDER BY ordinal_position
 
 fn define_ar_impl(
     config: &Config,
+    columns_map: &HashMap<String, Vec<Column>>,
 ) -> Result<(TokenStream, TokenStream, HashMap<String, TokenStream>)> {
     let mut rt = Runtime::new()?;
 
@@ -144,7 +157,7 @@ fn define_ar_impl(
         let client = connect().await?;
 
         let table_name: String = config.table_name.to_string();
-        let columns: Vec<Column> = columns(&table_name, &client).await?;
+        let columns = &columns_map[&table_name];
 
         let mut column_names = Vec::<Ident>::new();
         let mut rust_types = Vec::<TokenStream>::new();
@@ -196,7 +209,7 @@ fn define_ar_impl(
             has_many_filters_impl,
             has_many_join,
             has_many_preload,
-        } = make_has_many(config, &builder_ident);
+        } = make_has_many(config, &builder_ident, columns_map);
 
         let HasOne {
             has_one_use_plain,

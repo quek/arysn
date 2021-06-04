@@ -91,11 +91,18 @@ fn main() -> Result<()> {
                 path: "project.rs",
                 table_name: "projects",
                 struct_name: "Project",
-                has_many: vec![HasManyConfig {
-                    field: "contributions",
-                    struct_name: "Contribution",
-                    foreign_key: "project_id",
-                }],
+                has_many: vec![
+                    HasManyConfig {
+                        field: "contributions",
+                        struct_name: "Contribution",
+                        foreign_key: "project_id",
+                    },
+                    HasManyConfig {
+                        field: "child_projects",
+                        struct_name: "Project",
+                        foreign_key: "parent_project_id",
+                    },
+                ],
                 has_one: vec![],
                 belongs_to: vec![
                     BelongsToConfig {
