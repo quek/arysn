@@ -1,7 +1,9 @@
 use crate::generator::config::Config;
+use crate::generator::Column;
 use inflector::Inflector;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct HasMany {
@@ -16,7 +18,11 @@ pub struct HasMany {
     pub has_many_preload: Vec<TokenStream>,
 }
 
-pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
+pub fn make_has_many(
+    config: &Config,
+    self_builder_name: &Ident,
+    columns_map: &HashMap<String, Vec<Column>>,
+) -> HasMany {
     let mut result: HasMany = HasMany::default();
     let table_name = config.table_name;
     for has_many in config.has_many.iter() {
@@ -53,13 +59,15 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
             }
         };
 
-        result
-            .has_many_use_plain
-            .push(vec![quote! ( use super::#module_ident::#struct_ident; )]);
-        result.has_many_use_impl.push(vec![
-            quote! ( use super::#module_ident::#struct_ident; ),
-            quote! ( use super::#module_impl_ident::#child_builder_ident; ),
-        ]);
+        if config.struct_name != has_many.struct_name {
+            result
+                .has_many_use_plain
+                .push(vec![quote! ( use super::#module_ident::#struct_ident; )]);
+            result.has_many_use_impl.push(vec![
+                quote! ( use super::#module_ident::#struct_ident; ),
+                quote! ( use super::#module_impl_ident::#child_builder_ident; ),
+            ]);
+        }
         result
             .has_many_field
             .push(quote! { pub #field_ident: Vec<#struct_ident>, });
@@ -94,6 +102,15 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                 }
             }
         });
+        let column = columns_map[&child_table_name]
+            .iter()
+            .find(|column| column.name == has_many.foreign_key)
+            .unwrap();
+        let foreign_key_value = if column.is_nullable {
+            quote! { child.#foreign_key_ident.unwrap() }
+        } else {
+            quote! { child.#foreign_key_ident }
+        };
         result.has_many_preload.push(quote! {
             if let Some(builder) = &self.#builder_field {
                 if builder.preload {
@@ -115,7 +132,7 @@ pub fn make_has_many(config: &Config, self_builder_name: &Ident) -> HasMany {
                     result.iter_mut().for_each(|x| {
                         let mut ys = vec![];
                         for child in children.iter() {
-                            if x.id == child.#foreign_key_ident {
+                            if x.id == #foreign_key_value {
                                 ys.push(child.clone());
                             }
                         }
