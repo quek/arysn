@@ -189,6 +189,7 @@ fn define_ar_impl(
 
         let fn_delete: TokenStream = make_fn_delete(&table_name, &columns);
         let fn_insert: TokenStream = make_fn_insert(&struct_ident, &table_name, &columns);
+        let fn_bulk_insert: TokenStream = make_fn_bulk_insert(&struct_ident, &new_struct_ident, &table_name, &columns);
         let fn_update: TokenStream = make_fn_update(&struct_ident, &table_name, &columns);
 
         let enums = enums::definitions(&columns, &client).await?;
@@ -287,6 +288,7 @@ fn define_ar_impl(
                 }
                 #fn_delete
                 #fn_update
+                #fn_bulk_insert
             }
 
             impl #new_struct_ident {
@@ -730,9 +732,9 @@ pub struct Column {
     pub udt_name: String,
 }
 
-fn make_fn_delete(table_name: &String, colums: &Vec<Column>) -> TokenStream {
+fn make_fn_delete(table_name: &String, columns: &Vec<Column>) -> TokenStream {
     let (key_columns, _rest_columns): (Vec<&Column>, Vec<&Column>) =
-        colums.iter().partition(|cloumn| cloumn.is_primary_key);
+        columns.iter().partition(|cloumn| cloumn.is_primary_key);
 
     let where_sql = key_columns
         .iter()
@@ -835,9 +837,109 @@ fn make_fn_insert(struct_ident: &Ident, table_name: &String, columns: &Vec<Colum
     }
 }
 
-fn make_fn_update(struct_ident: &Ident, table_name: &String, colums: &Vec<Column>) -> TokenStream {
+fn make_fn_bulk_insert(
+    struct_ident: &Ident,
+    new_struct_ident: &Ident,
+    table_name: &String,
+    columns: &Vec<Column>,
+) -> TokenStream {
+    let target_columns: Vec<TokenStream> = columns
+        .iter()
+        .map(|column| {
+            let name = format_ident!("{}", &column.name);
+            if !column.is_nullable && column.column_default.is_some() {
+                quote! {
+                    if value.#name.is_some() {
+                        target_columns.push(stringify!(#name));
+                    }
+                }
+            } else {
+                quote! {
+                    target_columns.push(stringify!(#name));
+                }
+            }
+        })
+        .collect();
+
+    let count_bind: Vec<TokenStream> = columns
+        .iter()
+        .map(|column| {
+            let name = format_ident!("{}", &column.name);
+            if !column.is_nullable && column.column_default.is_some() {
+                quote! {
+                    if value.#name.is_some() {
+                        bind_count += 1;
+                    }
+                }
+            } else {
+                quote! {
+                    bind_count += 1;
+                }
+            }
+        })
+        .collect();
+
+    let params: Vec<TokenStream> = columns
+        .iter()
+        .map(|column| {
+            let name = format_ident!("{}", &column.name);
+            if !column.is_nullable && column.column_default.is_some() {
+                quote! {
+                    if value.#name.is_some() {
+                        params.push(&value.#name);
+                    }
+                }
+            } else {
+                quote! {
+                    params.push(&value.#name);
+                }
+            }
+        })
+        .collect();
+
+    quote! {
+        pub async fn insert<'a>(values: &Vec<#new_struct_ident>, conn: &arysn::Connection<'a>)
+                                -> arysn::Result<Vec<#struct_ident>> {
+            if values.is_empty() {
+                return Ok(vec![]);
+            }
+            let value = &values[0];
+
+            let mut target_columns: Vec<&str> = vec![];
+            #(#target_columns)*
+            let target_columns = target_columns.join(", ");
+
+            let mut bind_count: usize = 0;
+            #(#count_bind)*
+            let binds = (0..values.len())
+                .map(|n| format!("({})",
+                                 (1..=bind_count).map(|i| format!("${}", n * bind_count + i as usize))
+                                 .collect::<Vec<_>>().join(", ")))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            let statement = format!(
+                "INSERT INTO {} ({}) VALUES {} RETURNING *",
+                #table_name, target_columns, binds
+            );
+
+            let mut params: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = vec![];
+            for value in values {
+                #(#params)*
+            }
+
+            let rows = conn.query(statement.as_str(), &params[..]).await?;
+            let result: Vec<#struct_ident> = rows.into_iter()
+                .map(|row| #struct_ident::from(row))
+                .collect();
+            Ok(result)
+        }
+    }
+}
+
+fn make_fn_update(struct_ident: &Ident, table_name: &String, columns: &Vec<Column>) -> TokenStream {
     let (key_columns, rest_columns): (Vec<&Column>, Vec<&Column>) =
-        colums.iter().partition(|cloumn| cloumn.is_primary_key);
+        columns.iter().partition(|cloumn| cloumn.is_primary_key);
 
     let set_sql = rest_columns
         .iter()
