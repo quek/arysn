@@ -33,6 +33,8 @@ async fn bulk_insert() -> Result<()> {
     let users = User::insert(&users, conn).await?;
     assert_eq!(users.len(), 2);
     assert!(users.iter().all(|x| x.id > 0));
+    assert_eq!(users[0].name, "こねら");
+    assert_eq!(users[1].name, "ぎょぴ");
 
     Ok(())
 }
