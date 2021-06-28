@@ -41,3 +41,21 @@ async fn has_many() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn has_many_as_preload() -> Result<()> {
+    init();
+    let conn = connect().await?;
+
+    // INNER JOIN ... ON contributions.project_id = create_projects.id
+    // ではなく
+    // INNER JOIN ... ON contributions.project_id = projects.id
+    // になること
+    let users = User::select()
+        .create_projects(|x| x.contributions(|x| x.id().eq(1).preload()).preload())
+        .load(&conn)
+        .await?;
+    assert_eq!(users[0].create_projects[0].contributions[0].id, 1);
+
+    Ok(())
+}

@@ -118,6 +118,7 @@ pub fn make_has_many(
                     let children_builder = #struct_ident::select().#foreign_key_ident().r#in(ids);
                     let children_builder = #child_builder_ident {
                         from: children_builder.from,
+                        table_name_as: None,
                         filters: builder.filters.iter().cloned()
                             .chain(children_builder.filters.into_iter())
                             .map(|x| Filter {

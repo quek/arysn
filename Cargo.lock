@@ -39,7 +39,7 @@ checksum = "cff77d8686867eceff3105329d4698d96c2391c176d5d03adc90c7389162b5b8"
 
 [[package]]
 name = "arysn"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "Inflector",
  "anyhow",
