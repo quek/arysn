@@ -129,6 +129,7 @@ pub fn make_belongs_to(
                         let parents_builder = #struct_ident::select().id().r#in(ids);
                         let parents_builder = #parent_builder_ident {
                             from: parents_builder.from,
+                            table_name_as: None,
                             filters: builder.filters.iter().cloned()
                                 .chain(parents_builder.filters.into_iter())
                                 .map(|x| Filter {
