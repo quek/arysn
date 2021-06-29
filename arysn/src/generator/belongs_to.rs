@@ -49,13 +49,13 @@ pub fn make_belongs_to(
         let parent_builder_ident = format_ident!("{}Builder", struct_ident);
         let join = {
             let x = format!(
-                "INNER JOIN {} ON {}.id = {{}}.{}",
+                "{{}} JOIN {} ON {}.id = {{}}.{}",
                 parent_table_name,
                 parent_table_name_as,
                 foreign_key_ident.to_string()
             );
             let y = format!(
-                "INNER JOIN {} AS {{0}} ON {{0}}.id = {{1}}.{}",
+                "{{0}} JOIN {} AS {{1}} ON {{1}}.id = {{2}}.{}",
                 parent_table_name,
                 foreign_key_ident.to_string()
             );
@@ -64,8 +64,17 @@ pub fn make_belongs_to(
             };
             quote! {
                 match &self.#builder_field.as_ref().map(|x| x.table_name_as.as_ref()).flatten() {
-                    Some(table_name_as) => format!(#y, table_name_as, #parent_table_name),
-                    None => format!(#x, #parent_table_name)
+                    Some(table_name_as) => format!(
+                        #y,
+                        if builder.outer_join { "LEFT OUTER" } else { "INNER" },
+                        table_name_as,
+                        #parent_table_name
+                    ),
+                    None => format!(
+                        #x,
+                        if builder.outer_join { "LEFT OUTER" } else { "INNER" },
+                        #parent_table_name
+                    )
                 }
             }
         };
