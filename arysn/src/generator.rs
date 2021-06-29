@@ -314,6 +314,7 @@ fn define_ar_impl(
                 pub table_name_as: Option<String>,
                 pub filters: Vec<Filter>,
                 pub preload: bool,
+                pub outer_join: bool,
                 pub orders: Vec<OrderItem>,
                 pub limit: Option<usize>,
                 pub offset: Option<usize>,
@@ -370,6 +371,13 @@ fn define_ar_impl(
                 pub fn preload(&self) -> Self {
                     Self {
                         preload: true,
+                        ..self.clone()
+                    }
+                }
+
+                pub fn outer_join(&self) -> Self {
+                    Self {
+                        outer_join: true,
                         ..self.clone()
                     }
                 }

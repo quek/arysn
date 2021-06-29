@@ -37,7 +37,7 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
             format!(" AS {}", child_table_name_as)
         };
         let join = format!(
-            "INNER JOIN {}{} ON {}.{} = {{}}.id",
+            "{{}} JOIN {}{} ON {}.{} = {{}}.id",
             child_table_name, join_as, child_table_name_as, has_one.foreign_key,
         );
         let struct_ident = format_ident!("{}", has_one.struct_name);
@@ -87,6 +87,7 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
                 if !builder.filters().is_empty() {
                     join_parts.push(
                         format!(#join,
+                                if builder.outer_join { "LEFT OUTER" } else { "INNER" },
                                 self.table_name_as.as_ref().unwrap_or(&#table_name.to_string()))
                     );
                     builder.join(join_parts);
