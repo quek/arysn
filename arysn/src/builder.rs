@@ -61,9 +61,16 @@ pub trait BuilderTrait {
     }
 
     fn select_sql(&self) -> String {
+        let orders: &Vec<OrderItem> = BuilderTrait::order(self);
         let select = BuilderTrait::all_columns(self)
             .iter()
             .map(|column| format!("{}.{}", BuilderTrait::select(self), column))
+            .chain(
+                orders
+                    .iter()
+                    .filter(|x| x.table.is_empty())
+                    .map(|x| x.field.to_string()),
+            )
             .collect::<Vec<_>>()
             .join(", ");
         let mut index: usize = 1;
@@ -85,7 +92,6 @@ pub trait BuilderTrait {
                     .replace(" AND )", ")")
             )
         };
-        let orders: &Vec<OrderItem> = BuilderTrait::order(self);
         let order_part = if orders.is_empty() {
             "".to_string()
         } else {
