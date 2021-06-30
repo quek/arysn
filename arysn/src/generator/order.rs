@@ -38,6 +38,26 @@ pub fn order_part(
                     order_builder: self.clone(),
                 }
             })*
+
+            pub fn by_string_literal_asc(&self, field: &'static str) -> #builder_ident {
+                let mut builder = self.builder.clone();
+                builder.orders.push(OrderItem {
+                    table: "".to_string(),
+                    field,
+                    asc_or_desc: "ASC",
+                });
+                builder
+            }
+
+            pub fn by_string_literal_desc(&self, field: &'static str) -> #builder_ident {
+                let mut builder = self.builder.clone();
+                builder.orders.push(OrderItem {
+                    table: "".to_string(),
+                    field,
+                    asc_or_desc: "DESC",
+                });
+                builder
+            }
         }
 
         #[derive(Clone, Debug)]
