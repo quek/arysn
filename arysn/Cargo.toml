@@ -14,8 +14,10 @@ repository = "https://github.com/quek/arysn"
 Inflector = "0.11"
 anyhow = "1"
 chrono = "0.4"
-deadpool = "0.8"
-deadpool-postgres = "0.9"
+deadpool-0_5 = { package = "deadpool", version = "^0.5", optional = true }
+deadpool-0_8 = { package = "deadpool", version = "^0.8", optional = true }
+deadpool-postgres-0_5 = { package = "deadpool-postgres", version = "^0.5", optional = true }
+deadpool-postgres-0_9 = { package = "deadpool-postgres", version = "^0.9", optional = true }
 dyn-clone = "1"
 env_logger = "0.9"
 log = "0.4"
@@ -23,8 +25,10 @@ proc-macro2 = "1"
 quote = "1"
 syn = "1"
 thiserror = "1.0"
-tokio = { version = "^1.0", features = ["full"] }
-tokio-postgres = { version = "^0.7", features = ["with-chrono-0_4"] }
+tokio-0_2 = { package="tokio", version = "^0.2", features = ["full"], optional = true }
+tokio-1_x = { package="tokio", version = "^1.0", features = ["full"], optional = true }
+tokio-postgres-0_5 = { package = "tokio-postgres", version = "^0.5.5", features = ["with-chrono-0_4"], optional = true }
+tokio-postgres-0_7 = { package = "tokio-postgres", version = "^0.7", features = ["with-chrono-0_4"], optional = true }
 
 # gis
 bytes = { version = "^1.0", optional = true }
@@ -36,4 +40,7 @@ serde = { version = "1", optional = true }
 version = "1"
 
 [features]
+default = ["with-tokio-1_x"]
 gis = ["bytes", "postgis", "postgres", "serde"]
+with-tokio-0_2 = ["tokio-0_2", "tokio-postgres-0_5", "deadpool-0_5", "deadpool-postgres-0_5"]
+with-tokio-1_x = ["tokio-1_x", "tokio-postgres-0_7", "deadpool-0_8", "deadpool-postgres-0_9"]
