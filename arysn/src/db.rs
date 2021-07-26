@@ -1,6 +1,6 @@
 use crate::error::Result;
 use deadpool::managed::Object;
-use deadpool_postgres::{ClientWrapper, Transaction as PoolTransaction};
+use deadpool_postgres::{Manager, Transaction as PoolTransaction};
 use tokio_postgres::types::ToSql;
 use tokio_postgres::{Client, NoTls, ToStatement, Transaction as ClientTransaction};
 
@@ -21,7 +21,7 @@ pub async fn connect<'a>() -> Result<Connection<'a>> {
 pub enum Connection<'a> {
     ClientConnection(Client),
     ClientTransaction(ClientTransaction<'a>),
-    PoolConnection(Object<ClientWrapper, tokio_postgres::Error>),
+    PoolConnection(Object<Manager>),
     PoolTransaction(PoolTransaction<'a>),
 }
 
