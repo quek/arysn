@@ -1,7 +1,9 @@
 use crate::generator::config::Config;
+use crate::generator::Column;
 use inflector::Inflector;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct HasOne {
@@ -17,7 +19,11 @@ pub struct HasOne {
     pub has_one_preload: Vec<TokenStream>,
 }
 
-pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
+pub fn make_has_one(
+    config: &Config,
+    self_builder_name: &Ident,
+    columns_map: &HashMap<String, Vec<Column>>,
+) -> HasOne {
     let mut result: HasOne = HasOne::default();
     let table_name = config.table_name;
     for has_one in config.has_one.iter() {
@@ -94,6 +100,15 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
                 }
             }
         });
+        let column = columns_map[&child_table_name]
+            .iter()
+            .find(|column| column.name == has_one.foreign_key)
+            .unwrap();
+        let foreign_key_value = if column.is_nullable {
+            quote! { child.#foreign_key_ident.unwrap() }
+        } else {
+            quote! { child.#foreign_key_ident }
+        };
         result.has_one_preload.push(quote! {
             if let Some(builder) = &self.#builder_field {
                 if builder.preload {
@@ -115,7 +130,7 @@ pub fn make_has_one(config: &Config, self_builder_name: &Ident) -> HasOne {
                     let children = children_builder.load(conn).await?;
                     result.iter_mut().for_each(|x| {
                         for child in children.iter() {
-                            if x.id == child.#foreign_key_ident {
+                            if x.id == #foreign_key_value {
                                 x.#field_ident = Some(Box::new(child.clone()));
                                 break;
                             }
