@@ -24,7 +24,7 @@ mod order;
 
 pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
-    let mut rt = Runtime::new()?;
+    let rt = Runtime::new()?;
 
     let columns_map: HashMap<String, Vec<Column>> = rt.block_on(async {
         let mut columns_map = HashMap::new();
@@ -151,7 +151,7 @@ fn define_ar_impl(
     config: &Config,
     columns_map: &HashMap<String, Vec<Column>>,
 ) -> Result<(TokenStream, TokenStream, HashMap<String, TokenStream>)> {
-    let mut rt = Runtime::new()?;
+    let rt = Runtime::new()?;
 
     rt.block_on(async {
         let client = connect().await?;

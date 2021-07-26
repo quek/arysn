@@ -74,7 +74,7 @@ impl<'de> Deserialize<'de> for Point {
             X,
             Y,
             Srid,
-        };
+        }
 
         impl<'de> Deserialize<'de> for Field {
             fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
