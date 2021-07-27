@@ -22,3 +22,6 @@ publish:
 
 test-no-gis:
 	docker exec --workdir /app/arysn-test arysn_dev_1 cargo test -- --nocapture
+
+test-tokio-02:
+	docker-compose exec dev cargo test --features "with-tokio-0_2" --no-default-features -- --nocapture

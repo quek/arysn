@@ -24,7 +24,7 @@ postgres-types-0_2 = { package = "postgres-types", version = "0.2", features = [
 
 [build-dependencies]
 anyhow = "1"
-arysn = { path = "../arysn" }
+arysn = { path = "../arysn", default-features = false }
 
 [features]
 default = ["with-tokio-1_x"]
