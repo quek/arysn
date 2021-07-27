@@ -16,8 +16,8 @@ log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 tokio-0_2 = { package="tokio", version = "^0.2", features = ["full"], optional = true }
 tokio-1_x = { package="tokio", version = "^1.0", features = ["full"], optional = true }
-tokio-postgres-0_5 = { package = "tokio-postgres", version = "^0.5.5", features = ["with-chrono-0_4"], optional = true }
-tokio-postgres-0_7 = { package = "tokio-postgres", version = "^0.7", features = ["with-chrono-0_4"], optional = true }
+tokio-postgres-0_5 = { package = "tokio-postgres", version = "^0.5.5", features = ["with-chrono-0_4", "with-uuid-0_8"], optional = true }
+tokio-postgres-0_7 = { package = "tokio-postgres", version = "^0.7", features = ["with-chrono-0_4", "with-uuid-0_8"], optional = true }
 uuid = { version = "0.8", features = ["serde"] }
 postgres-types-0_1 = { package = "postgres-types", version = "0.1", features = ["derive"], optional = true }
 postgres-types-0_2 = { package = "postgres-types", version = "0.2", features = ["derive"], optional = true }
