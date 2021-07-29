@@ -229,7 +229,7 @@ fn define_ar_impl(
             has_one_filters_impl,
             has_one_join,
             has_one_preload,
-        } = make_has_one(config, &builder_ident);
+        } = make_has_one(config, &builder_ident, columns_map);
 
         let BelongsTo {
             belongs_to_use_plain,
