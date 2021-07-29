@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- fix han one nullable foreign key
+
 ## 0.3.0
 
 - update dependencies
