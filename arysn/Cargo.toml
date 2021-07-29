@@ -31,9 +31,12 @@ tokio-postgres-0_5 = { package = "tokio-postgres", version = "^0.5.5", features 
 tokio-postgres-0_7 = { package = "tokio-postgres", version = "^0.7", features = ["with-chrono-0_4"], optional = true }
 
 # gis
-bytes = { version = "^1.0", optional = true }
-postgis = { version = "0.8", optional = true }
-postgres = { version = "0.19", optional = true }
+bytes-0_5 = { package = "bytes", version = "^0.5", optional = true }
+bytes-1_x = { package = "bytes", version = "^1.0", optional = true }
+postgis-0_7 = { package = "postgis", version = "0.7", optional = true }
+postgis-0_8 = { package = "postgis", version = "0.8", optional = true }
+postgres-0_17 = { package = "postgres", version = "0.17", optional = true }
+postgres-0_19 = { package = "postgres", version = "0.19", optional = true }
 serde = { version = "1", optional = true }
 
 [dev-dependencies.serde_json]
@@ -41,6 +44,7 @@ version = "1"
 
 [features]
 default = ["with-tokio-1_x"]
-gis = ["bytes", "postgis", "postgres", "serde"]
+gis = ["bytes-1_x", "postgis-0_8", "postgres-0_19", "serde"]
+gis-tokio-0_2 = ["bytes-0_5", "postgis-0_7", "postgres-0_17", "serde"]
 with-tokio-0_2 = ["tokio-0_2", "tokio-postgres-0_5", "deadpool-0_5", "deadpool-postgres-0_5"]
 with-tokio-1_x = ["tokio-1_x", "tokio-postgres-0_7", "deadpool-0_8", "deadpool-postgres-0_9"]

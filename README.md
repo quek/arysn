@@ -143,5 +143,16 @@ Cargo.toml
 
 ``` toml
 [dependencies]
-arysn = { version = "0.1.8", features = ["gis"] }
+arysn = { version = "0.3", features = ["gis"] }
 ```
+
+# Tokio 0.2
+
+If you neet tokio v0.2
+
+Cargo.toml
+
+``` toml
+arysn = { version = "0.3", features = ["with-tokio-0_2"], default-features = false }
+```
+
