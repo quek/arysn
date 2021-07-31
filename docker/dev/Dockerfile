@@ -1,4 +1,4 @@
-FROM rust:1.53.0-slim-buster
+FROM rust:1.54.0-slim-buster
 
 RUN apt update && apt install -y locales curl
 
