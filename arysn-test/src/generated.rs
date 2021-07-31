@@ -1,9 +1,9 @@
 pub mod contribution;
 pub mod contribution_impl;
 pub mod enums;
-#[cfg(feature = "gis")]
+#[cfg(any(feature = "with-tokio-0_2-gis", feature = "with-tokio-1_x-gis"))]
 pub mod gis_thing;
-#[cfg(feature = "gis")]
+#[cfg(any(feature = "with-tokio-0_2-gis", feature = "with-tokio-1_x-gis"))]
 pub mod gis_thing_impl;
 pub mod profile;
 pub mod profile_impl;

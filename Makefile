@@ -20,12 +20,26 @@ psql:
 publish:
 	cargo publish --manifest-path arysn/Cargo.toml
 
-test:
-	docker-compose exec dev cargo test --features "gis" -- --nocapture
+test-tokio-1_x:
+	docker-compose exec dev cargo test -p arysn-test \
+	  --no-default-features \
+	  --features "with-tokio-1_x" -- --nocapture
 
-test-no-gis:
-	docker-compose exec dev cargo test -- --nocapture
+test-tokio-1_x-gis:
+	docker-compose exec dev cargo test -p arysn-test \
+	  --no-default-features \
+	  --features "with-tokio-1_x-gis" -- --nocapture
 
-test-tokio-02:
-	docker-compose exec dev cargo test --no-default-features \
-	  --features "with-tokio-0_2" --features "gis-tokio-0_2" -- --nocapture
+test-tokio-0_2:
+	docker-compose exec dev cargo test -p arysn-test \
+	  --no-default-features \
+	  --features "with-tokio-0_2" \
+	  -- --nocapture
+
+test-tokio-0_2-gis:
+	docker-compose exec dev cargo test -p arysn-test \
+	  --no-default-features \
+	  --features "with-tokio-0_2-gis" \
+	  -- --nocapture
+
+test-all: test-tokio-1_x test-tokio-1_x-gis test-tokio-0_2 test-tokio-0_2-gis
