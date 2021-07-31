@@ -130,7 +130,7 @@ Cargo.toml
 
 ``` toml
 [dependencies]
-tokio-postgres = { version = "0.5", features = ["with-chrono-0_4", "with-uuid-0_8"] }
+tokio-postgres = { version = "0.7", features = ["with-chrono-0_4", "with-uuid-0_8"] }
 uuid = { version = "0.8", features = ["serde"] }
 ```
 
@@ -143,5 +143,16 @@ Cargo.toml
 
 ``` toml
 [dependencies]
-arysn = { version = "0.1.8", features = ["gis"] }
+arysn = { version = "0.3", features = ["gis"] }
+```
+
+# Tokio 0.2
+
+If you need tokio v0.2
+
+Cargo.toml
+
+``` toml
+[dependencies]
+arysn = { version = "0.3", features = ["with-tokio-0_2", "gis-tokio-0_2"], default-features = false }
 ```
