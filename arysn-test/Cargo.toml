@@ -27,7 +27,8 @@ anyhow = "1"
 arysn = { path = "../arysn", default-features = false }
 
 [features]
-default = ["with-tokio-1_x"]
-gis = ["arysn/gis"]
+default = ["with-tokio-1_x-gis"]
 with-tokio-0_2 = ["arysn/with-tokio-0_2", "postgres-types-0_1", "tokio-0_2", "tokio-postgres-0_5"]
 with-tokio-1_x = ["arysn/with-tokio-1_x", "postgres-types-0_2", "tokio-1_x", "tokio-postgres-0_7"]
+with-tokio-0_2-gis = ["with-tokio-0_2", "arysn/gis-tokio-0_2"]
+with-tokio-1_x-gis = ["with-tokio-1_x", "arysn/gis"]
