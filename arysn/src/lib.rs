@@ -34,6 +34,7 @@ mod builder;
 mod db;
 mod error;
 mod filter;
+mod filter_builder;
 pub mod generator;
 #[cfg(any(feature = "gis", feature = "gis-tokio-0_2"))]
 mod gis;
@@ -49,6 +50,7 @@ pub mod prelude {
     pub use super::builder::BuilderTrait;
     pub use super::db::connect;
     pub use super::filter::Filter;
+    pub use super::filter_builder::{BuilderAccessor, FilterBuilder};
     pub use super::order_item::OrderItem;
     pub use super::value::ToSqlValue;
 }
