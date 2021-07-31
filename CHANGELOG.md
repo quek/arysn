@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2
+
+- Add feature `with-tokio-0_2`
+- Reduced the size of the generated code
+
 ## 0.3.1
 
 - fix han one nullable foreign key
