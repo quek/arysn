@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3
+
+- Fix belongs to struct_name: "FooStatus"
+
 ## 0.3.2
 
 - Add feature `with-tokio-0_2`

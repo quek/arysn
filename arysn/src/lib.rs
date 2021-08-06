@@ -39,6 +39,7 @@ pub mod generator;
 #[cfg(any(feature = "gis", feature = "gis-tokio-0_2"))]
 mod gis;
 mod order_item;
+mod utils;
 mod value;
 
 pub use db::Connection;

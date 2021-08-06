@@ -1,6 +1,5 @@
 use crate::generator::config::Config;
 use crate::generator::Column;
-use inflector::Inflector;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use std::collections::HashMap;
@@ -23,16 +22,21 @@ pub fn make_has_one(
     config: &Config,
     self_builder_name: &Ident,
     columns_map: &HashMap<String, Vec<Column>>,
+    configs: &[Config],
 ) -> HasOne {
     let mut result: HasOne = HasOne::default();
     let table_name = config.table_name;
     for has_one in config.has_one.iter() {
-        let module_ident = format_ident!("{}", has_one.struct_name.to_table_case().to_singular());
+        let child_config = configs
+            .iter()
+            .find(|x| x.struct_name == has_one.struct_name)
+            .unwrap();
+        let module_ident = format_ident!("{}", child_config.mod_name());
         let module_impl_ident = format_ident!("{}_impl", module_ident);
         let field_ident = format_ident!("{}", has_one.field);
         let foreign_key_ident = format_ident!("{}", has_one.foreign_key);
-        let child_table_name = has_one.struct_name.to_table_case();
-        let child_table_name_as = if has_one.field.to_table_case() != child_table_name {
+        let child_table_name = child_config.table_name;
+        let child_table_name_as = if has_one.field != child_config.mod_name() {
             has_one.field
         } else {
             &child_table_name
@@ -100,7 +104,7 @@ pub fn make_has_one(
                 }
             }
         });
-        let column = columns_map[&child_table_name]
+        let column = columns_map[child_table_name]
             .iter()
             .find(|column| column.name == has_one.foreign_key)
             .unwrap();
