@@ -1,6 +1,5 @@
 use crate::generator::config::Config;
 use crate::generator::Column;
-use inflector::Inflector;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use std::collections::HashMap;
@@ -22,16 +21,21 @@ pub fn make_has_many(
     config: &Config,
     self_builder_name: &Ident,
     columns_map: &HashMap<String, Vec<Column>>,
+    configs: &[Config],
 ) -> HasMany {
     let mut result: HasMany = HasMany::default();
     let table_name = config.table_name;
     for has_many in config.has_many.iter() {
-        let module_ident = format_ident!("{}", has_many.struct_name.to_table_case().to_singular());
+        let child_config = configs
+            .iter()
+            .find(|x| x.struct_name == has_many.struct_name)
+            .unwrap();
+        let module_ident = format_ident!("{}", child_config.mod_name());
         let module_impl_ident = format_ident!("{}_impl", module_ident);
         let field_ident = format_ident!("{}", has_many.field);
         let foreign_key_ident = format_ident!("{}", has_many.foreign_key);
-        let child_table_name = has_many.struct_name.to_table_case();
-        let child_table_name_as = if has_many.field.to_table_case() != child_table_name {
+        let child_table_name = child_config.table_name;
+        let child_table_name_as = if has_many.field != child_config.mod_name() {
             has_many.field
         } else {
             &child_table_name
@@ -111,7 +115,7 @@ pub fn make_has_many(
                 }
             }
         });
-        let column = columns_map[&child_table_name]
+        let column = columns_map[child_table_name]
             .iter()
             .find(|column| column.name == has_many.foreign_key)
             .unwrap();

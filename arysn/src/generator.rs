@@ -3,7 +3,6 @@ use belongs_to::{make_belongs_to, BelongsTo};
 use config::Config;
 use has_many::{make_has_many, HasMany};
 use has_one::{make_has_one, HasOne};
-use inflector::Inflector;
 use log::debug;
 use order::order_part;
 use proc_macro2::{Ident, TokenStream};
@@ -213,7 +212,7 @@ fn define_ar_impl(
             has_many_filters_impl,
             has_many_join,
             has_many_preload,
-        } = make_has_many(config, &builder_ident, columns_map);
+        } = make_has_many(config, &builder_ident, columns_map, configs);
 
         let HasOne {
             has_one_use_plain,
@@ -226,7 +225,7 @@ fn define_ar_impl(
             has_one_filters_impl,
             has_one_join,
             has_one_preload,
-        } = make_has_one(config, &builder_ident, columns_map);
+        } = make_has_one(config, &builder_ident, columns_map, configs);
 
         let BelongsTo {
             belongs_to_use_plain,
@@ -562,7 +561,7 @@ fn compute_type(
         ("uuid", _) => quote!(uuid::Uuid),
         ("USER-DEFINED", "geography(Point,4326)") => quote!(arysn::Point),
         ("USER-DEFINED", _) => {
-            let name = format_ident!("{}", udt_name.to_title_case().replace(" ", ""));
+            let name = format_ident!("{}", crate::utils::title_case(udt_name));
             quote!(#name)
         }
         _ => panic!("unknown sql type: {}", data_type),
