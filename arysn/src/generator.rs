@@ -46,7 +46,7 @@ pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
             TokenStream,
             TokenStream,
             HashMap<String, TokenStream>,
-        ) = define_ar_impl(config, &columns_map).unwrap();
+        ) = define_ar_impl(config, &configs, &columns_map).unwrap();
         for (key, val) in output_enums {
             enums.insert(key, val);
         }
@@ -152,6 +152,7 @@ ORDER BY ordinal_position
 
 fn define_ar_impl(
     config: &Config,
+    configs: &Vec<Config>,
     columns_map: &HashMap<String, Vec<Column>>,
 ) -> Result<(TokenStream, TokenStream, HashMap<String, TokenStream>)> {
     #[cfg(feature = "with-tokio-0_2")]
@@ -238,7 +239,7 @@ fn define_ar_impl(
             belongs_to_filters_impl,
             belongs_to_join,
             belongs_to_preload,
-        } = make_belongs_to(config, &builder_ident, &columns);
+        } = make_belongs_to(config, &builder_ident, &columns, configs);
         let use_plain = uniq_use(has_many_use_plain, has_one_use_plain, belongs_to_use_plain);
         let use_impl = uniq_use(has_many_use_impl, has_one_use_impl, belongs_to_use_impl);
 

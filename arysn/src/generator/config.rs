@@ -1,3 +1,5 @@
+use std::path::Path;
+
 #[derive(Debug)]
 pub struct Config {
     pub path: &'static str,
@@ -6,6 +8,17 @@ pub struct Config {
     pub has_many: Vec<HasManyConfig>,
     pub has_one: Vec<HasOneConfig>,
     pub belongs_to: Vec<BelongsToConfig>,
+}
+
+impl Config {
+    pub fn mod_name(&self) -> String {
+        Path::new(self.path)
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
 }
 
 #[derive(Debug)]

@@ -1,6 +1,5 @@
 use crate::generator::config::Config;
 use crate::generator::Column;
-use inflector::Inflector;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 
@@ -22,6 +21,7 @@ pub fn make_belongs_to(
     config: &Config,
     self_builder_name: &Ident,
     columns: &Vec<Column>,
+    configs: &Vec<Config>,
 ) -> BelongsTo {
     let mut result: BelongsTo = BelongsTo::default();
     let table_name = config.table_name;
@@ -33,13 +33,16 @@ pub fn make_belongs_to(
                 "{} is not found in {}",
                 &belongs_to.foreign_key, &config.table_name
             ));
-        let module_ident =
-            format_ident!("{}", belongs_to.struct_name.to_table_case().to_singular());
+        let parent_config = configs
+            .iter()
+            .find(|x| x.struct_name == belongs_to.struct_name)
+            .unwrap();
+        let module_ident = format_ident!("{}", parent_config.mod_name());
         let module_impl_ident = format_ident!("{}_impl", module_ident);
         let field_ident = format_ident!("{}", belongs_to.field);
         let foreign_key_ident = format_ident!("{}", belongs_to.foreign_key);
-        let parent_table_name = belongs_to.struct_name.to_table_case();
-        let parent_table_name_as = if belongs_to.field.to_table_case() != parent_table_name {
+        let parent_table_name = parent_config.table_name;
+        let parent_table_name_as = if belongs_to.field != parent_config.mod_name() {
             belongs_to.field
         } else {
             &parent_table_name
