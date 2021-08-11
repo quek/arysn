@@ -137,7 +137,8 @@ pub fn make_belongs_to(
             quote! {
                 if let Some(builder) = &self.#builder_field {
                     if builder.preload {
-                        let ids = result.iter().#map(|x| x.#foreign_key_ident).collect::<Vec<_>>();
+                        let ids = result.iter().#map(|x| x.#foreign_key_ident).collect::<std::collections::HashSet<_>>();
+                        let ids = ids.into_iter().collect::<Vec<_>>();
                         let parents_builder = #struct_ident::select().id().r#in(ids);
                         let parents_builder = #parent_builder_ident {
                             from: parents_builder.from,

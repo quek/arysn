@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.4
+
+- Remove duplicate id in preload of belongs to.
+
 ## 0.3.3
 
 - Fix belongs to struct_name: "FooStatus"
