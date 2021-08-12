@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5
+
+- Add LIKE operator.
+
 ## 0.3.4
 
 - Remove duplicate id in preload of belongs to.
