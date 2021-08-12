@@ -66,13 +66,6 @@ impl Filter {
                 ),
                 2,
             ),
-            "LIKE" => (
-                format!(
-                    "{}.{} {} ${}",
-                    &self.table, &self.name, &self.operator, bind_index
-                ),
-                1,
-            ),
             _ => (
                 format!(
                     "{}.{} {} ${}",
