@@ -46,6 +46,7 @@ pub use db::Connection;
 pub use error::{ArysnError as Error, Optional, Result};
 #[cfg(any(feature = "gis", feature = "gis-tokio-0_2"))]
 pub use gis::Point;
+pub use utils::escape_like;
 
 pub mod prelude {
     pub use super::builder::BuilderTrait;

@@ -193,4 +193,19 @@ where
         BuilderAccessor::filters(&mut builder).push(filter);
         builder
     }
+    pub fn like(&self, value: V) -> B {
+        let mut builder = self.builder.clone();
+        let filter = Filter {
+            table: BuilderAccessor::table_name_as(&builder)
+                .as_ref()
+                .unwrap_or(BuilderAccessor::from(&builder))
+                .to_string(),
+            name: self.column_name.to_string(),
+            values: vec![Box::new(value)],
+            operator: "LIKE",
+            preload: BuilderAccessor::preload(&builder),
+        };
+        BuilderAccessor::filters(&mut builder).push(filter);
+        builder
+    }
 }
