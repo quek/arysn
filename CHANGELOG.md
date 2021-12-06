@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.6
+
+- Add `literal_condition`.
+
 ## 0.3.5
 
 - Add LIKE operator.

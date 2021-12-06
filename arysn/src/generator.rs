@@ -464,6 +464,18 @@ fn define_ar_impl(
                     });
                     result
                 }
+
+                pub fn literal_condition(&self, condition: &'static str) -> Self {
+                    let mut builder = self.clone();
+                    builder.filters.push(Filter {
+                        table: "".to_string(),
+                        name: "".to_string(),
+                        values: vec![],
+                        operator: condition,
+                        preload: BuilderAccessor::preload(self),
+                    });
+                    builder
+                }
             }
 
             impl BuilderTrait for #builder_ident {
