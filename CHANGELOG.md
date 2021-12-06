@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.7
+
+- Derive PartialEq.
+
 ## 0.3.6
 
 - Add `literal_condition`.
