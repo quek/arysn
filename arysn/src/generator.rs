@@ -466,7 +466,7 @@ fn define_ar_impl(
                 }
 
                 pub fn literal_condition(&self, condition: &'static str) -> Self {
-                    let mut builder = (*self).clone();
+                    let mut builder = self.clone();
                     builder.filters.push(Filter {
                         table: "".to_string(),
                         name: "".to_string(),
