@@ -5,6 +5,7 @@ extern crate tokio_1_x as tokio;
 
 use anyhow::Result;
 use arysn::prelude::*;
+use arysn_test::generated::project::Project;
 use arysn_test::generated::user::{User, UserNew};
 use common::init;
 
@@ -71,6 +72,21 @@ async fn limit_offset() -> Result<()> {
 
     let users = User::select().limit(1).offset(1).load(conn).await?;
     assert_eq!(users.len(), 1);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn literal_condition() -> Result<()> {
+    init();
+
+    let conn = &connect().await?;
+
+    let projects = Project::select()
+        .literal_condition("create_user_id=update_user_id")
+        .load(conn)
+        .await?;
+    assert_eq!(projects.len(), 1);
 
     Ok(())
 }

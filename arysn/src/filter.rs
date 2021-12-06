@@ -66,13 +66,19 @@ impl Filter {
                 ),
                 2,
             ),
-            _ => (
-                format!(
-                    "{}.{} {} ${}",
-                    &self.table, &self.name, &self.operator, bind_index
-                ),
-                1,
-            ),
+            _ => {
+                if self.name.is_empty() {
+                    (self.operator.to_string(), 0)
+                } else {
+                    (
+                        format!(
+                            "{}.{} {} ${}",
+                            &self.table, &self.name, &self.operator, bind_index
+                        ),
+                        1,
+                    )
+                }
+            }
         }
     }
 }
