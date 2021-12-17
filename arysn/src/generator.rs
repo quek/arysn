@@ -247,7 +247,7 @@ fn define_ar_impl(
             #(#use_plain)*
             #(#use_enums)*
 
-            #[derive(Clone, Debug, Deserialize, Serialize)]
+            #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
             pub struct #struct_ident {
                 #(pub #column_names: #nullable_rust_types,)*
                 #(#has_many_field)*
