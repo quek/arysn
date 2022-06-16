@@ -6,6 +6,13 @@ fn main() -> Result<()> {
     define_ar(
         "src/generated".into(),
         vec![
+            "Clone".to_string(),
+            "Debug".to_string(),
+            "PartialEq".to_string(),
+            "Deserialize".to_string(),
+            "Serialize".to_string(),
+        ],
+        vec![
             Config {
                 path: "simple.rs",
                 table_name: "simples",

@@ -21,7 +21,7 @@ mod has_many;
 mod has_one;
 mod order;
 
-pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
+pub fn define_ar(dir: PathBuf, derive: Vec<String>, configs: Vec<Config>) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
     #[cfg(feature = "with-tokio-0_2")]
     let mut rt = Runtime::new()?;
@@ -45,7 +45,7 @@ pub fn define_ar(dir: PathBuf, configs: Vec<Config>) -> Result<()> {
             TokenStream,
             TokenStream,
             HashMap<String, TokenStream>,
-        ) = define_ar_impl(config, &configs, &columns_map).unwrap();
+        ) = define_ar_impl(config, &configs, &columns_map, &derive).unwrap();
         for (key, val) in output_enums {
             enums.insert(key, val);
         }
@@ -153,6 +153,7 @@ fn define_ar_impl(
     config: &Config,
     configs: &Vec<Config>,
     columns_map: &HashMap<String, Vec<Column>>,
+    derive: &Vec<String>,
 ) -> Result<(TokenStream, TokenStream, HashMap<String, TokenStream>)> {
     #[cfg(feature = "with-tokio-0_2")]
     let mut rt = Runtime::new()?;
@@ -161,6 +162,8 @@ fn define_ar_impl(
 
     rt.block_on(async {
         let client = connect().await?;
+
+        let derive = derive.iter().map(|x| format_ident!("{}", x)).collect::<Vec<_>>();
 
         let table_name: String = config.table_name.to_string();
         let columns = &columns_map[&table_name];
@@ -247,7 +250,7 @@ fn define_ar_impl(
             #(#use_plain)*
             #(#use_enums)*
 
-            #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+            #[derive(#(#derive,)*)]
             pub struct #struct_ident {
                 #(pub #column_names: #nullable_rust_types,)*
                 #(#has_many_field)*
@@ -317,6 +320,7 @@ fn define_ar_impl(
                 pub filters: Vec<Filter>,
                 pub preload: bool,
                 pub outer_join: bool,
+                pub group_by: Option<&'static str>,
                 pub orders: Vec<OrderItem>,
                 pub limit: Option<usize>,
                 pub offset: Option<usize>,
@@ -355,6 +359,13 @@ fn define_ar_impl(
                 pub fn r#as(&self, name: String) -> Self {
                     Self  {
                         table_name_as: Some(name),
+                        ..self.clone()
+                    }
+                }
+
+                pub fn group_by_literal(&self, group_by: &'static str) -> Self {
+                    Self {
+                        group_by: Some(group_by),
                         ..self.clone()
                     }
                 }
@@ -510,6 +521,10 @@ fn define_ar_impl(
                     #(#has_one_filters_impl)*
                     #(#belongs_to_filters_impl)*
                     result
+                }
+
+                fn group_by(&self) -> Option<&'static str> {
+                    self.group_by
                 }
 
                 fn order(&self) -> &Vec<OrderItem> {
