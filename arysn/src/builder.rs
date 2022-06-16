@@ -9,6 +9,7 @@ pub trait BuilderTrait {
     fn from(&self) -> String;
     fn join(&self, join_parts: &mut Vec<String>);
     fn filters(&self) -> Vec<&Filter>;
+    fn group_by(&self) -> Option<&'static str>;
     fn order(&self) -> &Vec<OrderItem>;
     fn limit(&self) -> Option<usize>;
     fn offset(&self) -> Option<usize>;
@@ -33,11 +34,17 @@ pub trait BuilderTrait {
                     .replace(" AND )", ")")
             )
         };
+        let group_by_part = if let Some(group_by) = self.group_by() {
+            format!(" GROUP BY {}", group_by)
+        } else {
+            "".to_string()
+        };
         let sql = format!(
-            "SELECT COUNT(DISTINCT {}.*) FROM {}{}",
+            "SELECT COUNT(DISTINCT {}.*) FROM {}{}{}",
             self.select(),
             self.from(),
             where_part,
+            group_by_part
         );
 
         let mut params: Vec<&(dyn ToSql + Sync)> = vec![];
@@ -92,6 +99,11 @@ pub trait BuilderTrait {
                     .replace(" AND )", ")")
             )
         };
+        let group_by_part = if let Some(group_by) = self.group_by() {
+            format!(" GROUP BY {}", group_by)
+        } else {
+            "".to_string()
+        };
         let order_part = if orders.is_empty() {
             "".to_string()
         } else {
@@ -114,10 +126,11 @@ pub trait BuilderTrait {
         };
         // TODO 無条件に DISTINCT 付けるのはどうかと思う
         format!(
-            "SELECT DISTINCT {} FROM {}{}{}{}{}",
+            "SELECT DISTINCT {} FROM {}{}{}{}{}{}",
             select,
             self.from(),
             where_part,
+            group_by_part,
             order_part,
             limit,
             offset

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+
+- Derive can be specified.
+- Add group_by_literal.
+
 ## 0.3.7
 
 - Derive PartialEq.
