@@ -8,27 +8,20 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1"
-arysn = { path = "../arysn", default-features = false }
+arysn = { path = "../arysn" }
 async-recursion = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
 env_logger = "0.9"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
-tokio-0_2 = { package="tokio", version = "^0.2", features = ["full"], optional = true }
-tokio-1_x = { package="tokio", version = "^1.0", features = ["full"], optional = true }
-tokio-postgres-0_5 = { package = "tokio-postgres", version = "^0.5.5", features = ["with-chrono-0_4", "with-uuid-0_8"], optional = true }
-tokio-postgres-0_7 = { package = "tokio-postgres", version = "^0.7", features = ["with-chrono-0_4", "with-uuid-0_8"], optional = true }
+tokio = { package="tokio", version = "^1.0", features = ["full"] }
+tokio-postgres = { package = "tokio-postgres", version = "^0.7", features = ["with-chrono-0_4", "with-uuid-0_8"] }
 uuid = { version = "0.8", features = ["serde"] }
-postgres-types-0_1 = { package = "postgres-types", version = "0.1", features = ["derive"], optional = true }
-postgres-types-0_2 = { package = "postgres-types", version = "0.2", features = ["derive"], optional = true }
+postgres-types = { package = "postgres-types", version = "0.2", features = ["derive"] }
 
 [build-dependencies]
 anyhow = "1"
 arysn = { path = "../arysn", default-features = false }
 
 [features]
-default = ["with-tokio-1_x-gis"]
-with-tokio-0_2 = ["arysn/with-tokio-0_2", "postgres-types-0_1", "tokio-0_2", "tokio-postgres-0_5"]
-with-tokio-1_x = ["arysn/with-tokio-1_x", "postgres-types-0_2", "tokio-1_x", "tokio-postgres-0_7"]
-with-tokio-0_2-gis = ["with-tokio-0_2", "arysn/gis-tokio-0_2"]
-with-tokio-1_x-gis = ["with-tokio-1_x", "arysn/gis"]
+gis = ["arysn/gis"]

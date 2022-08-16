@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.0
+
+- tokio 0.2 is not supported.
 ## 0.4.0
 
 - Derive can be specified.

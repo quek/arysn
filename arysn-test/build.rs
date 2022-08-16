@@ -148,7 +148,7 @@ fn main() -> Result<()> {
                     },
                 ],
             },
-            #[cfg(any(feature = "with-tokio-0_2-gis", feature = "with-tokio-1_x-gis"))]
+            #[cfg(any(feature = "gis"))]
             Config {
                 path: "gis_thing.rs",
                 table_name: "gis_things",

@@ -23,9 +23,6 @@ mod order;
 
 pub fn define_ar(dir: PathBuf, derive: Vec<String>, configs: Vec<Config>) -> Result<()> {
     let _ = env_logger::builder().is_test(true).try_init();
-    #[cfg(feature = "with-tokio-0_2")]
-    let mut rt = Runtime::new()?;
-    #[cfg(feature = "with-tokio-1_x")]
     let rt = Runtime::new()?;
 
     let columns_map: HashMap<String, Vec<Column>> = rt.block_on(async {
@@ -155,9 +152,6 @@ fn define_ar_impl(
     columns_map: &HashMap<String, Vec<Column>>,
     derive: &Vec<String>,
 ) -> Result<(TokenStream, TokenStream, HashMap<String, TokenStream>)> {
-    #[cfg(feature = "with-tokio-0_2")]
-    let mut rt = Runtime::new()?;
-    #[cfg(feature = "with-tokio-1_x")]
     let rt = Runtime::new()?;
 
     rt.block_on(async {
