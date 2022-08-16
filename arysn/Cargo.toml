@@ -13,8 +13,8 @@ repository = "https://github.com/quek/arysn"
 [dependencies]
 anyhow = "1"
 chrono = "0.4"
-deadpool = { package = "deadpool", version = "^0.8"}
-deadpool-postgres = { package = "deadpool-postgres", version = "^0.9"}
+deadpool = { package = "deadpool", version = "^0.9"}
+deadpool-postgres = { package = "deadpool-postgres", version = "^0.10"}
 dyn-clone = "1"
 env_logger = "0.9"
 log = "0.4"
