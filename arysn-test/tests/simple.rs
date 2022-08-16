@@ -1,8 +1,3 @@
-#[cfg(feature = "with-tokio-0_2")]
-extern crate tokio_0_2 as tokio;
-#[cfg(feature = "with-tokio-1_x")]
-extern crate tokio_1_x as tokio;
-
 use anyhow::Result;
 use arysn::prelude::*;
 use arysn_test::generated::simple::Simple;

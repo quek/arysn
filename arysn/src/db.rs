@@ -1,8 +1,5 @@
 use crate::error::Result;
 use deadpool::managed::Object;
-#[cfg(feature = "with-tokio-0_2")]
-use deadpool_postgres::ClientWrapper;
-#[cfg(feature = "with-tokio-1_x")]
 use deadpool_postgres::Manager;
 use deadpool_postgres::Transaction as PoolTransaction;
 use tokio_postgres::types::ToSql;
@@ -25,9 +22,6 @@ pub async fn connect<'a>() -> Result<Connection<'a>> {
 pub enum Connection<'a> {
     ClientConnection(Client),
     ClientTransaction(ClientTransaction<'a>),
-    #[cfg(feature = "with-tokio-0_2")]
-    PoolConnection(Object<ClientWrapper, tokio_postgres::Error>),
-    #[cfg(feature = "with-tokio-1_x")]
     PoolConnection(Object<Manager>),
     PoolTransaction(PoolTransaction<'a>),
 }
