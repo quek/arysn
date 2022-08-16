@@ -3,6 +3,10 @@
 ## 0.5.0
 
 - tokio 0.2 is not supported.
+- update dependencies
+    - deadpool to 0.9
+    - deadpool-postgres to 0.10
+
 ## 0.4.0
 
 - Derive can be specified.

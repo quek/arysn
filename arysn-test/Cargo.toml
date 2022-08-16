@@ -13,7 +13,7 @@ async-recursion = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
 env_logger = "0.9"
 log = "0.4"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
 tokio = { package="tokio", version = "^1.0", features = ["full"] }
 tokio-postgres = { package = "tokio-postgres", version = "^0.7", features = ["with-chrono-0_4", "with-uuid-0_8"] }
 uuid = { version = "0.8", features = ["serde"] }
