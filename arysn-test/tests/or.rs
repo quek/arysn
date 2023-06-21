@@ -46,6 +46,9 @@ async fn or() -> Result<()> {
         assert_eq!(users.len(), 1);
     }
 
+    log::info!(
+        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+    );
     let users = User::select()
         .active()
         .eq(true)

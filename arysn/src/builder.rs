@@ -98,14 +98,12 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
             .join(", ");
         let mut index: usize = 1;
         let mut filters: Vec<String> = vec![];
-        log::info!("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-        log::info!("$1 {:?}", self.filters());
         for filter in self.filters().iter() {
             let (s, i) = filter.to_sql(index);
             filters.push(s);
             index += i;
         }
-        log::info!("$2 {:?}", filters);
+        log::info!("filters {:?}", filters);
         let where_part = if filters.is_empty() {
             "".to_string()
         } else {
