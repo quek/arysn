@@ -123,11 +123,15 @@ pub fn make_has_one(
                         table_name_as: None,
                         filters: builder.filters.iter().cloned()
                             .chain(children_builder.filters.into_iter())
-                            .map(|x| Filter {
+                            .filter_map(|x| match x {
+                                Filter::Column(x) => Some(x),
+                                _ => None
+                            })
+                            .map(|x| Filter::Column(Column {
                                 table: #child_table_name.to_string(),
                                 preload: false,
                                 ..x
-                            })
+                            }))
                             .collect::<Vec<_>>(),
                         ..(**builder).clone()
                     };

@@ -1,9 +1,12 @@
 use crate::filter::Filter;
 use crate::order_item::OrderItem;
+use crate::prelude::BuilderAccessor;
+use dyn_clone::DynClone;
 use tokio_postgres::types::ToSql;
 
 // TODO カラム名がメソッドとしてはえるので名前衝突しないように名前空間がわけたい
-pub trait BuilderTrait {
+dyn_clone::clone_trait_object!(BuilderTrait);
+pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
     fn all_columns(&self) -> Vec<&'static str>;
     fn select(&self) -> String;
     fn from(&self) -> String;
@@ -42,15 +45,20 @@ pub trait BuilderTrait {
         let sql = format!(
             "SELECT COUNT(DISTINCT {}.*) FROM {}{}{}",
             self.select(),
-            self.from(),
+            BuilderTrait::from(self),
             where_part,
             group_by_part
         );
 
         let mut params: Vec<&(dyn ToSql + Sync)> = vec![];
         for filter in self.filters().iter() {
-            for value in filter.values.iter() {
-                params.push(value.as_to_sql().unwrap());
+            match filter {
+                Filter::Column(column) => {
+                    for value in column.values.iter() {
+                        params.push(value.as_to_sql().unwrap());
+                    }
+                }
+                Filter::Builder(_) => todo!(),
             }
         }
 
@@ -60,8 +68,16 @@ pub trait BuilderTrait {
     fn select_params(&self) -> Vec<&(dyn ToSql + Sync)> {
         let mut result: Vec<&(dyn ToSql + Sync)> = vec![];
         for filter in self.filters().iter() {
-            for value in filter.values.iter() {
-                result.push(value.as_to_sql().unwrap());
+            match filter {
+                Filter::Column(column) => {
+                    for value in column.values.iter() {
+                        result.push(value.as_to_sql().unwrap());
+                    }
+                }
+                Filter::Builder(builder) => {
+                    log::info!("{:?}", builder);
+                    result.append(&mut builder.select_params());
+                }
             }
         }
         result
@@ -82,11 +98,14 @@ pub trait BuilderTrait {
             .join(", ");
         let mut index: usize = 1;
         let mut filters: Vec<String> = vec![];
+        log::info!("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+        log::info!("$1 {:?}", self.filters());
         for filter in self.filters().iter() {
             let (s, i) = filter.to_sql(index);
             filters.push(s);
             index += i;
         }
+        log::info!("$2 {:?}", filters);
         let where_part = if filters.is_empty() {
             "".to_string()
         } else {
@@ -128,12 +147,19 @@ pub trait BuilderTrait {
         format!(
             "SELECT DISTINCT {} FROM {}{}{}{}{}{}",
             select,
-            self.from(),
+            BuilderTrait::from(self),
             where_part,
             group_by_part,
             order_part,
             limit,
             offset
         )
+    }
+}
+
+use core::fmt::Debug;
+impl Debug for dyn BuilderTrait {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "BuilderTrait {{ filters: {:?} }}", self.filters())
     }
 }

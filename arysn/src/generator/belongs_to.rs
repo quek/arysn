@@ -145,11 +145,15 @@ pub fn make_belongs_to(
                             table_name_as: None,
                             filters: builder.filters.iter().cloned()
                                 .chain(parents_builder.filters.into_iter())
-                                .map(|x| Filter {
+                                .filter_map(|x| match x {
+                                    Filter::Column(x) => Some(x),
+                                    _ => None
+                                })
+                                .map(|x| Filter::Column(Column {
                                     table: #parent_table_name.to_string(),
                                     preload: false,
                                     ..x
-                                })
+                                }))
                                 .collect::<Vec<_>>(),
                             ..(**builder).clone()
                         };

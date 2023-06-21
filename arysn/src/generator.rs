@@ -324,17 +324,17 @@ fn define_ar_impl(
             }
 
             impl BuilderAccessor for #builder_ident {
-                fn from(x: &Self) -> &String {
-                    &x.from
+                fn from(&self) -> &String {
+                    &self.from
                 }
-                fn table_name_as(x: &Self) -> &Option<String> {
-                    &x.table_name_as
+                fn table_name_as(&self) -> &Option<String> {
+                    &self.table_name_as
                 }
-                fn filters(x: &mut Self) -> &mut Vec<Filter> {
-                    &mut x.filters
+                fn filters(&mut self) -> &mut Vec<Filter> {
+                    &mut self.filters
                 }
-                fn preload(x: &Self) -> bool {
-                    x.preload
+                fn preload(&self) -> bool {
+                    self.preload
                 }
             }
 
@@ -374,13 +374,13 @@ fn define_ar_impl(
                 pub fn or(&self) -> Self {
                     let mut builder = self.clone();
                     builder.filters.push(
-                        Filter {
+                        Filter::Column(Column {
                             table: "".to_string(),
                             name: "".to_string(),
                             values: vec![],
                             operator: "OR",
                             preload: builder.preload,
-                        }
+                        })
                     );
                     builder
                 }
@@ -448,37 +448,39 @@ fn define_ar_impl(
 
                 pub fn r#where<F>(&self, f: F) -> Self
                 where F: FnOnce(&Self) -> Self {
-                    let mut builder = self.clone();
-                    builder.filters.clear();
-                    let mut builder = f(&builder);
+                    let builder = Box::new(f(&Self {
+                        from: BuilderAccessor::from(self).clone(),
+                        table_name_as: BuilderAccessor::table_name_as(self).clone(),
+                        ..Self::default()
+                    }));
                     let mut result = self.clone();
-                    result.filters.push(Filter {
+                    result.filters.push(Filter::Column(Column {
                         table: "".to_string(),
                         name: "".to_string(),
                         values: vec![],
                         operator: "(",
-                        preload: builder.preload,
-                    });
-                    result.filters.append(&mut builder.filters);
-                    result.filters.push(Filter {
+                        preload: BuilderAccessor::preload(self),
+                    }));
+                    result.filters.push(Filter::Builder(builder));
+                    result.filters.push(Filter::Column(Column {
                         table: "".to_string(),
                         name: "".to_string(),
                         values: vec![],
                         operator: ")",
-                        preload: builder.preload,
-                    });
+                        preload: BuilderAccessor::preload(self),
+                    }));
                     result
                 }
 
                 pub fn literal_condition(&self, condition: &'static str) -> Self {
                     let mut builder = self.clone();
-                    builder.filters.push(Filter {
+                    builder.filters.push(Filter::Column(Column {
                         table: "".to_string(),
                         name: "".to_string(),
                         values: vec![],
                         operator: condition,
                         preload: BuilderAccessor::preload(self),
-                    });
+                    }));
                     builder
                 }
             }
@@ -509,7 +511,10 @@ fn define_ar_impl(
                     #[allow(unused_mut)]
                     let mut result: Vec<&Filter> = self.filters
                         .iter()
-                        .filter(|x| !x.preload)
+                        .flat_map(|x| match x {
+                            Filter::Column(_) => vec![x],
+                            Filter::Builder(builder) => builder.filters(),
+                        })
                         .collect();
                     #(#has_many_filters_impl)*
                     #(#has_one_filters_impl)*
