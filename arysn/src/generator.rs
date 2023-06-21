@@ -324,7 +324,7 @@ fn define_ar_impl(
             }
 
             impl BuilderAccessor for #builder_ident {
-                fn from(&self) -> &String {
+                fn from_table(&self) -> &String {
                     &self.from
                 }
                 fn table_name_as(&self) -> &Option<String> {
@@ -449,7 +449,7 @@ fn define_ar_impl(
                 pub fn r#where<F>(&self, f: F) -> Self
                 where F: FnOnce(&Self) -> Self {
                     let builder = Box::new(f(&Self {
-                        from: BuilderAccessor::from(self).clone(),
+                        from: BuilderAccessor::from_table(self).clone(),
                         table_name_as: BuilderAccessor::table_name_as(self).clone(),
                         ..Self::default()
                     }));

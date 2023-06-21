@@ -3,7 +3,7 @@ use crate::value::ToSqlValue;
 use std::marker::PhantomData;
 
 pub trait BuilderAccessor {
-    fn from(&self) -> &String;
+    fn from_table(&self) -> &String;
     fn table_name_as(&self) -> &Option<String>;
     fn filters(&mut self) -> &mut Vec<Filter>;
     fn preload(&self) -> bool;
@@ -25,7 +25,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
@@ -40,7 +40,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
@@ -55,7 +55,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
@@ -70,7 +70,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
@@ -85,7 +85,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
@@ -100,7 +100,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
@@ -115,7 +115,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![],
@@ -130,7 +130,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![],
@@ -145,7 +145,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(from), Box::new(to)],
@@ -164,7 +164,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vs,
@@ -183,7 +183,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vs,
@@ -198,7 +198,7 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from(&builder))
+                .unwrap_or(BuilderAccessor::from_table(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
