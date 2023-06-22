@@ -160,10 +160,11 @@ impl Debug for dyn BuilderTrait {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
-            "BuilderTrait {{ table_name: {:?}, table_name_as: {:?}, filters: {:?} }}",
+            "BuilderTrait {{ table_name: {:?}, table_name_as: {:?}, filters: {:?}, preload: {:?} }}",
             self.table_name(),
             self.table_name_as(),
-            self.query_filters()
+            self.filters(),
+            self.preload(),
         )
     }
 }

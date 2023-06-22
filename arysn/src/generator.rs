@@ -433,6 +433,7 @@ fn define_ar_impl(
 
                 #[async_recursion]
                 pub async fn load<'a>(&self, conn: &arysn::Connection<'a>) -> arysn::Result<Vec<#struct_ident>> {
+                    log::info!("{} &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&", stringify!(#struct_ident));
                     let params = self.select_params();
                     let rows = conn
                         .query(self.select_sql().as_str(), &params[..])
@@ -440,6 +441,7 @@ fn define_ar_impl(
                     #[allow(unused_mut)]
                     let mut result: Vec<#struct_ident> = rows.into_iter()
                             .map(|row| #struct_ident::from(row)).collect();
+                    log::info!("filters: {:?}", self.filters);
                     #(#has_many_preload)*
                     #(#has_one_preload)*
                     #(#belongs_to_preload)*

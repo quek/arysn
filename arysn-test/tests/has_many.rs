@@ -36,7 +36,9 @@ async fn has_many() -> Result<()> {
         })
         .load(&conn)
         .await?;
-    let screen = &users[0].roles[0].screens[0];
+    log::info!("{:?}", users);
+    let role = &users[0].roles[0];
+    let screen = &role.screens[0];
     assert_eq!(screen.id, screen.id);
 
     Ok(())

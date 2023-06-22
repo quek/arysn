@@ -118,7 +118,7 @@ pub fn make_has_one(
         };
         result.has_one_preload.push(quote! {
             let builders = self.filters.iter().filter_map(|filter| match filter {
-                Filter::Builder(builder) if builder.preload() && builder.table_name_as() == &Some(#child_table_name_as.to_string()) => Some(builder),
+                Filter::Builder(builder) if builder.preload() && builder.table_name_as_or() == #child_table_name_as => Some(builder),
                 _ => None,
             }).collect::<Vec<_>>();
             if !builders.is_empty() {

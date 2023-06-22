@@ -134,9 +134,10 @@ pub fn make_has_many(
         };
         result.has_many_preload.push(quote! {
             let builders = self.filters.iter().filter_map(|filter| match filter {
-                Filter::Builder(builder) if builder.preload() && builder.table_name_as() == &Some(#child_table_name_as.to_string()) => Some(builder),
+                Filter::Builder(builder) if builder.preload() && builder.table_name_as_or() == #child_table_name_as => Some(builder),
                 _ => None,
             }).collect::<Vec<_>>();
+            log::info!("builders: {:?}", builders);
             if !builders.is_empty() {
                 let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
                 let mut children_builder = #struct_ident::select().#foreign_key_ident().r#in(ids);
@@ -163,7 +164,9 @@ pub fn make_has_many(
                         }
                     }
                 }
+                log::info!("children_builder: {:?}", children_builder);
                 let children = children_builder.load(conn).await?;
+                log::info!("children: {:?}", children);
                 result.iter_mut().for_each(|x| {
                     let mut ys = vec![];
                     for child in children.iter() {
