@@ -102,6 +102,7 @@ pub fn make_belongs_to(
                 builder
                     .filters
                     .push(Filter::Builder(Box::new(f(&#parent_builder_ident {
+                        from: #parent_table_name.to_string(),
                         table_name_as: Some(#parent_table_name_as.to_string()),
                         ..Default::default()
                     }))));
@@ -111,7 +112,7 @@ pub fn make_belongs_to(
         result.belongs_to_join.push(quote! {
             let builders = self.filters.iter().filter_map(|filter| match filter {
                 Filter::Builder(builder)
-                    if builder.table_name_as() == &Some(#parent_table_name_as.to_string())
+                    if builder.table_name_as_or() == #parent_table_name_as
                         && !builder.query_filters().is_empty() => Some(builder),
                 _ => None,
             }).collect::<Vec<_>>();

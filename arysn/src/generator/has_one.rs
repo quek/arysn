@@ -74,6 +74,7 @@ pub fn make_has_one(
                 builder
                     .filters
                     .push(Filter::Builder(Box::new(f(&#child_builder_ident {
+                        from: #child_table_name.to_string(),
                         table_name_as: Some(#child_table_name_as.to_string()),
                         ..Default::default()
                     }))));
@@ -83,7 +84,7 @@ pub fn make_has_one(
         result.has_one_join.push(quote! {
             let builders = self.filters.iter().filter_map(|filter| match filter {
                 Filter::Builder(builder)
-                    if builder.table_name_as() == &Some(#child_table_name_as.to_string())
+                    if builder.table_name_as_or() == #child_table_name_as
                         && !builder.query_filters().is_empty() => Some(builder),
                 _ => None,
             }).collect::<Vec<_>>();

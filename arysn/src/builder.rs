@@ -158,6 +158,12 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
 use core::fmt::Debug;
 impl Debug for dyn BuilderTrait {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "BuilderTrait {{ filters: {:?} }}", self.query_filters())
+        write!(
+            f,
+            "BuilderTrait {{ table_name: {:?}, table_name_as: {:?}, filters: {:?} }}",
+            self.table_name(),
+            self.table_name_as(),
+            self.query_filters()
+        )
     }
 }
