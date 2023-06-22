@@ -137,8 +137,13 @@ pub fn make_has_one(
                     }
                 }
                 for filter in children_builder.filters.iter_mut() {
-                    if let Filter::Column(column) = filter {
-                        column.preload = false;
+                    match filter {
+                        Filter::Column(column) => {
+                            column.preload = false;
+                        }
+                        Filter::Builder(builder) => {
+                            builder.table_name_as_mut().take();
+                        }
                     }
                 }
                 let children = children_builder.load(conn).await?;

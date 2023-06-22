@@ -46,7 +46,6 @@ pub fn make_belongs_to(
             &parent_table_name
         };
         let struct_ident = format_ident!("{}", belongs_to.struct_name);
-        let builder_field = format_ident!("{}_builder", field_ident);
         let parent_builder_ident = format_ident!("{}Builder", struct_ident);
         let join = {
             let x = format!(
@@ -164,8 +163,13 @@ pub fn make_belongs_to(
                         }
                     }
                     for filter in parents_builder.filters.iter_mut() {
-                        if let Filter::Column(column) = filter {
-                            column.preload = false;
+                        match filter {
+                            Filter::Column(column) => {
+                                column.preload = false;
+                            }
+                            Filter::Builder(builder) => {
+                                builder.table_name_as_mut().take();
+                            }
                         }
                     }
                     let parents = parents_builder.load(conn).await?;
@@ -178,39 +182,6 @@ pub fn make_belongs_to(
                         }
                     });
                 }
-                // if let Some(builder) = &self.#builder_field {
-                //     if builder.preload {
-                //         let ids = result.iter().#map(|x| x.#foreign_key_ident).collect::<std::collections::HashSet<_>>();
-                //         let ids = ids.into_iter().collect::<Vec<_>>();
-                //         let parents_builder = #struct_ident::select().id().r#in(ids);
-                //         let parents_builder = #parent_builder_ident {
-                //             from: parents_builder.from,
-                //             table_name_as: None,
-                //             filters: builder.filters.iter().cloned()
-                //                 .chain(parents_builder.filters.into_iter())
-                //                 .filter_map(|x| match x {
-                //                     Filter::Column(x) => Some(x),
-                //                     _ => None
-                //                 })
-                //                 .map(|x| Filter::Column(Column {
-                //                     table: #parent_table_name.to_string(),
-                //                     preload: false,
-                //                     ..x
-                //                 }))
-                //                 .collect::<Vec<_>>(),
-                //             ..(**builder).clone()
-                //         };
-                //         let parents = parents_builder.load(conn).await?;
-                //         result.iter_mut().for_each(|x| {
-                //             for parent in parents.iter() {
-                //                 if x.#foreign_key_ident == #parent_id {
-                //                     x.#field_ident = Some(parent.clone());
-                //                     break;
-                //                 }
-                //             }
-                //         });
-                //     }
-                // }
             }
         });
     }

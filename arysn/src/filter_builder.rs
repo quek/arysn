@@ -5,6 +5,7 @@ use std::marker::PhantomData;
 pub trait BuilderAccessor {
     fn table_name(&self) -> &String;
     fn table_name_as(&self) -> &Option<String>;
+    fn table_name_as_mut(&mut self) -> &mut Option<String>;
     fn filters(&self) -> &Vec<Filter>;
     fn filters_mut(&mut self) -> &mut Vec<Filter>;
     fn outer_join(&self) -> bool;
