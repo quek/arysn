@@ -456,14 +456,23 @@ fn define_ar_impl(
                         ..Self::default()
                     });
                     let mut result = self.clone();
-                    result.filters.push(Filter::Column(Column {
-                        table: "".to_string(),
-                        name: "".to_string(),
-                        values: vec![],
-                        operator: "(",
-                        preload: BuilderAccessor::preload(self),
-                    }));
-                    result.filters.append(&mut builder.filters);
+                    if !builder.filters.is_empty() {
+                        result.filters.push(Filter::Column(Column {
+                            table: "".to_string(),
+                            name: "".to_string(),
+                            values: vec![],
+                            operator: "(",
+                            preload: BuilderAccessor::preload(self),
+                        }));
+                        result.filters.append(&mut builder.filters);
+                        result.filters.push(Filter::Column(Column {
+                            table: "".to_string(),
+                            name: "".to_string(),
+                            values: vec![],
+                            operator: ")",
+                            preload: BuilderAccessor::preload(self),
+                        }));
+                    }
                     if builder.table_name_as.is_some() {
                         result.table_name_as = builder.table_name_as;
                     }
@@ -483,13 +492,6 @@ fn define_ar_impl(
                     if builder.offset.is_some() {
                         result.offset = builder.offset;
                     }
-                    result.filters.push(Filter::Column(Column {
-                        table: "".to_string(),
-                        name: "".to_string(),
-                        values: vec![],
-                        operator: ")",
-                        preload: BuilderAccessor::preload(self),
-                    }));
                     result
                 }
 

@@ -33,34 +33,16 @@ async fn or() -> Result<()> {
         .await?;
     assert_eq!(users.len(), 1);
 
-    {
-        log::info!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        let users = User::select()
-            .active()
-            .eq(true)
-            // r#where って名前どうなの？ でも()付けるだけなんだよね
-            .r#where(|user| {
-                user.profile(|profile| profile.birth_date().eq(NaiveDate::from_ymd(1999, 12, 31)))
-            })
-            .load(&conn)
-            .await?;
-        assert_eq!(users.len(), 1);
-    }
-
-    // log::info!(
-    //     "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-    // );
-    // let users = User::select()
-    //     .active()
-    //     .eq(true)
-    //     // r#where って名前どうなの？ でも()付けるだけなんだよね
-    //     .r#where(|user| {
-    //         user.profile(|profile| profile.birth_date().eq(NaiveDate::from_ymd(1999, 12, 31)))
-    //             .or()
-    //             .profile(|profile| profile.birth_date().eq(NaiveDate::from_ymd(2000, 1, 1)))
-    //     })
-    //     .load(&conn)
-    //     .await?;
-    // assert_eq!(users.len(), 2);
+    let users = User::select()
+        .r#where(|user| user.clone())
+        .r#where(|user| user.active().eq(true).or().title().is_null())
+        .r#where(|user| {
+            user.profile(|profile| profile.birth_date().eq(NaiveDate::from_ymd(1999, 12, 31)))
+                .or()
+                .profile(|profile| profile.birth_date().eq(NaiveDate::from_ymd(2000, 1, 1)))
+        })
+        .load(&conn)
+        .await?;
+    assert_eq!(users.len(), 2);
     Ok(())
 }
