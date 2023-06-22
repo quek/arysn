@@ -3,7 +3,6 @@ use belongs_to::{make_belongs_to, BelongsTo};
 use config::Config;
 use has_many::{make_has_many, HasMany};
 use has_one::{make_has_one, HasOne};
-use log::debug;
 use order::order_part;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -433,7 +432,6 @@ fn define_ar_impl(
 
                 #[async_recursion]
                 pub async fn load<'a>(&self, conn: &arysn::Connection<'a>) -> arysn::Result<Vec<#struct_ident>> {
-                    log::info!("{} &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&", stringify!(#struct_ident));
                     let params = self.select_params();
                     let rows = conn
                         .query(self.select_sql().as_str(), &params[..])
@@ -441,7 +439,6 @@ fn define_ar_impl(
                     #[allow(unused_mut)]
                     let mut result: Vec<#struct_ident> = rows.into_iter()
                             .map(|row| #struct_ident::from(row)).collect();
-                    log::info!("filters: {:?}", self.filters);
                     #(#has_many_preload)*
                     #(#has_one_preload)*
                     #(#belongs_to_preload)*
@@ -632,7 +629,7 @@ async fn connect() -> Result<Client> {
     let (client, connection) = tokio_postgres::connect(&database_url, NoTls).await?;
     tokio::spawn(async move {
         if let Err(e) = connection.await {
-            debug!("connection error: {}", e);
+            log::debug!("connection error: {}", e);
         }
     });
     if std::env::var("TRACE_SQL").map_or(false, |x| x == "1") {

@@ -146,7 +146,6 @@ pub fn make_belongs_to(
                     Filter::Builder(builder) if builder.preload() && builder.table_name_as_or() == #parent_table_name_as => Some(builder),
                     _ => None,
                 }).collect::<Vec<_>>();
-                log::info!("builders: {:?}", builders);
                 if !builders.is_empty() {
                     let ids = result.iter().#map(|x| x.#foreign_key_ident).collect::<std::collections::HashSet<_>>();
                     let ids = ids.into_iter().collect::<Vec<_>>();
@@ -175,7 +174,6 @@ pub fn make_belongs_to(
                             }
                         }
                     }
-                    log::info!("parents_builder: {:?}", parents_builder);
                     let parents = parents_builder.load(conn).await?;
                     result.iter_mut().for_each(|x| {
                         for parent in parents.iter() {

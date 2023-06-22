@@ -75,7 +75,6 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
                     }
                 }
                 Filter::Builder(builder) => {
-                    log::info!("{:?}", builder);
                     result.append(&mut builder.select_params());
                 }
             }
@@ -103,7 +102,6 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
             filters.push(s);
             index += i;
         }
-        log::info!("filters {:?}", filters);
         let where_part = if filters.is_empty() {
             "".to_string()
         } else {
