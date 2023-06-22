@@ -140,6 +140,7 @@ pub fn make_has_one(
                 for filter in children_builder.filters.iter_mut() {
                     match filter {
                         Filter::Column(column) => {
+                            column.table = #child_table_name.to_string();
                             column.preload = false;
                         }
                         Filter::Builder(builder) => {
