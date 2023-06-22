@@ -82,12 +82,15 @@ pub fn make_has_one(
             }
         });
         result.has_one_join.push(quote! {
+            dbg!("has_one_join .....................................................");
+            dbg!(&self.filters);
             let builders = self.filters.iter().filter_map(|filter| match filter {
                 Filter::Builder(builder)
                     if builder.table_name_as_or() == #child_table_name_as
                         && !builder.query_filters().is_empty() => Some(builder),
                 _ => None,
             }).collect::<Vec<_>>();
+            dbg!(&builders);
             let mut table_name = None;
             let mut outer_join = false;
             for builder in &builders {

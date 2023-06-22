@@ -450,11 +450,11 @@ fn define_ar_impl(
 
                 pub fn r#where<F>(&self, f: F) -> Self
                 where F: FnOnce(&Self) -> Self {
-                    let builder = Box::new(f(&Self {
+                    let mut builder = f(&Self {
                         from: BuilderAccessor::table_name(self).clone(),
                         table_name_as: BuilderAccessor::table_name_as(self).clone(),
                         ..Self::default()
-                    }));
+                    });
                     let mut result = self.clone();
                     result.filters.push(Filter::Column(Column {
                         table: "".to_string(),
@@ -463,7 +463,26 @@ fn define_ar_impl(
                         operator: "(",
                         preload: BuilderAccessor::preload(self),
                     }));
-                    result.filters.push(Filter::Builder(builder));
+                    result.filters.append(&mut builder.filters);
+                    if builder.table_name_as.is_some() {
+                        result.table_name_as = builder.table_name_as;
+                    }
+                    if builder.preload {
+                        result.preload = true;
+                    }
+                    if builder.outer_join {
+                        result.outer_join = true;
+                    }
+                    if builder.group_by.is_some() {
+                        result.group_by = builder.group_by;
+                    }
+                    result.orders.append(&mut builder.orders);
+                    if builder.limit.is_some() {
+                        result.limit = builder.limit;
+                    }
+                    if builder.offset.is_some() {
+                        result.offset = builder.offset;
+                    }
                     result.filters.push(Filter::Column(Column {
                         table: "".to_string(),
                         name: "".to_string(),

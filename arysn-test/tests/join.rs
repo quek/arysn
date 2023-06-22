@@ -24,33 +24,33 @@ async fn join_as_belongs_to() -> Result<()> {
     Ok(())
 }
 
-// TODO #[tokio::test]
-// TODO async fn join_as_has_many() -> Result<()> {
-// TODO     init();
-// TODO     let mut conn = connect().await?;
-// TODO     let conn = &conn.transaction().await?;
-// TODO
-// TODO     let users = User::select()
-// TODO         .order()
-// TODO         .id()
-// TODO         .asc()
-// TODO         .create_projects(|x| x.id().r#in(vec![1, 2]).preload())
-// TODO         .update_projects(|x| x.id().r#in(vec![1, 3]).preload())
-// TODO         .load(conn)
-// TODO         .await?;
-// TODO     assert_eq!(users.len(), 2);
-// TODO     let user = &users[0];
-// TODO     assert_eq!(user.id, 1);
-// TODO     let create_projects = &user.create_projects;
-// TODO     assert_eq!(create_projects.len(), 1);
-// TODO     let update_projects = &user.update_projects;
-// TODO     assert_eq!(update_projects.len(), 1);
-// TODO     let user = &users[1];
-// TODO     assert_eq!(user.id, 2);
-// TODO     let create_projects = &user.create_projects;
-// TODO     assert_eq!(create_projects.len(), 1);
-// TODO     let update_projects = &user.update_projects;
-// TODO     assert_eq!(update_projects.len(), 1);
-// TODO
-// TODO     Ok(())
-// TODO }
+#[tokio::test]
+async fn join_as_has_many() -> Result<()> {
+    init();
+    let mut conn = connect().await?;
+    let conn = &conn.transaction().await?;
+
+    let users = User::select()
+        .order()
+        .id()
+        .asc()
+        .create_projects(|x| x.id().r#in(vec![1, 2]).preload())
+        .update_projects(|x| x.id().r#in(vec![1, 3]).preload())
+        .load(conn)
+        .await?;
+    assert_eq!(users.len(), 2);
+    let user = &users[0];
+    assert_eq!(user.id, 1);
+    let create_projects = &user.create_projects;
+    assert_eq!(create_projects.len(), 1);
+    let update_projects = &user.update_projects;
+    assert_eq!(update_projects.len(), 1);
+    let user = &users[1];
+    assert_eq!(user.id, 2);
+    let create_projects = &user.create_projects;
+    assert_eq!(create_projects.len(), 1);
+    let update_projects = &user.update_projects;
+    assert_eq!(update_projects.len(), 1);
+
+    Ok(())
+}
