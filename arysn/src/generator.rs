@@ -204,9 +204,7 @@ fn define_ar_impl(
             has_many_use_impl,
             has_many_field,
             has_many_init,
-            has_many_builder_field,
             has_many_builder_impl,
-            has_many_filters_impl,
             has_many_join,
             has_many_preload,
         } = make_has_many(config, &builder_ident, columns_map, configs);
@@ -217,9 +215,7 @@ fn define_ar_impl(
             has_one_field,
             has_one_reader,
             has_one_init,
-            has_one_builder_field,
             has_one_builder_impl,
-            has_one_filters_impl,
             has_one_join,
             has_one_preload,
         } = make_has_one(config, &builder_ident, columns_map, configs);
@@ -230,9 +226,7 @@ fn define_ar_impl(
             belongs_to_field,
             belongs_to_reader,
             belongs_to_init,
-            belongs_to_builder_field,
             belongs_to_builder_impl,
-            belongs_to_filters_impl,
             belongs_to_join,
             belongs_to_preload,
         } = make_belongs_to(config, &builder_ident, &columns, configs);
@@ -318,20 +312,23 @@ fn define_ar_impl(
                 pub orders: Vec<OrderItem>,
                 pub limit: Option<usize>,
                 pub offset: Option<usize>,
-                #(#has_many_builder_field)*
-                #(#has_one_builder_field)*
-                #(#belongs_to_builder_field)*
             }
 
             impl BuilderAccessor for #builder_ident {
-                fn from_table(&self) -> &String {
+                fn table_name(&self) -> &String {
                     &self.from
                 }
                 fn table_name_as(&self) -> &Option<String> {
                     &self.table_name_as
                 }
-                fn filters(&mut self) -> &mut Vec<Filter> {
+                fn filters(&self) -> &Vec<Filter> {
+                    &self.filters
+                }
+                fn filters_mut(&mut self) -> &mut Vec<Filter> {
                     &mut self.filters
+                }
+                fn outer_join(&self) -> bool {
+                    self.outer_join
                 }
                 fn preload(&self) -> bool {
                     self.preload
@@ -449,7 +446,7 @@ fn define_ar_impl(
                 pub fn r#where<F>(&self, f: F) -> Self
                 where F: FnOnce(&Self) -> Self {
                     let builder = Box::new(f(&Self {
-                        from: BuilderAccessor::from_table(self).clone(),
+                        from: BuilderAccessor::table_name(self).clone(),
                         table_name_as: BuilderAccessor::table_name_as(self).clone(),
                         ..Self::default()
                     }));
@@ -511,29 +508,20 @@ fn define_ar_impl(
                     #(#has_many_join)*
                     #(#has_one_join)*
                     #(#belongs_to_join)*
-                    for filter in self.filters.iter() {
-                        match filter {
-                            Filter::Column(_) => (),
-                            Filter::Builder(builder) => {
-                                builder.join(join_parts);
-                            }
-                        }
-                    }
                 }
 
-                fn filters(&self) -> Vec<&Filter> {
-                    #[allow(unused_mut)]
-                    let mut result: Vec<&Filter> = self.filters
+                fn query_filters(&self) -> Vec<&Filter> {
+                    self.filters
                         .iter()
                         .flat_map(|x| match x {
-                            Filter::Column(_) => vec![x],
-                            Filter::Builder(builder) => builder.filters(),
+                            Filter::Column(column) => if column.preload {
+                                vec![]
+                            } else { 
+                                vec![x]
+                            },
+                            Filter::Builder(builder) => builder.query_filters(),
                         })
-                        .collect();
-                    #(#has_many_filters_impl)*
-                    #(#has_one_filters_impl)*
-                    #(#belongs_to_filters_impl)*
-                    result
+                        .collect()
                 }
 
                 fn group_by(&self) -> Option<&'static str> {

@@ -90,7 +90,7 @@ impl Filter {
             Filter::Builder(builder) => {
                 let mut index: usize = bind_index;
                 let mut filters: Vec<String> = vec![];
-                for filter in builder.filters().iter() {
+                for filter in builder.query_filters().iter() {
                     let (s, i) = filter.to_sql(index);
                     filters.push(s);
                     index += i;

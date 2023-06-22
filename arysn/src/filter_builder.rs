@@ -3,9 +3,11 @@ use crate::value::ToSqlValue;
 use std::marker::PhantomData;
 
 pub trait BuilderAccessor {
-    fn from_table(&self) -> &String;
+    fn table_name(&self) -> &String;
     fn table_name_as(&self) -> &Option<String>;
-    fn filters(&mut self) -> &mut Vec<Filter>;
+    fn filters(&self) -> &Vec<Filter>;
+    fn filters_mut(&mut self) -> &mut Vec<Filter>;
+    fn outer_join(&self) -> bool;
     fn preload(&self) -> bool;
 }
 
@@ -25,14 +27,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
             operator: "=",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn gt(&self, value: V) -> B {
@@ -40,14 +42,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
             operator: ">",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn lt(&self, value: V) -> B {
@@ -55,14 +57,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
             operator: "<",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn gte(&self, value: V) -> B {
@@ -70,14 +72,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
             operator: ">=",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn lte(&self, value: V) -> B {
@@ -85,14 +87,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
             operator: "<=",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn not_eq(&self, value: V) -> B {
@@ -100,14 +102,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
             operator: "<>",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn is_null(&self) -> B {
@@ -115,14 +117,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![],
             operator: "IS NULL",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn is_not_null(&self) -> B {
@@ -130,14 +132,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![],
             operator: "IS NOT NULL",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn between(&self, from: V, to: V) -> B {
@@ -145,14 +147,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(from), Box::new(to)],
             operator: "BETWEEN",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn r#in(&self, values: Vec<V>) -> B {
@@ -164,14 +166,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vs,
             operator: "IN",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn not_in(&self, values: Vec<V>) -> B {
@@ -183,14 +185,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vs,
             operator: "NOT IN",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
     pub fn like(&self, value: V) -> B {
@@ -198,14 +200,14 @@ where
         let filter = Filter::Column(Column {
             table: BuilderAccessor::table_name_as(&builder)
                 .as_ref()
-                .unwrap_or(BuilderAccessor::from_table(&builder))
+                .unwrap_or(BuilderAccessor::table_name(&builder))
                 .to_string(),
             name: self.column_name.to_string(),
             values: vec![Box::new(value)],
             operator: "LIKE",
             preload: BuilderAccessor::preload(&builder),
         });
-        BuilderAccessor::filters(&mut builder).push(filter);
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
 }

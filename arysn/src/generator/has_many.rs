@@ -10,9 +10,7 @@ pub struct HasMany {
     pub has_many_use_impl: Vec<Vec<TokenStream>>,
     pub has_many_field: Vec<TokenStream>,
     pub has_many_init: Vec<TokenStream>,
-    pub has_many_builder_field: Vec<TokenStream>,
     pub has_many_builder_impl: Vec<TokenStream>,
-    pub has_many_filters_impl: Vec<TokenStream>,
     pub has_many_join: Vec<TokenStream>,
     pub has_many_preload: Vec<TokenStream>,
 }
@@ -41,7 +39,6 @@ pub fn make_has_many(
             &child_table_name
         };
         let struct_ident = format_ident!("{}", has_many.struct_name);
-        let builder_field = format_ident!("{}_builder", field_ident.to_string());
         let child_builder_ident = format_ident!("{}Builder", &struct_ident.to_string());
         let join = {
             let x = format!(
@@ -56,16 +53,17 @@ pub fn make_has_many(
                 self.table_name_as.as_ref().unwrap_or(&#table_name.to_string())
             };
             quote! {
-                match &self.#builder_field.as_ref().map(|x| x.table_name_as.as_ref()).flatten() {
-                    Some(table_name_as) => format!(
+                if let Some(table_name_as) = table_name_as {
+                    format!(
                         #y,
-                        if builder.outer_join { "LEFT OUTER" } else { "INNER" },
+                        if outer_join { "LEFT OUTER" } else { "INNER" },
                         table_name_as,
                         #parent_table_name
-                    ),
-                    None => format!(
+                    )
+                } else {
+                    format!(
                         #x,
-                        if builder.outer_join { "LEFT OUTER" } else { "INNER" },
+                        if outer_join { "LEFT OUTER" } else { "INNER" },
                         #parent_table_name
                     )
                 }
@@ -85,34 +83,43 @@ pub fn make_has_many(
             .has_many_field
             .push(quote! { pub #field_ident: Vec<#struct_ident>, });
         result.has_many_init.push(quote! { #field_ident: vec![], });
-        result
-            .has_many_builder_field
-            .push(quote! { pub #builder_field: Option<Box<#child_builder_ident>>, });
         result.has_many_builder_impl.push(quote! {
             pub fn #field_ident<F>(&self, f: F) -> #self_builder_name
             where F: FnOnce(&#child_builder_ident) -> #child_builder_ident {
-                let child_builder = f(self.#builder_field.as_ref().unwrap_or(
-                    &Box::new(#child_builder_ident {
+                let mut builder = self.clone();
+                builder
+                    .filters
+                    .push(Filter::Builder(Box::new(f(&#child_builder_ident {
                         table_name_as: Some(#child_table_name_as.to_string()),
                         ..Default::default()
-                    })
-                ));
-                let mut builder = self.clone();
-                builder.#builder_field = Some(Box::new(child_builder));
+                    }))));
                 builder
             }
         });
-        result.has_many_filters_impl.push(quote! {
-            if let Some(builder) = &self.#builder_field {
-                result.append(&mut builder.filters());
-            }
-        });
         result.has_many_join.push(quote! {
-            if let Some(builder) = &self.#builder_field {
-                if !builder.filters().is_empty() {
-                    join_parts.push(#join);
-                    builder.join(join_parts);
+            let builders = self.filters.iter().filter_map(|filter| match filter {
+                Filter::Builder(builder)
+                    if builder.table_name_as() == &Some(#child_table_name_as.to_string())
+                        && !builder.query_filters().is_empty() => Some(builder),
+                _ => None,
+            }).collect::<Vec<_>>();
+            let mut table_name = None;
+            let mut table_name_as = None;
+            let mut outer_join = false;
+            for builder in &builders {
+                table_name = Some(builder.table_name());
+                if let Some(x) = builder.table_name_as() {
+                    table_name_as = Some(x);
                 }
+                if builder.outer_join() {
+                    outer_join = true;
+                }
+            }
+            if let Some(table_name) = table_name {
+                join_parts.push(#join);
+            }
+            for builder in &builders {
+                builder.join(join_parts);
             }
         });
         let column = columns_map[child_table_name]
@@ -125,39 +132,75 @@ pub fn make_has_many(
             quote! { child.#foreign_key_ident }
         };
         result.has_many_preload.push(quote! {
-            if let Some(builder) = &self.#builder_field {
-                if builder.preload {
-                    let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
-                    let children_builder = #struct_ident::select().#foreign_key_ident().r#in(ids);
-                    let children_builder = #child_builder_ident {
-                        from: children_builder.from,
-                        table_name_as: None,
-                        filters: builder.filters.iter().cloned()
-                            .chain(children_builder.filters.into_iter())
-                            .filter_map(|x| match x {
-                                Filter::Column(x) => Some(x),
-                                _ => None
-                            })
-                            .map(|x| Filter::Column(Column {
-                                table: #child_table_name.to_string(),
-                                preload: false,
-                                ..x
-                            }))
-                            .collect::<Vec<_>>(),
-                        ..(**builder).clone()
-                    };
-                    let children = children_builder.load(conn).await?;
-                    result.iter_mut().for_each(|x| {
-                        let mut ys = vec![];
-                        for child in children.iter() {
-                            if x.id == #foreign_key_value {
-                                ys.push(child.clone());
-                            }
-                        }
-                        x.#field_ident = ys;
-                    });
+            let builders = self.filters.iter().filter_map(|filter| match filter {
+                Filter::Builder(builder) if builder.preload() && builder.table_name_as() == &Some(#child_table_name_as.to_string()) => Some(builder),
+                _ => None,
+            }).collect::<Vec<_>>();
+            if !builders.is_empty() {
+                let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
+                let mut children_builder = #struct_ident::select().#foreign_key_ident().r#in(ids);
+                for builder in &builders {
+                    children_builder.filters.append(&mut builder.filters().clone());
+                    children_builder.orders.append(&mut builder.order().clone());
+                    if builder.group_by().is_some() {
+                        children_builder.group_by = builder.group_by();
+                    }
+                    if builder.limit().is_some() {
+                        children_builder.limit = builder.limit();
+                    }
+                    if builder.offset().is_some() {
+                        children_builder.offset = builder.offset();
+                    }
                 }
+                for filter in children_builder.filters.iter_mut() {
+                    if let Filter::Column(column) = filter {
+                        column.preload = false;
+                    }
+                }
+                let children = children_builder.load(conn).await?;
+                result.iter_mut().for_each(|x| {
+                    let mut ys = vec![];
+                    for child in children.iter() {
+                        if x.id == #foreign_key_value {
+                            ys.push(child.clone());
+                        }
+                    }
+                    x.#field_ident = ys;
+                });
             }
+            // if let Some(builder) = &self.#builder_field {
+            //     if builder.preload {
+            //         let ids = result.iter().map(|x| x.id).collect::<Vec<_>>();
+            //         let children_builder = #struct_ident::select().#foreign_key_ident().r#in(ids);
+            //         let children_builder = #child_builder_ident {
+            //             from: children_builder.from,
+            //             table_name_as: None,
+            //             filters: builder.filters.iter().cloned()
+            //                 .chain(children_builder.filters.into_iter())
+            //                 .filter_map(|x| match x {
+            //                     Filter::Column(x) => Some(x),
+            //                     _ => None
+            //                 })
+            //                 .map(|x| Filter::Column(Column {
+            //                     table: #child_table_name.to_string(),
+            //                     preload: false,
+            //                     ..x
+            //                 }))
+            //                 .collect::<Vec<_>>(),
+            //             ..(**builder).clone()
+            //         };
+            //         let children = children_builder.load(conn).await?;
+            //         result.iter_mut().for_each(|x| {
+            //             let mut ys = vec![];
+            //             for child in children.iter() {
+            //                 if x.id == #foreign_key_value {
+            //                     ys.push(child.clone());
+            //                 }
+            //             }
+            //             x.#field_ident = ys;
+            //         });
+            //     }
+            // }
         });
     }
     result

@@ -11,7 +11,7 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
     fn select(&self) -> String;
     fn from(&self) -> String;
     fn join(&self, join_parts: &mut Vec<String>);
-    fn filters(&self) -> Vec<&Filter>;
+    fn query_filters(&self) -> Vec<&Filter>;
     fn group_by(&self) -> Option<&'static str>;
     fn order(&self) -> &Vec<OrderItem>;
     fn limit(&self) -> Option<usize>;
@@ -20,7 +20,7 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
     fn count(&self) -> (String, Vec<&(dyn ToSql + Sync)>) {
         let mut index: usize = 1;
         let mut filters: Vec<String> = vec![];
-        for filter in self.filters().iter() {
+        for filter in self.query_filters().iter() {
             let (s, i) = filter.to_sql(index);
             filters.push(s);
             index += i;
@@ -51,7 +51,7 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
         );
 
         let mut params: Vec<&(dyn ToSql + Sync)> = vec![];
-        for filter in self.filters().iter() {
+        for filter in self.query_filters().iter() {
             match filter {
                 Filter::Column(column) => {
                     for value in column.values.iter() {
@@ -67,7 +67,7 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
 
     fn select_params(&self) -> Vec<&(dyn ToSql + Sync)> {
         let mut result: Vec<&(dyn ToSql + Sync)> = vec![];
-        for filter in self.filters().iter() {
+        for filter in self.query_filters().iter() {
             match filter {
                 Filter::Column(column) => {
                     for value in column.values.iter() {
@@ -98,7 +98,7 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
             .join(", ");
         let mut index: usize = 1;
         let mut filters: Vec<String> = vec![];
-        for filter in self.filters().iter() {
+        for filter in self.query_filters().iter() {
             let (s, i) = filter.to_sql(index);
             filters.push(s);
             index += i;
@@ -158,6 +158,6 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
 use core::fmt::Debug;
 impl Debug for dyn BuilderTrait {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "BuilderTrait {{ filters: {:?} }}", self.filters())
+        write!(f, "BuilderTrait {{ filters: {:?} }}", self.query_filters())
     }
 }
