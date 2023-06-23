@@ -318,9 +318,6 @@ fn define_ar_impl(
                 fn table_name_as(&self) -> &Option<String> {
                     &self.table_name_as
                 }
-                fn table_name_as_mut(&mut self) -> &mut Option<String> {
-                    &mut self.table_name_as
-                }
                 fn filters(&self) -> &Vec<Filter> {
                     &self.filters
                 }

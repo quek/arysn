@@ -14,8 +14,6 @@ pub enum RelationType {
 pub trait BuilderAccessor {
     fn table_name(&self) -> &String;
     fn table_name_as(&self) -> &Option<String>;
-    // TODO これいらないのでは
-    fn table_name_as_mut(&mut self) -> &mut Option<String>;
     fn table_name_as_or(&self) -> &String {
         self.table_name_as().as_ref().unwrap_or(self.table_name())
     }
