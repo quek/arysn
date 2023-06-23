@@ -11,7 +11,6 @@ pub struct HasMany {
     pub has_many_field: Vec<TokenStream>,
     pub has_many_init: Vec<TokenStream>,
     pub has_many_builder_impl: Vec<TokenStream>,
-    pub has_many_join: Vec<TokenStream>,
     pub has_many_preload: Vec<TokenStream>,
 }
 
@@ -22,7 +21,7 @@ pub fn make_has_many(
     configs: &[Config],
 ) -> HasMany {
     let mut result: HasMany = HasMany::default();
-    let table_name = config.table_name;
+    let _table_name = config.table_name;
     for has_many in config.has_many.iter() {
         let child_config = configs
             .iter()
@@ -40,35 +39,6 @@ pub fn make_has_many(
         };
         let struct_ident = format_ident!("{}", has_many.struct_name);
         let child_builder_ident = format_ident!("{}Builder", &struct_ident.to_string());
-        let join = {
-            let x = format!(
-                "{{}} JOIN {} ON {}.{} = {{}}.id",
-                child_table_name, child_table_name_as, has_many.foreign_key,
-            );
-            let y = format!(
-                "{{0}} JOIN {} AS {{1}} ON {{1}}.{} = {{2}}.id",
-                child_table_name, has_many.foreign_key,
-            );
-            let parent_table_name = quote! {
-                self.table_name_as.as_ref().unwrap_or(&#table_name.to_string())
-            };
-            quote! {
-                if let Some(table_name_as) = table_name_as {
-                    format!(
-                        #y,
-                        if outer_join { "LEFT OUTER" } else { "INNER" },
-                        table_name_as,
-                        #parent_table_name
-                    )
-                } else {
-                    format!(
-                        #x,
-                        if outer_join { "LEFT OUTER" } else { "INNER" },
-                        #parent_table_name
-                    )
-                }
-            }
-        };
 
         if config.struct_name != has_many.struct_name {
             result
@@ -97,55 +67,6 @@ pub fn make_has_many(
                     }))));
                 builder
             }
-        });
-        result.has_many_join.push(quote! {
-            let builders = self.filters.iter().filter_map(|filter| match filter {
-                Filter::Builder(builder)
-                    if *builder.relation_type() == RelationType::HasMany
-                        && !builder.query_filters().is_empty() => {
-                    Some(builder)
-                }
-                _ => None,
-            }).collect::<Vec<_>>();
-            let mut xs: Vec<(&String, &Option<String>, bool)> = vec![];
-            for builder in &builders {
-                match xs.iter_mut().find(|x| x.0 == builder.table_name() && x.1 == builder.table_name_as()) {
-                    Some(x) => { x.2 |= builder.outer_join(); },
-                    None => { xs.push((builder.table_name(), builder.table_name_as(), builder.outer_join())); }
-                }
-            }
-            for x in xs {
-                let (table_name, table_name_as, outer_join) = x;
-                join_parts.push(#join);
-            }
-            for builder in &builders {
-                builder.join(join_parts);
-            }
-
-            // let builders = self.filters.iter().filter_map(|filter| match filter {
-            //     Filter::Builder(builder)
-            //         if builder.table_name_as_or() == #child_table_name_as
-            //             && !builder.query_filters().is_empty() => Some(builder),
-            //     _ => None,
-            // }).collect::<Vec<_>>();
-            // let mut table_name = None;
-            // let mut table_name_as = None;
-            // let mut outer_join = false;
-            // for builder in &builders {
-            //     table_name = Some(builder.table_name());
-            //     if let Some(x) = builder.table_name_as() {
-            //         table_name_as = Some(x);
-            //     }
-            //     if builder.outer_join() {
-            //         outer_join = true;
-            //     }
-            // }
-            // if let Some(table_name) = table_name {
-            //     join_parts.push(#join);
-            // }
-            // for builder in &builders {
-            //     builder.join(join_parts);
-            // }
         });
         let column = columns_map[child_table_name]
             .iter()

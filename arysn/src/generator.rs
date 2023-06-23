@@ -204,7 +204,6 @@ fn define_ar_impl(
             has_many_field,
             has_many_init,
             has_many_builder_impl,
-            has_many_join,
             has_many_preload,
         } = make_has_many(config, &builder_ident, columns_map, configs);
 
@@ -215,7 +214,6 @@ fn define_ar_impl(
             has_one_reader,
             has_one_init,
             has_one_builder_impl,
-            has_one_join,
             has_one_preload,
         } = make_has_one(config, &builder_ident, columns_map, configs);
 
@@ -226,7 +224,6 @@ fn define_ar_impl(
             belongs_to_reader,
             belongs_to_init,
             belongs_to_builder_impl,
-            belongs_to_join,
             belongs_to_preload,
         } = make_belongs_to(config, &builder_ident, &columns, configs);
         let use_plain = uniq_use(has_many_use_plain, has_one_use_plain, belongs_to_use_plain);
@@ -739,9 +736,6 @@ fn define_ar_impl(
                     for builder in &builders {
                         builder.join(join_parts);
                     }
-                    // #(#has_many_join)*
-                    // #(#has_one_join)*
-                    // #(#belongs_to_join)*
                 }
 
                 fn query_filters(&self) -> Vec<&Filter> {

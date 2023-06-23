@@ -12,7 +12,6 @@ pub struct HasOne {
     pub has_one_reader: Vec<TokenStream>,
     pub has_one_init: Vec<TokenStream>,
     pub has_one_builder_impl: Vec<TokenStream>,
-    pub has_one_join: Vec<TokenStream>,
     pub has_one_preload: Vec<TokenStream>,
 }
 
@@ -23,7 +22,7 @@ pub fn make_has_one(
     configs: &[Config],
 ) -> HasOne {
     let mut result: HasOne = HasOne::default();
-    let table_name = config.table_name;
+    let _table_name = config.table_name;
     for has_one in config.has_one.iter() {
         let child_config = configs
             .iter()
@@ -39,15 +38,6 @@ pub fn make_has_one(
         } else {
             &child_table_name
         };
-        let join_as = if child_table_name == child_table_name_as {
-            "".to_string()
-        } else {
-            format!(" AS {}", child_table_name_as)
-        };
-        let join = format!(
-            "{{}} JOIN {}{} ON {}.{} = {{}}.id",
-            child_table_name, join_as, child_table_name_as, has_one.foreign_key,
-        );
         let struct_ident = format_ident!("{}", has_one.struct_name);
         let child_builder_ident = format_ident!("{}Builder", &struct_ident.to_string());
 
@@ -81,58 +71,6 @@ pub fn make_has_one(
                     }))));
                 builder
             }
-        });
-        result.has_one_join.push(quote! {
-            let builders = self.filters.iter().filter_map(|filter| match filter {
-                Filter::Builder(builder)
-                    if *builder.relation_type() == RelationType::HasOne
-                        && !builder.query_filters().is_empty() => {
-                    Some(builder)
-                }
-                _ => None,
-            }).collect::<Vec<_>>();
-            let mut xs: Vec<(&String, &Option<String>, bool)> = vec![];
-            for builder in &builders {
-                match xs.iter_mut().find(|x| x.0 == builder.table_name() && x.1 == builder.table_name_as()) {
-                    Some(x) => { x.2 |= builder.outer_join(); },
-                    None => { xs.push((builder.table_name(), builder.table_name_as(), builder.outer_join())); }
-                }
-            }
-            for x in xs {
-                let (table_name, table_name_as, outer_join) = x;
-                join_parts.push(
-                    format!(#join,
-                            if outer_join { "LEFT OUTER" } else { "INNER" },
-                            self.table_name_as.as_ref().unwrap_or(&#table_name.to_string()))
-                );
-            }
-            for builder in &builders {
-                builder.join(join_parts);
-            }
-            // let builders = self.filters.iter().filter_map(|filter| match filter {
-            //     Filter::Builder(builder)
-            //         if builder.table_name_as_or() == #child_table_name_as
-            //             && !builder.query_filters().is_empty() => Some(builder),
-            //     _ => None,
-            // }).collect::<Vec<_>>();
-            // let mut table_name = None;
-            // let mut outer_join = false;
-            // for builder in &builders {
-            //     table_name = Some(builder.table_name());
-            //     if builder.outer_join() {
-            //         outer_join = true;
-            //     }
-            // }
-            // if let Some(table_name) = table_name {
-            //         join_parts.push(
-            //             format!(#join,
-            //                     if outer_join { "LEFT OUTER" } else { "INNER" },
-            //                     self.table_name_as.as_ref().unwrap_or(&#table_name.to_string()))
-            //         );
-            // }
-            // for builder in &builders {
-            //     builder.join(join_parts);
-            // }
         });
         let column = columns_map[child_table_name]
             .iter()

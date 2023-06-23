@@ -11,7 +11,6 @@ pub struct BelongsTo {
     pub belongs_to_reader: Vec<TokenStream>,
     pub belongs_to_init: Vec<TokenStream>,
     pub belongs_to_builder_impl: Vec<TokenStream>,
-    pub belongs_to_join: Vec<TokenStream>,
     pub belongs_to_preload: Vec<TokenStream>,
 }
 
@@ -29,7 +28,7 @@ pub fn make_belongs_to(
             .find(|column| column.name == belongs_to.foreign_key)
             .expect(&format!(
                 "{} is not found in {}",
-                &belongs_to.foreign_key, &config.table_name
+                &belongs_to.foreign_key, table_name
             ));
         let parent_config = configs
             .iter()
@@ -47,37 +46,6 @@ pub fn make_belongs_to(
         };
         let struct_ident = format_ident!("{}", belongs_to.struct_name);
         let parent_builder_ident = format_ident!("{}Builder", struct_ident);
-        let join = {
-            let x = format!(
-                "{{}} JOIN {} ON {}.id = {{}}.{}",
-                parent_table_name,
-                parent_table_name_as,
-                foreign_key_ident.to_string()
-            );
-            let y = format!(
-                "{{0}} JOIN {} AS {{1}} ON {{1}}.id = {{2}}.{}",
-                parent_table_name,
-                foreign_key_ident.to_string()
-            );
-            let parent_table_name = quote! {
-                self.table_name_as.as_ref().unwrap_or(&#table_name.to_string())
-            };
-            quote! {
-                match table_name_as {
-                    Some(table_name_as) => format!(
-                        #y,
-                        if outer_join { "LEFT OUTER" } else { "INNER" },
-                        table_name_as,
-                        #parent_table_name
-                    ),
-                    None => format!(
-                        #x,
-                        if outer_join { "LEFT OUTER" } else { "INNER" },
-                        #parent_table_name
-                    )
-                }
-            }
-        };
 
         result.belongs_to_use_plain.push(vec![quote! {
             use super::#module_ident::#struct_ident;
@@ -109,55 +77,6 @@ pub fn make_belongs_to(
                     }))));
                 builder
             }
-        });
-        result.belongs_to_join.push(quote! {
-            let builders = self.filters.iter().filter_map(|filter| match filter {
-                Filter::Builder(builder)
-                    if *builder.relation_type() == RelationType::BelongsTo
-                        && !builder.query_filters().is_empty() => {
-                    Some(builder)
-                }
-                _ => None,
-            }).collect::<Vec<_>>();
-            let mut xs: Vec<(&String, &Option<String>, bool)> = vec![];
-            for builder in &builders {
-                match xs.iter_mut().find(|x| x.0 == builder.table_name() && x.1 == builder.table_name_as()) {
-                    Some(x) => { x.2 |= builder.outer_join(); },
-                    None => { xs.push((builder.table_name(), builder.table_name_as(), builder.outer_join())); }
-                }
-            }
-            for x in xs {
-                let (table_name, table_name_as, outer_join) = x;
-                join_parts.push(#join);
-            }
-            for builder in &builders {
-                builder.join(join_parts);
-            }
-
-            // let builders = self.filters.iter().filter_map(|filter| match filter {
-            //     Filter::Builder(builder)
-            //         if builder.table_name_as_or() == #parent_table_name_as
-            //             && !builder.query_filters().is_empty() => Some(builder),
-            //     _ => None,
-            // }).collect::<Vec<_>>();
-            // let mut table_name = None;
-            // let mut table_name_as = None;
-            // let mut outer_join = false;
-            // for builder in &builders {
-            //     table_name = Some(builder.table_name());
-            //     if let Some(x) = builder.table_name_as() {
-            //         table_name_as = Some(x);
-            //     }
-            //     if builder.outer_join() {
-            //         outer_join = true;
-            //     }
-            // }
-            // if let Some(table_name) = table_name {
-            //     join_parts.push(#join);
-            // }
-            // for builder in &builders {
-            //     builder.join(join_parts);
-            // }
         });
         result.belongs_to_preload.push({
             let (map, parent_id) = if column.is_nullable {
