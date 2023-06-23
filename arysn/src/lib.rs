@@ -20,7 +20,7 @@ pub mod prelude {
     pub use super::builder::BuilderTrait;
     pub use super::db::connect;
     pub use super::filter::{Column, Filter};
-    pub use super::filter_builder::{BuilderAccessor, FilterBuilder};
+    pub use super::filter_builder::{BuilderAccessor, FilterBuilder, RelationType};
     pub use super::order_item::OrderItem;
     pub use super::value::ToSqlValue;
 }

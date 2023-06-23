@@ -104,6 +104,7 @@ pub fn make_belongs_to(
                     .push(Filter::Builder(Box::new(f(&#parent_builder_ident {
                         from: #parent_table_name.to_string(),
                         table_name_as: Some(#parent_table_name_as.to_string()),
+                        relation_type: RelationType::BelongsTo(stringify!(#foreign_key_ident)),
                         ..Default::default()
                     }))));
                 builder
@@ -112,28 +113,51 @@ pub fn make_belongs_to(
         result.belongs_to_join.push(quote! {
             let builders = self.filters.iter().filter_map(|filter| match filter {
                 Filter::Builder(builder)
-                    if builder.table_name_as_or() == #parent_table_name_as
-                        && !builder.query_filters().is_empty() => Some(builder),
+                    if *builder.relation_type() == RelationType::BelongsTo
+                        && !builder.query_filters().is_empty() => {
+                    Some(builder)
+                }
                 _ => None,
             }).collect::<Vec<_>>();
-            let mut table_name = None;
-            let mut table_name_as = None;
-            let mut outer_join = false;
+            let mut xs: Vec<(&String, &Option<String>, bool)> = vec![];
             for builder in &builders {
-                table_name = Some(builder.table_name());
-                if let Some(x) = builder.table_name_as() {
-                    table_name_as = Some(x);
-                }
-                if builder.outer_join() {
-                    outer_join = true;
+                match xs.iter_mut().find(|x| x.0 == builder.table_name() && x.1 == builder.table_name_as()) {
+                    Some(x) => { x.2 |= builder.outer_join(); },
+                    None => { xs.push((builder.table_name(), builder.table_name_as(), builder.outer_join())); }
                 }
             }
-            if let Some(table_name) = table_name {
+            for x in xs {
+                let (table_name, table_name_as, outer_join) = x;
                 join_parts.push(#join);
             }
             for builder in &builders {
                 builder.join(join_parts);
             }
+
+            // let builders = self.filters.iter().filter_map(|filter| match filter {
+            //     Filter::Builder(builder)
+            //         if builder.table_name_as_or() == #parent_table_name_as
+            //             && !builder.query_filters().is_empty() => Some(builder),
+            //     _ => None,
+            // }).collect::<Vec<_>>();
+            // let mut table_name = None;
+            // let mut table_name_as = None;
+            // let mut outer_join = false;
+            // for builder in &builders {
+            //     table_name = Some(builder.table_name());
+            //     if let Some(x) = builder.table_name_as() {
+            //         table_name_as = Some(x);
+            //     }
+            //     if builder.outer_join() {
+            //         outer_join = true;
+            //     }
+            // }
+            // if let Some(table_name) = table_name {
+            //     join_parts.push(#join);
+            // }
+            // for builder in &builders {
+            //     builder.join(join_parts);
+            // }
         });
         result.belongs_to_preload.push({
             let (map, parent_id) = if column.is_nullable {

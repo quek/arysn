@@ -2,6 +2,15 @@ use crate::filter::{Column, Filter};
 use crate::value::ToSqlValue;
 use std::marker::PhantomData;
 
+#[derive(Clone, Debug, Default, PartialEq)]
+pub enum RelationType {
+    #[default]
+    TopLevel,
+    HasMany(&'static str),
+    HasOne(&'static str),
+    BelongsTo(&'static str),
+}
+
 pub trait BuilderAccessor {
     fn table_name(&self) -> &String;
     fn table_name_as(&self) -> &Option<String>;
@@ -14,6 +23,7 @@ pub trait BuilderAccessor {
     fn filters_mut(&mut self) -> &mut Vec<Filter>;
     fn outer_join(&self) -> bool;
     fn preload(&self) -> bool;
+    fn relation_type(&self) -> &RelationType;
 }
 
 pub struct FilterBuilder<B, V> {
