@@ -454,6 +454,7 @@ fn define_ar_impl(
                     let mut builder = f(&Self {
                         from: BuilderAccessor::table_name(self).clone(),
                         table_name_as: BuilderAccessor::table_name_as(self).clone(),
+                        preload: self.preload,
                         ..Self::default()
                     });
                     let mut result = self.clone();
