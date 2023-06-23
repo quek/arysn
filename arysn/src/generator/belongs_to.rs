@@ -169,9 +169,7 @@ pub fn make_belongs_to(
                                 column.table = #parent_table_name.to_string(); 
                                 column.preload = false;
                             }
-                            Filter::Builder(builder) => {
-                                builder.table_name_as_mut().take();
-                            }
+                            _ => ()
                         }
                     }
                     let parents = parents_builder.load(conn).await?;

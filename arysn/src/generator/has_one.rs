@@ -143,9 +143,7 @@ pub fn make_has_one(
                             column.table = #child_table_name.to_string();
                             column.preload = false;
                         }
-                        Filter::Builder(builder) => {
-                            builder.table_name_as_mut().take();
-                        }
+                        _ => ()
                     }
                 }
                 let children = children_builder.load(conn).await?;
