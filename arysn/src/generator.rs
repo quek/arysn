@@ -436,7 +436,6 @@ fn define_ar_impl(
 
                 #[async_recursion]
                 pub async fn load<'a>(&self, conn: &arysn::Connection<'a>) -> arysn::Result<Vec<#struct_ident>> {
-                    dbg!(&self.filters);
                     let params = self.select_params();
                     let rows = conn
                         .query(self.select_sql().as_str(), &params[..])
@@ -533,7 +532,6 @@ fn define_ar_impl(
 
                 #[allow(unused_variables)]
                 fn join(&self, join_parts: &mut Vec<String>) {
-                    dbg!(self);
                     // HasMany
                     let builders = self.filters.iter().filter_map(|filter| match filter {
                         Filter::Builder(builder) => match builder.relation_type() {
@@ -707,8 +705,6 @@ fn define_ar_impl(
                             }
                         }
                     }
-                    dbg!(&builders);
-                    dbg!(&xs);
                     for x in xs {
                         let (table_name, table_name_as, outer_join, foreign_key) = x;
                         let my_table_name = self
