@@ -2,7 +2,7 @@ mod builder;
 mod db;
 mod error;
 mod filter;
-mod filter_builder;
+pub mod filter_builder;
 pub mod generator;
 #[cfg(any(feature = "gis"))]
 mod gis;
