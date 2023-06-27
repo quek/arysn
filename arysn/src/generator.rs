@@ -444,24 +444,21 @@ fn define_ar_impl(
                 }
 
                 pub fn r#where<F>(&self, f: F) -> Self
-                where F: FnOnce(&Self) -> Self {
-                    let mut builder = f(&Self {
-                        from: BuilderAccessor::table_name(self).clone(),
-                        table_name_as: BuilderAccessor::table_name_as(self).clone(),
-                        preload: self.preload,
-                        ..Self::default()
-                    });
-                    let mut result = self.clone();
-                    if !builder.query_filters().is_empty() {
-                        result.filters.push(Filter::Column(Column {
-                            table: "".to_string(),
-                            name: "".to_string(),
-                            values: vec![],
-                            operator: "(",
-                            preload: BuilderAccessor::preload(self),
-                        }));
-                        result.filters.append(&mut builder.filters);
-                        result.filters.push(Filter::Column(Column {
+                where F: FnOnce(Self) -> Self {
+                    let mut builder = self.clone();
+                    builder.filters.push(Filter::Column(Column {
+                        table: "".to_string(),
+                        name: "".to_string(),
+                        values: vec![],
+                        operator: "(",
+                        preload: BuilderAccessor::preload(self),
+                    }));
+                    let filters_len = builder.filters.len();
+                    builder = f(builder);
+                    if filters_len == builder.filters.len() {
+                        builder.filters.pop();
+                    } else {
+                        builder.filters.push(Filter::Column(Column {
                             table: "".to_string(),
                             name: "".to_string(),
                             values: vec![],
@@ -469,26 +466,7 @@ fn define_ar_impl(
                             preload: BuilderAccessor::preload(self),
                         }));
                     }
-                    if builder.table_name_as.is_some() {
-                        result.table_name_as = builder.table_name_as;
-                    }
-                    if builder.preload {
-                        result.preload = true;
-                    }
-                    if builder.outer_join {
-                        result.outer_join = true;
-                    }
-                    if builder.group_by.is_some() {
-                        result.group_by = builder.group_by;
-                    }
-                    result.orders.append(&mut builder.orders);
-                    if builder.limit.is_some() {
-                        result.limit = builder.limit;
-                    }
-                    if builder.offset.is_some() {
-                        result.offset = builder.offset;
-                    }
-                    result
+                    builder
                 }
 
                 pub fn literal_condition(&self, condition: &'static str) -> Self {

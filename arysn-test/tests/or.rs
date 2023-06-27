@@ -34,7 +34,7 @@ async fn or() -> Result<()> {
     assert_eq!(users.len(), 1);
 
     let users = User::select()
-        .r#where(|user| user.clone())
+        .r#where(|user| user)
         .r#where(|user| user.active().eq(true).or().title().is_null())
         .r#where(|user| {
             user.profile(|profile| profile.birth_date().eq(NaiveDate::from_ymd(1999, 12, 31)))
