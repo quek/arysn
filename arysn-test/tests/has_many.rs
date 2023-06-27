@@ -32,6 +32,11 @@ async fn has_many() -> Result<()> {
         .roles(|roles| {
             roles
                 .preload()
+                .screens(|screens| screens.id().is_not_null())
+        })
+        .roles(|roles| {
+            roles
+                .preload()
                 .screens(|screens| screens.id().eq(screen.id).preload())
         })
         .load(&conn)
