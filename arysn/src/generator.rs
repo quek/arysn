@@ -492,8 +492,14 @@ fn define_ar_impl(
                 }
 
                 fn from(&self) -> String {
-                    let mut result: Vec<String> = vec![self.from.clone()];
-                    self.join(&mut result);
+                    let mut xs: Vec<String> = vec![self.from.clone()];
+                    self.join(&mut xs);
+                    let mut result = vec![];
+                    for x in xs {
+                        if !result.contains(&x) {
+                            result.push(x);
+                        }
+                    }
                     result.join(" ")
                 }
 

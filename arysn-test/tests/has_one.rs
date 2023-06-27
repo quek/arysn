@@ -38,7 +38,6 @@ async fn has_one() -> Result<()> {
     assert_eq!(users.len(), 2);
 
     let users = User::select()
-        .profile(|profile| profile.id().is_not_null())
         .profile(|profile| {
             profile
                 .birth_date()
