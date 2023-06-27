@@ -50,17 +50,7 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
             group_by_part
         );
 
-        let mut params: Vec<&(dyn ToSql + Sync)> = vec![];
-        for filter in self.query_filters().iter() {
-            match filter {
-                Filter::Column(column) => {
-                    for value in column.values.iter() {
-                        params.push(value.as_to_sql().unwrap());
-                    }
-                }
-                Filter::Builder(_) => todo!(),
-            }
-        }
+        let params: Vec<&(dyn ToSql + Sync)> = self.select_params();
 
         (sql, params)
     }
