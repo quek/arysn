@@ -452,7 +452,7 @@ fn define_ar_impl(
                         ..Self::default()
                     });
                     let mut result = self.clone();
-                    if !builder.filters.is_empty() {
+                    if !builder.query_filters().is_empty() {
                         result.filters.push(Filter::Column(Column {
                             table: "".to_string(),
                             name: "".to_string(),
