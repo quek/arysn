@@ -86,10 +86,10 @@ pub fn make_belongs_to(
             };
             quote! {
                 let builders = self.filters.iter().filter_map(|filter| match filter {
-                    Filter::Builder(builder) if builder.preload() && builder.table_name_as_or() == #parent_table_name_as => Some(builder),
+                    Filter::Builder(builder) if builder.table_name_as_or() == #parent_table_name_as => Some(builder),
                     _ => None,
                 }).collect::<Vec<_>>();
-                if !builders.is_empty() {
+                if builders.iter().any(|x| x.preload()) {
                     let ids = result.iter().#map(|x| x.#foreign_key_ident).collect::<std::collections::HashSet<_>>();
                     let ids = ids.into_iter().collect::<Vec<_>>();
                     let mut parents_builder = #struct_ident::select().id().r#in(ids);

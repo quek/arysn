@@ -65,3 +65,28 @@ async fn has_many_as_preload() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn has_many_multiple_preload() -> Result<()> {
+    init();
+    let conn = connect().await?;
+
+    let users = User::select()
+        .roles(|roles| roles.role_type().eq(RoleType::Admin).preload())
+        .load(&conn)
+        .await?;
+
+    assert_eq!(users.len(), 1);
+    assert_eq!(users[0].roles.len(), 1);
+    assert_eq!(users[0].roles[0].role_type, RoleType::Admin);
+    let users = User::select()
+        .roles(|roles| roles.role_type().eq(RoleType::Admin))
+        .roles(|roles| roles.preload())
+        .load(&conn)
+        .await?;
+    assert_eq!(users.len(), 1);
+    assert_eq!(users[0].roles.len(), 1);
+    assert_eq!(users[0].roles[0].role_type, RoleType::Admin);
+
+    Ok(())
+}
