@@ -10,10 +10,7 @@ pub struct BelongsTo {
     pub belongs_to_field: Vec<TokenStream>,
     pub belongs_to_reader: Vec<TokenStream>,
     pub belongs_to_init: Vec<TokenStream>,
-    pub belongs_to_builder_field: Vec<TokenStream>,
     pub belongs_to_builder_impl: Vec<TokenStream>,
-    pub belongs_to_filters_impl: Vec<TokenStream>,
-    pub belongs_to_join: Vec<TokenStream>,
     pub belongs_to_preload: Vec<TokenStream>,
 }
 
@@ -31,7 +28,7 @@ pub fn make_belongs_to(
             .find(|column| column.name == belongs_to.foreign_key)
             .expect(&format!(
                 "{} is not found in {}",
-                &belongs_to.foreign_key, &config.table_name
+                &belongs_to.foreign_key, table_name
             ));
         let parent_config = configs
             .iter()
@@ -48,39 +45,7 @@ pub fn make_belongs_to(
             &parent_table_name
         };
         let struct_ident = format_ident!("{}", belongs_to.struct_name);
-        let builder_field = format_ident!("{}_builder", field_ident);
         let parent_builder_ident = format_ident!("{}Builder", struct_ident);
-        let join = {
-            let x = format!(
-                "{{}} JOIN {} ON {}.id = {{}}.{}",
-                parent_table_name,
-                parent_table_name_as,
-                foreign_key_ident.to_string()
-            );
-            let y = format!(
-                "{{0}} JOIN {} AS {{1}} ON {{1}}.id = {{2}}.{}",
-                parent_table_name,
-                foreign_key_ident.to_string()
-            );
-            let parent_table_name = quote! {
-                self.table_name_as.as_ref().unwrap_or(&#table_name.to_string())
-            };
-            quote! {
-                match &self.#builder_field.as_ref().map(|x| x.table_name_as.as_ref()).flatten() {
-                    Some(table_name_as) => format!(
-                        #y,
-                        if builder.outer_join { "LEFT OUTER" } else { "INNER" },
-                        table_name_as,
-                        #parent_table_name
-                    ),
-                    None => format!(
-                        #x,
-                        if builder.outer_join { "LEFT OUTER" } else { "INNER" },
-                        #parent_table_name
-                    )
-                }
-            }
-        };
 
         result.belongs_to_use_plain.push(vec![quote! {
             use super::#module_ident::#struct_ident;
@@ -98,34 +63,19 @@ pub fn make_belongs_to(
             }
         });
         result.belongs_to_init.push(quote! { #field_ident: None, });
-        result
-            .belongs_to_builder_field
-            .push(quote! { pub #builder_field: Option<Box<#parent_builder_ident>>, });
         result.belongs_to_builder_impl.push(quote! {
             pub fn #field_ident<F>(&self, f: F) -> #self_builder_name
             where F: FnOnce(&#parent_builder_ident) -> #parent_builder_ident {
-                let parent_builder = f(self.#builder_field.as_ref().unwrap_or(
-                    &Box::new(#parent_builder_ident {
-                        table_name_as: Some(#parent_table_name_as.to_string()),
-                        ..Default::default()
-                    })
-                ));
                 let mut builder = self.clone();
-                builder.#builder_field = Some(Box::new(parent_builder));
                 builder
-            }
-        });
-        result.belongs_to_filters_impl.push(quote! {
-                if let Some(builder) = &self.#builder_field {
-                    result.append(&mut builder.filters());
-                }
-        });
-        result.belongs_to_join.push(quote! {
-            if let Some(builder) = &self.#builder_field {
-                if !builder.filters().is_empty() {
-                    join_parts.push(#join);
-                    builder.join(join_parts);
-                }
+                    .filters
+                    .push(Filter::Builder(Box::new(f(&#parent_builder_ident {
+                        from: #parent_table_name.to_string(),
+                        table_name_as: Some(#parent_table_name_as.to_string()),
+                        relation_type: RelationType::BelongsTo(stringify!(#foreign_key_ident)),
+                        ..Default::default()
+                    }))));
+                builder
             }
         });
         result.belongs_to_preload.push({
@@ -135,34 +85,45 @@ pub fn make_belongs_to(
                 (quote!(map), quote!(parent.id))
             };
             quote! {
-                if let Some(builder) = &self.#builder_field {
-                    if builder.preload {
-                        let ids = result.iter().#map(|x| x.#foreign_key_ident).collect::<std::collections::HashSet<_>>();
-                        let ids = ids.into_iter().collect::<Vec<_>>();
-                        let parents_builder = #struct_ident::select().id().r#in(ids);
-                        let parents_builder = #parent_builder_ident {
-                            from: parents_builder.from,
-                            table_name_as: None,
-                            filters: builder.filters.iter().cloned()
-                                .chain(parents_builder.filters.into_iter())
-                                .map(|x| Filter {
-                                    table: #parent_table_name.to_string(),
-                                    preload: false,
-                                    ..x
-                                })
-                                .collect::<Vec<_>>(),
-                            ..(**builder).clone()
-                        };
-                        let parents = parents_builder.load(conn).await?;
-                        result.iter_mut().for_each(|x| {
-                            for parent in parents.iter() {
-                                if x.#foreign_key_ident == #parent_id {
-                                    x.#field_ident = Some(parent.clone());
-                                    break;
-                                }
-                            }
-                        });
+                let builders = self.filters.iter().filter_map(|filter| match filter {
+                    Filter::Builder(builder) if builder.table_name_as_or() == #parent_table_name_as => Some(builder),
+                    _ => None,
+                }).collect::<Vec<_>>();
+                if builders.iter().any(|x| x.preload()) {
+                    let ids = result.iter().#map(|x| x.#foreign_key_ident).collect::<std::collections::HashSet<_>>();
+                    let ids = ids.into_iter().collect::<Vec<_>>();
+                    let mut parents_builder = #struct_ident::select().id().r#in(ids);
+                    for builder in &builders {
+                        parents_builder.filters.append(&mut builder.filters().clone());
+                        parents_builder.orders.append(&mut builder.order().clone());
+                        if builder.group_by().is_some() {
+                            parents_builder.group_by = builder.group_by();
+                        }
+                        if builder.limit().is_some() {
+                            parents_builder.limit = builder.limit();
+                        }
+                        if builder.offset().is_some() {
+                            parents_builder.offset = builder.offset();
+                        }
                     }
+                    for filter in parents_builder.filters.iter_mut() {
+                        match filter {
+                            Filter::Column(column) => {
+                                column.table = #parent_table_name.to_string(); 
+                                column.preload = false;
+                            }
+                            _ => ()
+                        }
+                    }
+                    let parents = parents_builder.load(conn).await?;
+                    result.iter_mut().for_each(|x| {
+                        for parent in parents.iter() {
+                            if x.#foreign_key_ident == #parent_id {
+                                x.#field_ident = Some(parent.clone());
+                                break;
+                            }
+                        }
+                    });
                 }
             }
         });
