@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+
+- Fix, r#where and or
+
 ## 0.5.0
 
 - tokio 0.2 is not supported.

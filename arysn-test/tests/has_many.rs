@@ -32,11 +32,17 @@ async fn has_many() -> Result<()> {
         .roles(|roles| {
             roles
                 .preload()
+                .screens(|screens| screens.id().is_not_null())
+        })
+        .roles(|roles| {
+            roles
+                .preload()
                 .screens(|screens| screens.id().eq(screen.id).preload())
         })
         .load(&conn)
         .await?;
-    let screen = &users[0].roles[0].screens[0];
+    let role = &users[0].roles[0];
+    let screen = &role.screens[0];
     assert_eq!(screen.id, screen.id);
 
     Ok(())
@@ -56,6 +62,31 @@ async fn has_many_as_preload() -> Result<()> {
         .load(&conn)
         .await?;
     assert_eq!(users[0].create_projects[0].contributions[0].id, 1);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn has_many_multiple_preload() -> Result<()> {
+    init();
+    let conn = connect().await?;
+
+    let users = User::select()
+        .roles(|roles| roles.role_type().eq(RoleType::Admin).preload())
+        .load(&conn)
+        .await?;
+
+    assert_eq!(users.len(), 1);
+    assert_eq!(users[0].roles.len(), 1);
+    assert_eq!(users[0].roles[0].role_type, RoleType::Admin);
+    let users = User::select()
+        .roles(|roles| roles.role_type().eq(RoleType::Admin))
+        .roles(|roles| roles.preload())
+        .load(&conn)
+        .await?;
+    assert_eq!(users.len(), 1);
+    assert_eq!(users[0].roles.len(), 1);
+    assert_eq!(users[0].roles[0].role_type, RoleType::Admin);
 
     Ok(())
 }

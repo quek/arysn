@@ -3,7 +3,6 @@ use belongs_to::{make_belongs_to, BelongsTo};
 use config::Config;
 use has_many::{make_has_many, HasMany};
 use has_one::{make_has_one, HasOne};
-use log::debug;
 use order::order_part;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -204,10 +203,7 @@ fn define_ar_impl(
             has_many_use_impl,
             has_many_field,
             has_many_init,
-            has_many_builder_field,
             has_many_builder_impl,
-            has_many_filters_impl,
-            has_many_join,
             has_many_preload,
         } = make_has_many(config, &builder_ident, columns_map, configs);
 
@@ -217,10 +213,7 @@ fn define_ar_impl(
             has_one_field,
             has_one_reader,
             has_one_init,
-            has_one_builder_field,
             has_one_builder_impl,
-            has_one_filters_impl,
-            has_one_join,
             has_one_preload,
         } = make_has_one(config, &builder_ident, columns_map, configs);
 
@@ -230,10 +223,7 @@ fn define_ar_impl(
             belongs_to_field,
             belongs_to_reader,
             belongs_to_init,
-            belongs_to_builder_field,
             belongs_to_builder_impl,
-            belongs_to_filters_impl,
-            belongs_to_join,
             belongs_to_preload,
         } = make_belongs_to(config, &builder_ident, &columns, configs);
         let use_plain = uniq_use(has_many_use_plain, has_one_use_plain, belongs_to_use_plain);
@@ -318,23 +308,30 @@ fn define_ar_impl(
                 pub orders: Vec<OrderItem>,
                 pub limit: Option<usize>,
                 pub offset: Option<usize>,
-                #(#has_many_builder_field)*
-                #(#has_one_builder_field)*
-                #(#belongs_to_builder_field)*
+                pub relation_type: RelationType,
             }
 
             impl BuilderAccessor for #builder_ident {
-                fn from(x: &Self) -> &String {
-                    &x.from
+                fn table_name(&self) -> &String {
+                    &self.from
                 }
-                fn table_name_as(x: &Self) -> &Option<String> {
-                    &x.table_name_as
+                fn table_name_as(&self) -> &Option<String> {
+                    &self.table_name_as
                 }
-                fn filters(x: &mut Self) -> &mut Vec<Filter> {
-                    &mut x.filters
+                fn filters(&self) -> &Vec<Filter> {
+                    &self.filters
                 }
-                fn preload(x: &Self) -> bool {
-                    x.preload
+                fn filters_mut(&mut self) -> &mut Vec<Filter> {
+                    &mut self.filters
+                }
+                fn outer_join(&self) -> bool {
+                    self.outer_join
+                }
+                fn preload(&self) -> bool {
+                    self.preload
+                }
+                fn relation_type(&self) -> &RelationType {
+                    &self.relation_type
                 }
             }
 
@@ -374,13 +371,13 @@ fn define_ar_impl(
                 pub fn or(&self) -> Self {
                     let mut builder = self.clone();
                     builder.filters.push(
-                        Filter {
+                        Filter::Column(Column {
                             table: "".to_string(),
                             name: "".to_string(),
                             values: vec![],
                             operator: "OR",
                             preload: builder.preload,
-                        }
+                        })
                     );
                     builder
                 }
@@ -447,38 +444,40 @@ fn define_ar_impl(
                 }
 
                 pub fn r#where<F>(&self, f: F) -> Self
-                where F: FnOnce(&Self) -> Self {
+                where F: FnOnce(Self) -> Self {
                     let mut builder = self.clone();
-                    builder.filters.clear();
-                    let mut builder = f(&builder);
-                    let mut result = self.clone();
-                    result.filters.push(Filter {
+                    builder.filters.push(Filter::Column(Column {
                         table: "".to_string(),
                         name: "".to_string(),
                         values: vec![],
                         operator: "(",
-                        preload: builder.preload,
-                    });
-                    result.filters.append(&mut builder.filters);
-                    result.filters.push(Filter {
-                        table: "".to_string(),
-                        name: "".to_string(),
-                        values: vec![],
-                        operator: ")",
-                        preload: builder.preload,
-                    });
-                    result
+                        preload: BuilderAccessor::preload(self),
+                    }));
+                    let filters_len = builder.filters.len();
+                    builder = f(builder);
+                    if filters_len == builder.filters.len() {
+                        builder.filters.pop();
+                    } else {
+                        builder.filters.push(Filter::Column(Column {
+                            table: "".to_string(),
+                            name: "".to_string(),
+                            values: vec![],
+                            operator: ")",
+                            preload: BuilderAccessor::preload(self),
+                        }));
+                    }
+                    builder
                 }
 
                 pub fn literal_condition(&self, condition: &'static str) -> Self {
                     let mut builder = self.clone();
-                    builder.filters.push(Filter {
+                    builder.filters.push(Filter::Column(Column {
                         table: "".to_string(),
                         name: "".to_string(),
                         values: vec![],
                         operator: condition,
                         preload: BuilderAccessor::preload(self),
-                    });
+                    }));
                     builder
                 }
             }
@@ -493,28 +492,239 @@ fn define_ar_impl(
                 }
 
                 fn from(&self) -> String {
-                    let mut result: Vec<String> = vec![self.from.clone()];
-                    self.join(&mut result);
+                    let mut xs: Vec<String> = vec![self.from.clone()];
+                    self.join(&mut xs);
+                    let mut result = vec![];
+                    for x in xs {
+                        if !result.contains(&x) {
+                            result.push(x);
+                        }
+                    }
                     result.join(" ")
                 }
 
                 #[allow(unused_variables)]
                 fn join(&self, join_parts: &mut Vec<String>) {
-                    #(#has_many_join)*
-                    #(#has_one_join)*
-                    #(#belongs_to_join)*
+                    // HasMany
+                    let builders = self.filters.iter().filter_map(|filter| match filter {
+                        Filter::Builder(builder) => match builder.relation_type() {
+                            RelationType::HasMany(foreign_key) => {
+                                if !builder.query_filters().is_empty() {
+                                    Some(builder)
+                                } else {
+                                    None
+                                }
+                            },
+                            _ => None,
+                        },
+                        _ => None,
+                    }).collect::<Vec<_>>();
+                    let mut xs: Vec<(&String, &Option<String>, bool, &'static str)> = vec![];
+                    for builder in &builders {
+                        let foreign_key = match builder.relation_type() {
+                            RelationType::HasMany(foreign_key) => foreign_key,
+                            _ => unreachable!(),
+                        };
+                        match xs.iter_mut().find(|x| x.0 == builder.table_name() && x.1 == builder.table_name_as()) {
+                            Some(x) => { 
+                                x.2 |= builder.outer_join(); 
+                                x.3 = foreign_key;
+                            },
+                            None => {
+                                xs.push((
+                                    builder.table_name(),
+                                    builder.table_name_as(),
+                                    builder.outer_join(),
+                                    foreign_key,
+                                )); 
+                            }
+                        }
+                    }
+                    for x in xs {
+                        let (table_name, table_name_as, outer_join, foreign_key) = x;
+                        let outer_join = if outer_join { "LEFT OUTER" } else { "INNER" };
+                        let my_table_name = self
+                            .table_name_as
+                            .as_ref()
+                            .map(|x| x.as_str())
+                            .unwrap_or(#table_name);
+                        let join = if let Some(table_name_as) = table_name_as {
+                            format!(
+                                "{} JOIN {} AS {} ON {}.{} = {}.id",
+                                outer_join,
+                                table_name,
+                                table_name_as,
+                                table_name_as,
+                                foreign_key,
+                                my_table_name
+                            )
+                        } else {
+                            format!(
+                                "{} JOIN {} ON {}.{} = {}.id",
+                                outer_join,
+                                table_name,
+                                table_name,
+                                foreign_key,
+                                my_table_name
+                            )
+                        };
+                        join_parts.push(join);
+                    }
+                    for builder in &builders {
+                        builder.join(join_parts);
+                    }
+
+                    // HasOne
+                    let builders = self.filters.iter().filter_map(|filter| match filter {
+                        Filter::Builder(builder) => match builder.relation_type() {
+                            RelationType::HasOne(foreign_key) => {
+                                if !builder.query_filters().is_empty() {
+                                    Some(builder)
+                                } else {
+                                    None
+                                }
+                            },
+                            _ => None,
+                        },
+                        _ => None,
+                    }).collect::<Vec<_>>();
+                    let mut xs: Vec<(&String, &Option<String>, bool, &'static str)> = vec![];
+                    for builder in &builders {
+                        let foreign_key = match builder.relation_type() {
+                            RelationType::HasOne(foreign_key) => foreign_key,
+                            _ => unreachable!(),
+                        };
+                        match xs.iter_mut().find(|x| x.0 == builder.table_name() && x.1 == builder.table_name_as()) {
+                            Some(x) => { 
+                                x.2 |= builder.outer_join(); 
+                                x.3 = foreign_key;
+                            },
+                            None => {
+                                xs.push((
+                                    builder.table_name(),
+                                    builder.table_name_as(),
+                                    builder.outer_join(),
+                                    foreign_key,
+                                )); 
+                            }
+                        }
+                    }
+                    for x in xs {
+                        let (table_name, table_name_as, outer_join, foreign_key) = x;
+                        let outer_join = if outer_join { "LEFT OUTER" } else { "INNER" };
+                        let my_table_name = self
+                            .table_name_as
+                            .as_ref()
+                            .map(|x| x.as_str())
+                            .unwrap_or(#table_name);
+                        let join = if let Some(table_name_as) = table_name_as {
+                            format!(
+                                "{} JOIN {} AS {} ON {}.{} = {}.id",
+                                outer_join,
+                                table_name,
+                                table_name_as,
+                                table_name_as,
+                                foreign_key,
+                                my_table_name
+                            )
+                        } else {
+                            format!(
+                                "{} JOIN {} ON {}.{} = {}.id",
+                                outer_join,
+                                table_name,
+                                table_name,
+                                foreign_key,
+                                my_table_name
+                            )
+                        };
+                        join_parts.push(join);
+                    }
+                    for builder in &builders {
+                        builder.join(join_parts);
+                    }
+
+                    // BelongsTo
+                    let builders = self.filters.iter().filter_map(|filter| match filter {
+                        Filter::Builder(builder) => match builder.relation_type() {
+                            RelationType::BelongsTo(foreign_key) => {
+                                if !builder.query_filters().is_empty() {
+                                    Some(builder)
+                                } else {
+                                    None
+                                }
+                            },
+                            _ => None,
+                        },
+                        _ => None,
+                    }).collect::<Vec<_>>();
+                    let mut xs: Vec<(&String, &Option<String>, bool, &'static str)> = vec![];
+                    for builder in &builders {
+                        let foreign_key = match builder.relation_type() {
+                            RelationType::BelongsTo(foreign_key) => foreign_key,
+                            _ => unreachable!(),
+                        };
+                        match xs.iter_mut().find(|x| x.0 == builder.table_name() && x.1 == builder.table_name_as()) {
+                            Some(x) => { 
+                                x.2 |= builder.outer_join(); 
+                                x.3 = foreign_key;
+                            },
+                            None => {
+                                xs.push((
+                                    builder.table_name(),
+                                    builder.table_name_as(),
+                                    builder.outer_join(),
+                                    foreign_key,
+                                )); 
+                            }
+                        }
+                    }
+                    for x in xs {
+                        let (table_name, table_name_as, outer_join, foreign_key) = x;
+                        let my_table_name = self
+                            .table_name_as
+                            .as_ref()
+                            .map(|x| x.as_str())
+                            .unwrap_or(#table_name);
+                        let outer_join = if outer_join { "LEFT OUTER" } else { "INNER" };
+                        let join = if let Some(table_name_as) = table_name_as {
+                            format!(
+                                "{} JOIN {} AS {} ON {}.{} = {}.id",
+                                outer_join,
+                                table_name,
+                                table_name_as,
+                                my_table_name,
+                                foreign_key,
+                                table_name_as,
+                            )
+                        } else {
+                            format!(
+                                "{} JOIN {} ON {}.{} = {}.id",
+                                outer_join,
+                                table_name,
+                                my_table_name,
+                                foreign_key,
+                                table_name,
+                            )
+                        };
+                        join_parts.push(join);
+                    }
+                    for builder in &builders {
+                        builder.join(join_parts);
+                    }
                 }
 
-                fn filters(&self) -> Vec<&Filter> {
-                    #[allow(unused_mut)]
-                    let mut result: Vec<&Filter> = self.filters
+                fn query_filters(&self) -> Vec<&Filter> {
+                    self.filters
                         .iter()
-                        .filter(|x| !x.preload)
-                        .collect();
-                    #(#has_many_filters_impl)*
-                    #(#has_one_filters_impl)*
-                    #(#belongs_to_filters_impl)*
-                    result
+                        .flat_map(|x| match x {
+                            Filter::Column(column) => if column.preload {
+                                vec![]
+                            } else { 
+                                vec![x]
+                            },
+                            Filter::Builder(builder) => builder.query_filters(),
+                        })
+                        .collect()
                 }
 
                 fn group_by(&self) -> Option<&'static str> {
@@ -599,7 +809,7 @@ async fn connect() -> Result<Client> {
     let (client, connection) = tokio_postgres::connect(&database_url, NoTls).await?;
     tokio::spawn(async move {
         if let Err(e) = connection.await {
-            debug!("connection error: {}", e);
+            log::debug!("connection error: {}", e);
         }
     });
     if std::env::var("TRACE_SQL").map_or(false, |x| x == "1") {
