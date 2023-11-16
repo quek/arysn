@@ -19,6 +19,7 @@ pub trait BuilderAccessor {
     }
     fn filters(&self) -> &Vec<Filter>;
     fn filters_mut(&mut self) -> &mut Vec<Filter>;
+    fn join_selects(&self) -> &Vec<JoinSelect>;
     fn outer_join(&self) -> bool;
     fn preload(&self) -> bool;
     fn relation_type(&self) -> &RelationType;
@@ -223,4 +224,12 @@ where
         BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct JoinSelect {
+    pub select: &'static str,
+    pub builder: Box<dyn crate::prelude::BuilderTrait>,
+    pub as_name: &'static str,
+    pub on: &'static str,
 }

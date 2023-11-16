@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2
+
+- Add join_select.
+
 ## 0.5.1
 
 - Fix, r#where and or

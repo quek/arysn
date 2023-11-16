@@ -1,6 +1,6 @@
 [package]
 name = "arysn"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Tahara Yoshinori <read.eval.print@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -13,17 +13,20 @@ repository = "https://github.com/quek/arysn"
 [dependencies]
 anyhow = "1"
 chrono = "0.4"
-deadpool = { package = "deadpool", version = "^0.9"}
-deadpool-postgres = { package = "deadpool-postgres", version = "^0.10"}
+deadpool = { package = "deadpool", version = "^0.9" }
+deadpool-postgres = { package = "deadpool-postgres", version = "^0.10" }
 dyn-clone = "1"
 env_logger = "0.9"
 log = "0.4"
 proc-macro2 = "1"
 quote = "1"
+regex = "1"
 syn = "1"
 thiserror = "1.0"
-tokio = { package="tokio", version = "^1.0", features = ["full"] }
-tokio-postgres = { package = "tokio-postgres", version = "^0.7", features = ["with-chrono-0_4"] }
+tokio = { package = "tokio", version = "^1.0", features = ["full"] }
+tokio-postgres = { package = "tokio-postgres", version = "^0.7", features = [
+    "with-chrono-0_4",
+] }
 
 # gis
 bytes = { package = "bytes", version = "^1.0", optional = true }

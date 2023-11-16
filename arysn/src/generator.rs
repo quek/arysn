@@ -309,6 +309,7 @@ fn define_ar_impl(
                 pub limit: Option<usize>,
                 pub offset: Option<usize>,
                 pub relation_type: RelationType,
+                pub join_selects: Vec<JoinSelect>,
             }
 
             impl BuilderAccessor for #builder_ident {
@@ -323,6 +324,9 @@ fn define_ar_impl(
                 }
                 fn filters_mut(&mut self) -> &mut Vec<Filter> {
                     &mut self.filters
+                }
+                fn join_selects(&self) -> &Vec<JoinSelect> {
+                    &self.join_selects
                 }
                 fn outer_join(&self) -> bool {
                     self.outer_join
@@ -359,6 +363,24 @@ fn define_ar_impl(
                         group_by: Some(group_by),
                         ..self.clone()
                     }
+                }
+
+
+                pub fn join_select<T>(
+                    &self,
+                    select: &'static str,
+                    join_builder: T,
+                    as_name: &'static str,
+                    on: &'static str
+                ) -> Self where T: BuilderTrait + 'static{
+                    let mut builder = self.clone();
+                    builder.join_selects.push(JoinSelect {
+                        select,
+                        builder: Box::new(join_builder),
+                        as_name,
+                        on
+                    });
+                    builder
                 }
 
                 pub fn limit(&self, value: usize) -> Self {
@@ -473,9 +495,26 @@ fn define_ar_impl(
                     let mut builder = self.clone();
                     builder.filters.push(Filter::Column(Column {
                         table: "".to_string(),
-                        name: "".to_string(),
+                        name: condition.to_string(),
                         values: vec![],
-                        operator: condition,
+                        operator: "LITERAL",
+                        preload: BuilderAccessor::preload(self),
+                    }));
+                    builder
+                }
+
+                pub fn literal_condition_with_args<V>(&self, condition: &'static str, args: Vec<V>) -> Self
+                where V: ToSqlValue + 'static {
+                    let mut builder = self.clone();
+                    let mut values: Vec<Box<dyn ToSqlValue>> = vec![];
+                    for arg in args {
+                        values.push(Box::new(arg));
+                    }
+                    builder.filters.push(Filter::Column(Column {
+                        table: "".to_string(),
+                        name: condition.to_string(),
+                        values,
+                        operator: "LITERAL",
                         preload: BuilderAccessor::preload(self),
                     }));
                     builder
@@ -491,20 +530,84 @@ fn define_ar_impl(
                     #table_name.to_string()
                 }
 
-                fn from(&self) -> String {
+                fn from(&self, index: usize) -> (String, usize) {
                     let mut xs: Vec<String> = vec![self.from.clone()];
-                    self.join(&mut xs);
+                    let index_delta = self.join(&mut xs, index);
                     let mut result = vec![];
                     for x in xs {
                         if !result.contains(&x) {
                             result.push(x);
                         }
                     }
-                    result.join(" ")
+                    (result.join(" "), index_delta)
                 }
 
                 #[allow(unused_variables)]
-                fn join(&self, join_parts: &mut Vec<String>) {
+                fn join(&self, join_parts: &mut Vec<String>, index: usize) -> usize {
+                    let mut index_delta = 0;
+                    for join_select in self.join_selects.iter() {
+                        let builder = join_select.builder.as_ref();
+                        let orders: &Vec<OrderItem> = BuilderTrait::order(builder);
+                        let (from_part, delta) = BuilderTrait::from(builder, index + index_delta);
+                        index_delta += delta;
+                        let mut filters: Vec<String> = vec![];
+                        for filter in builder.query_filters().iter() {
+                            let (s, delta) = filter.to_sql(index + index_delta);
+                            filters.push(s);
+                            index_delta += delta;
+                        }
+                        let where_part = if filters.is_empty() {
+                            "".to_string()
+                        } else {
+                            format!(
+                                " WHERE {}",
+                                filters
+                                    .join(" AND ")
+                                    .replace(" AND OR AND ", " OR ")
+                                    .replace("( AND ", "(")
+                                    .replace(" AND )", ")")
+                            )
+                        };
+                        let group_by_part = if let Some(group_by) = builder.group_by() {
+                            format!(" GROUP BY {}", group_by)
+                        } else {
+                            "".to_string()
+                        };
+                        let order_part = if orders.is_empty() {
+                            "".to_string()
+                        } else {
+                            format!(
+                                " ORDER BY {}",
+                                orders
+                                    .iter()
+                                    .map(|x| x.to_sql())
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            )
+                        };
+                        let limit = match builder.limit() {
+                            Some(limit) => format!(" LIMIT {}", limit),
+                            _ => "".to_string(),
+                        };
+                        let offset = match builder.offset() {
+                            Some(offset) => format!(" OFFSET {}", offset),
+                            _ => "".to_string(),
+                        };
+                        join_parts.push(
+                            format!(
+                                "LEFT OUTER JOIN (SELECT {} FROM {}{}{}{}{}{}) AS {} ON {}",
+                                join_select.select,
+                                from_part,
+                                where_part,
+                                group_by_part,
+                                order_part,
+                                limit,
+                                offset,
+                                join_select.as_name,
+                                join_select.on,
+                            )
+                        );
+                    }
                     // HasMany
                     let builders = self.filters.iter().filter_map(|filter| match filter {
                         Filter::Builder(builder) => match builder.relation_type() {
@@ -571,7 +674,7 @@ fn define_ar_impl(
                         join_parts.push(join);
                     }
                     for builder in &builders {
-                        builder.join(join_parts);
+                        index_delta += builder.join(join_parts, index + index_delta);
                     }
 
                     // HasOne
@@ -640,7 +743,7 @@ fn define_ar_impl(
                         join_parts.push(join);
                     }
                     for builder in &builders {
-                        builder.join(join_parts);
+                        index_delta += builder.join(join_parts, index + index_delta);
                     }
 
                     // BelongsTo
@@ -709,8 +812,9 @@ fn define_ar_impl(
                         join_parts.push(join);
                     }
                     for builder in &builders {
-                        builder.join(join_parts);
+                        index_delta += builder.join(join_parts, index + index_delta);
                     }
+                    index_delta
                 }
 
                 fn query_filters(&self) -> Vec<&Filter> {

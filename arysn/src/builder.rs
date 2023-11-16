@@ -9,8 +9,8 @@ dyn_clone::clone_trait_object!(BuilderTrait);
 pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
     fn all_columns(&self) -> Vec<&'static str>;
     fn select(&self) -> String;
-    fn from(&self) -> String;
-    fn join(&self, join_parts: &mut Vec<String>);
+    fn from(&self, index: usize) -> (String, usize);
+    fn join(&self, join_parts: &mut Vec<String>, index: usize) -> usize;
     fn query_filters(&self) -> Vec<&Filter>;
     fn group_by(&self) -> Option<&'static str>;
     fn order(&self) -> &Vec<OrderItem>;
@@ -19,11 +19,13 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
 
     fn count(&self) -> (String, Vec<&(dyn ToSql + Sync)>) {
         let mut index: usize = 1;
+        let (from_part, index_delta) = BuilderTrait::from(self, index);
+        index += index_delta;
         let mut filters: Vec<String> = vec![];
         for filter in self.query_filters().iter() {
-            let (s, i) = filter.to_sql(index);
+            let (s, index_delta) = filter.to_sql(index);
             filters.push(s);
-            index += i;
+            index += index_delta;
         }
         let where_part = if filters.is_empty() {
             "".to_string()
@@ -45,7 +47,7 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
         let sql = format!(
             "SELECT COUNT(DISTINCT {}.*) FROM {}{}{}",
             self.select(),
-            BuilderTrait::from(self),
+            from_part,
             where_part,
             group_by_part
         );
@@ -57,6 +59,9 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
 
     fn select_params(&self) -> Vec<&(dyn ToSql + Sync)> {
         let mut result: Vec<&(dyn ToSql + Sync)> = vec![];
+        for join_select in self.join_selects().iter() {
+            result.append(&mut join_select.builder.select_params());
+        }
         for filter in self.query_filters().iter() {
             match filter {
                 Filter::Column(column) => {
@@ -86,11 +91,13 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
             .collect::<Vec<_>>()
             .join(", ");
         let mut index: usize = 1;
+        let (from_part, index_delta) = BuilderTrait::from(self, index);
+        index += index_delta;
         let mut filters: Vec<String> = vec![];
         for filter in self.query_filters().iter() {
-            let (s, i) = filter.to_sql(index);
+            let (s, index_delta) = filter.to_sql(index);
             filters.push(s);
-            index += i;
+            index += index_delta;
         }
         let where_part = if filters.is_empty() {
             "".to_string()
@@ -132,13 +139,7 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
         // TODO 無条件に DISTINCT 付けるのはどうかと思う
         format!(
             "SELECT DISTINCT {} FROM {}{}{}{}{}{}",
-            select,
-            BuilderTrait::from(self),
-            where_part,
-            group_by_part,
-            order_part,
-            limit,
-            offset
+            select, from_part, where_part, group_by_part, order_part, limit, offset
         )
     }
 }
