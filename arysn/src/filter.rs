@@ -73,19 +73,23 @@ impl Filter {
                     ),
                     2,
                 ),
-                _ => {
-                    if column.name.is_empty() {
-                        (column.operator.to_string(), 0)
-                    } else {
-                        (
-                            format!(
-                                "{}.{} {} ${}",
-                                &column.table, &column.name, &column.operator, bind_index
-                            ),
-                            1,
-                        )
-                    }
+                "LITERAL" => {
+                    let mut bind_index_delta = 0;
+                    let re = regex::Regex::new(r"\$\d+").unwrap();
+                    let sql = re.replace_all(&column.name, |caps: &regex::Captures| {
+                        let n: usize = caps[0][1..].parse().unwrap();
+                        bind_index_delta += 1;
+                        format!("${}", n - 1 + bind_index)
+                    });
+                    (sql.to_string(), 0)
                 }
+                _ => (
+                    format!(
+                        "{}.{} {} ${}",
+                        &column.table, &column.name, &column.operator, bind_index
+                    ),
+                    1,
+                ),
             },
             Filter::Builder(builder) => {
                 let mut index: usize = bind_index;
