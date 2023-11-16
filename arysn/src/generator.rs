@@ -595,7 +595,7 @@ fn define_ar_impl(
                         };
                         join_parts.push(
                             format!(
-                                "INNER JOIN (SELECT {} FROM {}{}{}{}{}{}) AS {} ON {}",
+                                "LEFT OUTER JOIN (SELECT {} FROM {}{}{}{}{}{}) AS {} ON {}",
                                 join_select.select,
                                 from_part,
                                 where_part,
