@@ -81,7 +81,7 @@ impl Filter {
                         bind_index_delta += 1;
                         format!("${}", n - 1 + bind_index)
                     });
-                    (sql.to_string(), 0)
+                    (sql.to_string(), bind_index_delta)
                 }
                 _ => (
                     format!(

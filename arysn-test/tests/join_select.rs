@@ -26,6 +26,7 @@ async fn join_as_has_many() -> Result<()> {
             "pj.create_user_id = users.id",
         )
         .literal_condition_with_args("last_name like $1", vec!["ねこみみ%"])
+        .literal_condition_with_args("last_name like $1", vec!["ねこみ%"])
         .order()
         .id()
         .asc()
