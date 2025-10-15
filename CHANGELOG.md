@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3
+
+- Support TIME type.
+
 ## 0.5.2
 
 - Add join_select.

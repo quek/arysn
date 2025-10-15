@@ -19,6 +19,7 @@ async fn bulk_insert() -> Result<()> {
             title: Some("さば".to_string()),
             age: 3,
             active: true,
+            start_time: None,
             created_at: None,
         },
         UserNew {
@@ -27,6 +28,7 @@ async fn bulk_insert() -> Result<()> {
             title: Some("いわし".to_string()),
             age: 12,
             active: true,
+            start_time: None,
             created_at: None,
         },
     ];

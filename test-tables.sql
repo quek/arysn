@@ -24,13 +24,14 @@ CREATE TABLE users (
   title VARCHAR(255),
   age INTEGER NOT NULL,
   active BOOLEAN NOT NULL,
+  start_time TIME,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO users(name, title, age, active, created_at) VALUES
- ('ユーザ1', '旅人', 20, TRUE, CURRENT_TIMESTAMP)
-,('ユーザ2', NULL, 21, FALSE, CURRENT_TIMESTAMP)
-,('ユーザ3', 'もののけ', 22, TRUE, CURRENT_TIMESTAMP)
+INSERT INTO users(name, title, age, active, start_time, created_at) VALUES
+ ('ユーザ1', '旅人', 20, TRUE, '07:08:09', CURRENT_TIMESTAMP)
+,('ユーザ2', NULL, 21, FALSE, NULL, CURRENT_TIMESTAMP)
+,('ユーザ3', 'もののけ', 22, TRUE, NULL, CURRENT_TIMESTAMP)
 ;
 
 CREATE TABLE profiles (
