@@ -2,6 +2,7 @@ use anyhow::Result;
 use arysn::prelude::*;
 use arysn_test::generated::project::Project;
 use arysn_test::generated::user::{User, UserNew};
+use chrono::NaiveTime;
 use common::init;
 
 mod common;
@@ -41,6 +42,7 @@ async fn crud() -> Result<()> {
         title: Some("さば".to_string()),
         age: 3,
         active: true,
+        start_time: NaiveTime::from_hms_opt(17, 8, 9),
         created_at: None,
     };
     let user = user.insert(conn).await?;
@@ -48,10 +50,18 @@ async fn crud() -> Result<()> {
     assert_eq!(user.title, Some("さば".to_string()));
     assert_eq!(user.age, 3);
     assert_eq!(user.active, true);
+    assert_eq!(user.start_time, NaiveTime::from_hms_opt(17, 8, 9));
     user.delete(conn).await?;
     let user = User::select().id().eq(user.id).first(conn).await;
     log::debug!("{:?}", &user);
     assert_eq!(user.is_err(), true);
+
+    let user = User::select()
+      .start_time()
+      .eq(NaiveTime::from_hms_opt(7, 8, 9).unwrap())
+      .first(conn)
+      .await?;
+    assert_eq!(user.name, "ユーザ1");
 
     Ok(())
 }

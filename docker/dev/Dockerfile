@@ -1,4 +1,4 @@
-FROM rust:1.63.0-slim-bullseye
+FROM rust:1.90.0-slim-trixie
 
 RUN apt update && apt install -y locales curl
 

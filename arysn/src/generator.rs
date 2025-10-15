@@ -891,6 +891,7 @@ fn compute_type(
         ("real", _) => quote!(f32),
         ("smallint", _) => quote!(i16),
         ("text", _) => quote!(String),
+        ("time without time zone", _) => quote!(chrono::NaiveTime),
         ("timestamp with time zone", _) => quote!(chrono::DateTime<chrono::Local>),
         ("timestamp without time zone", _) => quote!(chrono::NaiveDateTime),
         ("uuid", _) => quote!(uuid::Uuid),
