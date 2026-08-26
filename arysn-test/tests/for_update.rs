@@ -46,3 +46,27 @@ async fn for_update_locks_row() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn for_update_preload() -> Result<()> {
+    init();
+    let mut conn = connect().await?;
+    let conn = conn.transaction().await?;
+
+    // preload の子クエリにも FOR UPDATE が伝わる
+    let users = User::select()
+        .roles(|role| role.preload().for_update())
+        .load(&conn)
+        .await?;
+    assert_eq!(users.len(), 3);
+    assert_eq!(users[0].roles.len(), 2);
+
+    let mut other = connect().await?;
+    let other = other.transaction().await?;
+    let result = other
+        .query("SELECT id FROM roles WHERE id = 1 FOR UPDATE NOWAIT", &[])
+        .await;
+    assert!(result.is_err());
+
+    Ok(())
+}

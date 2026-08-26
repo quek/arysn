@@ -16,7 +16,10 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
     fn order(&self) -> &Vec<OrderItem>;
     fn limit(&self) -> Option<usize>;
     fn offset(&self) -> Option<usize>;
-    fn for_update(&self) -> bool;
+    // 生成された builder が実装する。既存の実装を壊さないようにデフォルトを持たせている。
+    fn for_update(&self) -> bool {
+        false
+    }
 
     fn where_part(&self, index: usize) -> String {
         let mut index = index;

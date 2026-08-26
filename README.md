@@ -111,6 +111,16 @@ SELECT users.id, ... FROM users WHERE users.id = $1 FOR UPDATE;
 
 `DISTINCT` is not used with `for_update`, because PostgreSQL does not allow
 `FOR UPDATE` with `DISTINCT`.
+For that reason `for_update` is meant for queries on a single table.
+Do not combine it with the following, PostgreSQL rejects them or the rows are duplicated.
+
+- Join. Without `DISTINCT` a row of the main table is returned once per matched row
+  of the joined table. `first` fails in that case.
+- `group_by_literal` and `join_select`. `FOR UPDATE is not allowed with GROUP BY clause`.
+- `outer_join`. `FOR UPDATE cannot be applied to the nullable side of an outer join`.
+
+`max`, `min` and `count` ignore `for_update`, `limit` and `offset`.
+PostgreSQL does not allow `FOR UPDATE` with aggregate functions.
 
 ## N+1
 

@@ -97,6 +97,9 @@ pub fn make_has_many(
                     if builder.offset().is_some() {
                         children_builder.offset = builder.offset();
                     }
+                    if builder.for_update() {
+                        children_builder.for_update = true;
+                    }
                 }
                 for filter in children_builder.filters.iter_mut() {
                     match filter {

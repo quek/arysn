@@ -105,6 +105,9 @@ pub fn make_belongs_to(
                         if builder.offset().is_some() {
                             parents_builder.offset = builder.offset();
                         }
+                        if builder.for_update() {
+                            parents_builder.for_update = true;
+                        }
                     }
                     for filter in parents_builder.filters.iter_mut() {
                         match filter {
