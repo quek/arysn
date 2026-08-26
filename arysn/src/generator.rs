@@ -308,6 +308,7 @@ fn define_ar_impl(
                 pub orders: Vec<OrderItem>,
                 pub limit: Option<usize>,
                 pub offset: Option<usize>,
+                pub for_update: bool,
                 pub relation_type: RelationType,
                 pub join_selects: Vec<JoinSelect>,
             }
@@ -421,6 +422,13 @@ fn define_ar_impl(
                 pub fn outer_join(&self) -> Self {
                     Self {
                         outer_join: true,
+                        ..self.clone()
+                    }
+                }
+
+                pub fn for_update(&self) -> Self {
+                    Self {
+                        for_update: true,
                         ..self.clone()
                     }
                 }
@@ -845,6 +853,10 @@ fn define_ar_impl(
 
                 fn offset(&self) -> Option<usize> {
                     self.offset
+                }
+
+                fn for_update(&self) -> bool {
+                    self.for_update
                 }
             }
 

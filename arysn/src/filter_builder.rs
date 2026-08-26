@@ -1,6 +1,10 @@
+use crate::db::Connection;
+use crate::error::Result;
 use crate::filter::{Column, Filter};
+use crate::prelude::BuilderTrait;
 use crate::value::ToSqlValue;
 use std::marker::PhantomData;
+use tokio_postgres::types::FromSql;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub enum RelationType {
@@ -29,6 +33,19 @@ pub struct FilterBuilder<B, V> {
     pub column_name: &'static str,
     pub builder: B,
     pub value_type: PhantomData<V>,
+}
+
+impl<B, V> FilterBuilder<B, V>
+where
+    B: BuilderAccessor,
+{
+    fn qualified_column_name(&self) -> String {
+        format!(
+            "{}.{}",
+            BuilderAccessor::table_name_as_or(&self.builder),
+            self.column_name
+        )
+    }
 }
 
 impl<B, V> FilterBuilder<B, V>
@@ -223,6 +240,24 @@ where
         });
         BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
+    }
+}
+
+impl<B, V> FilterBuilder<B, V>
+where
+    B: BuilderTrait,
+    V: for<'b> FromSql<'b>,
+{
+    pub async fn max<'a>(&self, conn: &Connection<'a>) -> Result<Option<V>> {
+        let (sql, params) = BuilderTrait::max(&self.builder, &self.qualified_column_name());
+        let row = conn.query_one(sql.as_str(), &params[..]).await?;
+        Ok(row.get(0))
+    }
+
+    pub async fn min<'a>(&self, conn: &Connection<'a>) -> Result<Option<V>> {
+        let (sql, params) = BuilderTrait::min(&self.builder, &self.qualified_column_name());
+        let row = conn.query_one(sql.as_str(), &params[..]).await?;
+        Ok(row.get(0))
     }
 }
 

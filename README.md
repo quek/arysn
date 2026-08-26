@@ -77,6 +77,51 @@ let users: Vec<User> = User::select().roles(|role| role.role_type().eq(RoleType:
     .load(&conn).await?;
 ```
 
+## Aggregation
+
+`count`, `max` and `min` are available.
+`max` and `min` are called on a column and return the type of the column.
+
+``` rust
+let count: i64 = User::select().active().eq(true).count(&conn).await?;
+
+let max: Option<i32> = User::select().active().eq(true).age().max(&conn).await?;
+let min: Option<i32> = User::select().age().min(&conn).await?;
+```
+
+SQL looks like this
+
+``` sql
+SELECT COUNT(DISTINCT users.*) FROM users WHERE users.active = $1;
+SELECT MAX(users.age) FROM users WHERE users.active = $1;
+SELECT MIN(users.age) FROM users;
+```
+
+## Lock
+
+``` rust
+let user: User = User::select().id().eq(1).for_update().first(&conn).await?;
+```
+
+SQL looks like this
+
+``` sql
+SELECT users.id, ... FROM users WHERE users.id = $1 FOR UPDATE;
+```
+
+`DISTINCT` is not used with `for_update`, because PostgreSQL does not allow
+`FOR UPDATE` with `DISTINCT`.
+For that reason `for_update` is meant for queries on a single table.
+Do not combine it with the following, PostgreSQL rejects them or the rows are duplicated.
+
+- Join. Without `DISTINCT` a row of the main table is returned once per matched row
+  of the joined table. `first` fails in that case.
+- `group_by_literal` and `join_select`. `FOR UPDATE is not allowed with GROUP BY clause`.
+- `outer_join`. `FOR UPDATE cannot be applied to the nullable side of an outer join`.
+
+`max`, `min` and `count` ignore `for_update`, `limit` and `offset`.
+PostgreSQL does not allow `FOR UPDATE` with aggregate functions.
+
 ## N+1
 
 ``` rust

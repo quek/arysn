@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.4
+
+- Add for_update.
+- Add max and min.
+
 ## 0.5.3
 
 - Support TIME type.
