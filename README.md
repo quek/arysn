@@ -77,6 +77,41 @@ let users: Vec<User> = User::select().roles(|role| role.role_type().eq(RoleType:
     .load(&conn).await?;
 ```
 
+## Aggregation
+
+`count`, `max` and `min` are available.
+`max` and `min` are called on a column and return the type of the column.
+
+``` rust
+let count: i64 = User::select().active().eq(true).count(&conn).await?;
+
+let max: Option<i32> = User::select().active().eq(true).age().max(&conn).await?;
+let min: Option<i32> = User::select().age().min(&conn).await?;
+```
+
+SQL looks like this
+
+``` sql
+SELECT COUNT(DISTINCT users.*) FROM users WHERE users.active = $1;
+SELECT MAX(users.age) FROM users WHERE users.active = $1;
+SELECT MIN(users.age) FROM users;
+```
+
+## Lock
+
+``` rust
+let user: User = User::select().id().eq(1).for_update().first(&conn).await?;
+```
+
+SQL looks like this
+
+``` sql
+SELECT users.id, ... FROM users WHERE users.id = $1 FOR UPDATE;
+```
+
+`DISTINCT` is not used with `for_update`, because PostgreSQL does not allow
+`FOR UPDATE` with `DISTINCT`.
+
 ## N+1
 
 ``` rust

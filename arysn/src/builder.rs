@@ -16,18 +16,17 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
     fn order(&self) -> &Vec<OrderItem>;
     fn limit(&self) -> Option<usize>;
     fn offset(&self) -> Option<usize>;
+    fn for_update(&self) -> bool;
 
-    fn count(&self) -> (String, Vec<&(dyn ToSql + Sync)>) {
-        let mut index: usize = 1;
-        let (from_part, index_delta) = BuilderTrait::from(self, index);
-        index += index_delta;
+    fn where_part(&self, index: usize) -> String {
+        let mut index = index;
         let mut filters: Vec<String> = vec![];
         for filter in self.query_filters().iter() {
             let (s, index_delta) = filter.to_sql(index);
             filters.push(s);
             index += index_delta;
         }
-        let where_part = if filters.is_empty() {
+        if filters.is_empty() {
             "".to_string()
         } else {
             format!(
@@ -38,23 +37,44 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
                     .replace("( AND ", "(")
                     .replace(" AND )", ")")
             )
-        };
-        let group_by_part = if let Some(group_by) = self.group_by() {
+        }
+    }
+
+    fn group_by_part(&self) -> String {
+        if let Some(group_by) = self.group_by() {
             format!(" GROUP BY {}", group_by)
         } else {
             "".to_string()
-        };
+        }
+    }
+
+    /// SELECT COUNT(...), MAX(...) などの集約関数用の SQL を組み立てる。
+    fn aggregate(&self, select_part: String) -> (String, Vec<&(dyn ToSql + Sync)>) {
+        let index: usize = 1;
+        let (from_part, index_delta) = BuilderTrait::from(self, index);
         let sql = format!(
-            "SELECT COUNT(DISTINCT {}.*) FROM {}{}{}",
-            self.select(),
+            "SELECT {} FROM {}{}{}",
+            select_part,
             from_part,
-            where_part,
-            group_by_part
+            self.where_part(index + index_delta),
+            self.group_by_part()
         );
 
         let params: Vec<&(dyn ToSql + Sync)> = self.select_params();
 
         (sql, params)
+    }
+
+    fn count(&self) -> (String, Vec<&(dyn ToSql + Sync)>) {
+        self.aggregate(format!("COUNT(DISTINCT {}.*)", self.select()))
+    }
+
+    fn max(&self, column: &str) -> (String, Vec<&(dyn ToSql + Sync)>) {
+        self.aggregate(format!("MAX({})", column))
+    }
+
+    fn min(&self, column: &str) -> (String, Vec<&(dyn ToSql + Sync)>) {
+        self.aggregate(format!("MIN({})", column))
     }
 
     fn select_params(&self) -> Vec<&(dyn ToSql + Sync)> {
@@ -90,32 +110,10 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
             )
             .collect::<Vec<_>>()
             .join(", ");
-        let mut index: usize = 1;
+        let index: usize = 1;
         let (from_part, index_delta) = BuilderTrait::from(self, index);
-        index += index_delta;
-        let mut filters: Vec<String> = vec![];
-        for filter in self.query_filters().iter() {
-            let (s, index_delta) = filter.to_sql(index);
-            filters.push(s);
-            index += index_delta;
-        }
-        let where_part = if filters.is_empty() {
-            "".to_string()
-        } else {
-            format!(
-                " WHERE {}",
-                filters
-                    .join(" AND ")
-                    .replace(" AND OR AND ", " OR ")
-                    .replace("( AND ", "(")
-                    .replace(" AND )", ")")
-            )
-        };
-        let group_by_part = if let Some(group_by) = self.group_by() {
-            format!(" GROUP BY {}", group_by)
-        } else {
-            "".to_string()
-        };
+        let where_part = self.where_part(index + index_delta);
+        let group_by_part = self.group_by_part();
         let order_part = if orders.is_empty() {
             "".to_string()
         } else {
@@ -136,10 +134,17 @@ pub trait BuilderTrait: BuilderAccessor + DynClone + Sync + Send {
             Some(offset) => format!(" OFFSET {}", offset),
             _ => "".to_string(),
         };
+        // FOR UPDATE は DISTINCT と併用できない
+        let (distinct, for_update) = if Self::for_update(self) {
+            ("", " FOR UPDATE")
+        } else {
+            ("DISTINCT ", "")
+        };
         // TODO 無条件に DISTINCT 付けるのはどうかと思う
         format!(
-            "SELECT DISTINCT {} FROM {}{}{}{}{}{}",
-            select, from_part, where_part, group_by_part, order_part, limit, offset
+            "SELECT {}{} FROM {}{}{}{}{}{}{}",
+            distinct, select, from_part, where_part, group_by_part, order_part, limit, offset,
+            for_update
         )
     }
 }
