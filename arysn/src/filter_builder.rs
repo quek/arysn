@@ -226,6 +226,26 @@ where
         BuilderAccessor::filters_mut(&mut builder).push(filter);
         builder
     }
+    /// `column = ANY($1)`
+    /// `r#in` と違い values は配列として 1 つのパラメータでバインドされる。
+    pub fn any(&self, values: Vec<V>) -> B
+    where
+        Vec<V>: ToSqlValue,
+    {
+        let mut builder = self.builder.clone();
+        let filter = Filter::Column(Column {
+            table: BuilderAccessor::table_name_as(&builder)
+                .as_ref()
+                .unwrap_or(BuilderAccessor::table_name(&builder))
+                .to_string(),
+            name: self.column_name.to_string(),
+            values: vec![Box::new(values)],
+            operator: "ANY",
+            preload: BuilderAccessor::preload(&builder),
+        });
+        BuilderAccessor::filters_mut(&mut builder).push(filter);
+        builder
+    }
     pub fn like(&self, value: V) -> B {
         let mut builder = self.builder.clone();
         let filter = Filter::Column(Column {

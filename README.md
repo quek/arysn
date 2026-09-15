@@ -70,6 +70,25 @@ use arysn::Optional;
 let user: Option<Vec> = User::select().id(1).first(&conn).await.optional()?;
 ```
 
+## ANY
+
+`any` binds the values as one array parameter.
+
+``` rust
+let users: Vec<User> = User::select().id().any(vec![1, 2, 3]).load(&conn).await?;
+```
+
+SQL looks like this
+
+``` sql
+SELECT DISTINCT users.id, ... FROM users WHERE users.id = ANY($1);
+```
+
+`r#in` binds each value as a separate parameter, `users.id IN ($1, $2, $3)`.
+tokio-postgres can not send more than 32767 parameters in a query,
+so use `any` when there are many values.
+An empty `Vec` matches no rows.
+
 ## Join
 
 ``` rust

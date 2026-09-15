@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.5
+
+- Add any.
+
 ## 0.5.4
 
 - Add for_update.
