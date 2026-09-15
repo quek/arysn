@@ -59,6 +59,11 @@ impl Filter {
                         )
                     }
                 }
+                // 配列を 1 つのパラメータとしてバインドするので、値の数に関わらずバインド数は 1
+                "ANY" => (
+                    format!("{}.{} = ANY(${})", &column.table, &column.name, bind_index),
+                    1,
+                ),
                 "OR" => ("OR".to_string(), 0),
                 "IS NULL" => (format!("{}.{} IS NULL", &column.table, &column.name), 0),
                 "IS NOT NULL" => (format!("{}.{} IS NOT NULL", &column.table, &column.name), 0),
